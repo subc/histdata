@@ -1,0 +1,57 @@
+<div id="chartContainer" style="width:100%;height:300px;"></div>
+
+<script type="text/javascript">
+window.onload = function () {
+var chart = new CanvasJS.Chart("chartContainer",
+{
+	title:{
+		text: "CNX Nifty's Monthly Stock Prices",
+	},
+	exportEnabled: true,
+	axisY: {
+		includeZero:false,
+		title: "Prices",
+		prefix: "$",
+	},
+	axisX: {
+		interval:2,
+		intervalType: "month",
+		valueFormatString: "MMM",
+		title: "Month wise Stock Prices for 2012 - 2013",
+	},
+	data: [
+	{
+		type: "candlestick",
+		risingColor: "#17EFDA",   
+		dataPoints: [
+			{x: new Date(2012,01,01),y:[0.05198, 0.05629, 0.05159, 0.05385]},
+			{x: new Date(2012,02,01),y:[0.05366, 0.05499, 0.05135, 0.05295]},
+			{x: new Date(2012,03,01),y:[0.05296, 0.05378, 0.05154, 0.05248]},
+			{x: new Date(2012,04,01),y:[0.05254, 0.05279, 0.04788, 0.04924]},
+			{x: new Date(2012,05,01),y:[0.04910, 0.05286, 0.04770, 0.05278]},
+			{x: new Date(2012,06,01),y:[0.05283, 0.05348, 0.05032, 0.05229]},
+{#			{x: new Date(2012,07,01),y:[5220, 5448, 5164, 5258]},#}
+{#			{x: new Date(2012,08,01),y:[5276, 5735, 5215, 5703]},#}
+{#			{x: new Date(2012,09,01),y:[5704, 5815, 4888, 5619]},#}
+{#			{x: new Date(2012,10,01),y:[5609, 5885, 5548, 5879]},#}
+{#			{x: new Date(2012,11,01),y:[5878, 5965, 5823, 5905]},#}
+{#			{x: new Date(2013,00,01),y:[5937, 6111, 5935, 6034]},#}
+{#			{x: new Date(2013,01,01),y:[6040, 6052, 5671, 5693]},#}
+{#			{x: new Date(2013,02,01),y:[5702, 5971, 5604, 5682]},#}
+{#			{x: new Date(2013,03,01),y:[5697, 5962, 5477, 5930]},#}
+{#			{x: new Date(2013,04,01),y:[5911, 6229, 5910, 5985]},#}
+{#			{x: new Date(2013,05,01),y:[5997, 6011, 5566, 5842]},#}
+{#			{x: new Date(2013,06,01),y:[5834, 6093, 5675, 5742]},#}
+{#			{x: new Date(2013,07,01),y:[5776, 5808, 5118, 5471]},#}
+{#			{x: new Date(2013,08,01),y:[5480, 6142, 5318, 5735]},#}
+{#			{x: new Date(2013,09,01),y:[5756, 6309, 5700, 6299]},#}
+{#			{x: new Date(2013,10,01),y:[6289, 6342, 5972, 6176]},#}
+{#			{x: new Date(2013,11,01),y:[6171, 6415, 6129, 6304]}#}
+		]
+	}
+	]
+});
+chart.render();
+}
+</script>
+<script type="text/javascript" src="{{ STATIC_URL }}/js/canvasjs/canvasjs.min.js"></script>

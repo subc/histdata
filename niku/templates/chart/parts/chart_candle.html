@@ -1,0 +1,27 @@
+<script type="text/javascript">
+  google.load("visualization", "1", {packages: ["corechart"]});
+  google.setOnLoadCallback(drawChart);
+  function drawChart() {
+    var data = google.visualization.arrayToDataTable([
+{#      ['Mon', 1.23100, 1.23200, 1.24134, 1.27134],#}
+{#      ['Tue', 1.23100, 1.24200, 1.25134, 1.26134],#}
+{#      ['Wed', 1.23100, 1.25200, 1.22134, 1.26134],#}
+{#      ['Thu', 1.23100, 1.22200, 1.23134, 1.27134],#}
+{#      ['Fri', 1.23100, 1.23200, 1.27134, 1.27134],#}
+{#      {{ chart_candle_data_single|safe }}#}
+      {{ chart_combo_data|safe }}
+      // Treat first row as data as well.
+    ], true);
+
+    var options = {
+      legend: 'none',
+      vAxis: {minValue: 1.12, maxValue: 1.14, gridlined: {count: 11 }},
+    };
+
+    var chart = new google.visualization.CandlestickChart(document.getElementById('chart_candle'));
+
+    chart.draw(data, options);
+  }
+</script>
+
+<div id="chart_candle" style="width: 900px; height: 500px;"></div>

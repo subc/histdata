@@ -1,0 +1,110 @@
+<script type="text/javascript">
+  google.load("visualization", "1", {packages: ["corechart"]});
+  google.setOnLoadCallback(drawChart);
+  function drawChart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Day');
+    data.addColumn('number', 'Dummy');
+    data.addColumn('number', 'Range');
+    data.addColumn({type: 'number', role: 'interval'});
+    data.addColumn({type: 'number', role: 'interval'});
+    data.addColumn('number', 'ポジション');
+    data.addRows([
+{#      ['Mon', 28, 10, -8, 17, 1],#}
+{#      ['Tue', 38, 17, -7, 28, 1],#}
+{#      ['Wed', 55, 22, -5, 25, 2],#}
+      {{ chart_combo_data_single|safe }}
+{#      {{ chart_combo_data|safe }}#}
+    ]);
+
+    var options = {
+      legend: 'none',
+      title: 'Monthly Coffee Production by Country',
+      vAxis: {title: "Cups"},
+      hAxis: {title: "Month"},
+      isStacked: true,
+      seriesType: "bars",
+      series: {0: {color: 'transparent'}, 2: {type: "steppedArea", targetAxisIndex: 1, visibleInLegend: false}}
+    };
+
+    var chart = new google.visualization.ComboChart(document.getElementById('chart_combo'));
+
+    chart.draw(data, options);
+  }
+</script>
+
+
+<div id="chart_combo" style="width: 900px; height: 500px;"></div>
+
+
+
+<div class="graphs">
+        <div id="chartEURUSDContainer" style="height: 331px; min-width: 611px"></div>
+</div>
+
+
+{#他のチャート#}
+<script src="http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.0.min.js" type="text/javascript"></script>
+<script src="http://code.highcharts.com/stock/highstock.js"></script>
+<script src="http://code.highcharts.com/stock/modules/exporting.js"></script>
+
+<script type="text/javascript">
+  $(function () {
+
+    var jsonData = [
+      {"LastModification": "04:18:45", "Symbol": "EURUSD", "Bid": "1.33132", "Ask": "1.33157", "High": "1.33336", "Low": "1.33007", "Direction": "0", "InserTime": "\/Date(1358760060933)\/"},
+      {"LastModification": "04:20:05", "Symbol": "EURUSD", "Bid": "1.33151", "Ask": "1.33174", "High": "1.33336", "Low": "1.33007", "Direction": "0", "InserTime": "\/Date(1358760140625)\/"},
+      {"LastModification": "04:21:25", "Symbol": "EURUSD", "Bid": "1.3312", "Ask": "1.33144", "High": "1.33336", "Low": "1.33007", "Direction": "1", "InserTime": "\/Date(1358760220731)\/"},
+      {"LastModification": "04:22:48", "Symbol": "EURUSD", "Bid": "1.33115", "Ask": "1.33141", "High": "1.33336", "Low": "1.33007", "Direction": "-1", "InserTime": "\/Date(1358760300387)\/"},
+      {"LastModification": "04:23:48", "Symbol": "EURUSD", "Bid": "1.33107", "Ask": "1.33132", "High": "1.33336", "Low": "1.33007", "Direction": "-1", "InserTime": "\/Date(1358760361033)\/"},
+      {"LastModification": "04:25:08", "Symbol": "EURUSD", "Bid": "1.33139", "Ask": "1.33164", "High": "1.33336", "Low": "1.33007", "Direction": "0", "InserTime": "\/Date(1358760440193)\/"},
+      {"LastModification": "04:26:28", "Symbol": "EURUSD", "Bid": "1.33202", "Ask": "1.33222", "High": "1.33336", "Low": "1.33007", "Direction": "1", "InserTime": "\/Date(1358760520037)\/"},
+      {"LastModification": "04:27:48", "Symbol": "EURUSD", "Bid": "1.33212", "Ask": "1.33238", "High": "1.33336", "Low": "1.33007", "Direction": "-1", "InserTime": "\/Date(1358760600163)\/"}
+    ]
+
+    var data = [];
+
+    fillData();
+
+    function fillData() {
+      for (i = 0; i < jsonData.length; i++) {
+        data.push([
+          parseInt(jsonData[i].InserTime.substr(6)),
+          jsonData[i].Ask ,
+          jsonData[i].High ,
+          jsonData[i].Low ,
+          jsonData[i].Bid
+        ]);
+      }
+      CreateChart();
+    }
+
+    function CreateChart() {
+      // create the chart
+      chart = new Highcharts.StockChart({
+        chart: {
+          renderTo: 'chartEURUSDContainer',
+          type: 'candlestick',
+          marginRight: 10
+        },
+        rangeSelector: {
+          enabled: false
+        },
+        scrollbar: {
+          enabled: false
+        },
+        navigator: {
+          enabled: false
+        },
+        series: [
+          {
+            type: 'candlestick',
+            color: '#00FF00',
+            name: 'Currency Rates',
+            data: data
+          }
+        ]
+      });
+    }
+  });
+</script>
