@@ -60,12 +60,23 @@ WSGI_APPLICATION = 'wsgi.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
+NAME_PREFIX = 'fx'
+DB_USER = 'root'
+DB_PASS = ''
+DB_HOST = '127.0.0.1'
+DB_PORT = ''
+CONN_MAX_AGE = '200000'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': '{}'.format(NAME_PREFIX),
+        'USER': DB_USER,
+        'PASSWORD': DB_PASS,
+        'HOST': DB_HOST,
+        'PORT': DB_PORT,
+#        'CONN_MAX_AGE': CONN_MAX_AGE,
+    },
 }
 
 # Internationalization
@@ -90,6 +101,7 @@ STATIC_URL = '/static/'
 
 # 開発したモジュール
 INSTALLED_APPS += (
+    'south',
     'tests',
     'module.bbs',
     'module.trading'
