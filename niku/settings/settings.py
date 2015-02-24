@@ -82,9 +82,10 @@ DATABASES = {
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# International settings
+LANGUAGE_CODE = 'ja'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Japan'
 
 USE_I18N = True
 
@@ -92,6 +93,11 @@ USE_L10N = True
 
 USE_TZ = True
 
+# 数字のカンマ区切りを何桁ごとに行うか
+NUMBER_GROUPING = 3
+
+# url.pyの場所
+ROOT_URLCONF = 'urls'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
