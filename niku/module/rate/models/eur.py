@@ -22,35 +22,29 @@ class Granularity(Enum):
         :rtype : CurrencyCandleBase
         """
         GranularityToDBTable = {
-            Granularity.D: CandleEurUsdM5Rate,
+            Granularity.D: CandleEurUsdDRate,
             Granularity.H1: CandleEurUsdH1Rate,
-            Granularity.M5: CandleEurUsdDRate,
+            Granularity.M5: CandleEurUsdM5Rate,
         }
         return GranularityToDBTable.get(self)
 
 
-class CandleEurUsdM5Rate(CurrencyCandleBase):
-    _granularity = Granularity.M5
+class CandleEurUsdBase(CurrencyCandleBase):
     tick = 0.0001
 
-class CandleEurUsdH1Rate(CurrencyCandleBase):
+    class Meta(object):
+        app_label = 'rate'
+        abstract = True
+        unique_together = ('start_at',)
+
+
+class CandleEurUsdM5Rate(CandleEurUsdBase):
+    _granularity = Granularity.M5
+
+
+class CandleEurUsdH1Rate(CandleEurUsdBase):
     _granularity = Granularity.H1
 
-    def get_type(self):
-        """
-        向きを返却
-        :rtype : int
-        """
-        alpha = 20
-        beta = 40
 
-
-
-
-
-
-
-
-class CandleEurUsdDRate(CurrencyCandleBase):
+class CandleEurUsdDRate(CandleEurUsdBase):
     _granularity = Granularity.D
-

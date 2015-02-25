@@ -22,6 +22,13 @@ class CurrencyCandleBase(models.Model):
         unique_together = ('start_at',)
 
     @classmethod
+    def get_all(cls):
+        """
+        :return: list of CurrencyCandleBase
+        """
+        return sorted(list(cls.objects.filter()), key=lambda x: x.start_at)
+
+    @classmethod
     def create(cls, **kwargs):
         """
         insertする

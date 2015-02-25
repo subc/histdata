@@ -112,6 +112,7 @@ INSTALLED_APPS += (
     'module.bbs',
     'module.trading',
     'module.rate',
+    'module.genetic',
 )
 
 # テンプレート
