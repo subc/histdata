@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from module.genetic.models.case1 import LogicPatternCase1, AiBaseCase1
+from module.genetic.models.history import GeneticHistory
 from module.rate.models import CandleEurUsdH1Rate, CandleEurUsdDRate
 from utils.command import CustomBaseCommand
 
@@ -15,8 +16,7 @@ class Command(CustomBaseCommand):
         # h1_candles = CandleEurUsdDRate.get_all()
         prev_rate = None
         market = Market()
-        p = 20
-        ai = AI(AiBaseCase1, p)
+        ai = AI(AiBaseCase1, 'AI_case1', 0)
         for rate in h1_candles:
             # 購入判断
             market = ai.order(market, prev_rate, rate)
@@ -26,8 +26,9 @@ class Command(CustomBaseCommand):
 
             prev_rate = rate
 
-        # 結果
-        ai.update_market(market)
+        # 確定処理
+        ai.update_market(market, rate)
+        ai.save()
         self.echo('ただいまの利益:{}円 ポジション損益:{}円 ポジション数:{} 総取引回数:{}'.format(market.profit_summary(rate),
                                                                       market.current_profit(rate),
                                                                       len(market.open_positions),
@@ -39,6 +40,7 @@ class Market(object):
     positions = []
     profit_max = 0
     profit_min = 0
+    profit_result = 0  # 最終利益
 
     def __init__(self):
         self.positions = []
@@ -63,7 +65,7 @@ class Market(object):
                 if rate.low_bid <= position.stop_limit_rate:
                     position.close(rate.start_at, position.stop_limit_rate)
                     continue
-                    # 利益確定
+                # 利益確定
                 if rate.high_bid >= position.limit_rate:
                     position.close(rate.start_at, position.limit_rate)
                     continue
@@ -72,7 +74,7 @@ class Market(object):
                 if rate.high_bid >= position.stop_limit_rate:
                     position.close(rate.start_at, position.stop_limit_rate)
                     continue
-                    # 利益確定
+                # 利益確定
                 if rate.low_bid <= position.limit_rate:
                     position.close(rate.start_at, position.limit_rate)
                     continue
@@ -117,6 +119,14 @@ class Market(object):
         """
         return self.current_profit(rate) + self.profit()
 
+    def to_dict(self):
+        return {
+            'positions': [p.to_dict() for p in self.positions],
+            'profit_max': self.profit_max,
+            'profit_min': self.profit_min,
+            'profit_result': self.profit_result,
+        }
+
     @property
     def open_positions(self):
         return [x for x in self.positions if x.is_open]
@@ -129,12 +139,19 @@ class Market(object):
 class AI(object):
     LIMIT_POSITION = 10
     market = None
+    generation = None
     ai_dict = {}
-    p = None
 
-    def __init__(self, ai_dict, p):
+    def __init__(self, ai_dict, name, generation):
         self.ai_dict = ai_dict
-        self.p = p
+        self.name = name
+        self.generation = generation
+
+    def save(self):
+        """
+        AIを記録する
+        """
+        GeneticHistory.record_history(self)
 
     def order(self, market, prev_rate, rate):
         """
@@ -175,8 +192,19 @@ class AI(object):
                      stop_order_rate)
         return market
 
-    def update_market(self, market):
+    def update_market(self, market, rate):
+        market.profit_result = market.profit_summary(rate)
         self.market = market
+
+    def to_dict(self):
+        return {
+            'AI_LOGIC': self.ai_dict,
+            'MARKET': self.market.to_dict(),
+        }
+
+    @property
+    def p(self):
+        return self.ai_dict.get('base_tick')
 
 
 class Position(object):
@@ -215,6 +243,17 @@ class Position(object):
         :rtype : bool
         """
         return not bool(self.end_at)
+
+    def to_dict(self):
+        return {
+            'start_at': str(self.start_at),
+            'end_at': str(self.end_at),
+            'open_rate': self.open_rate,
+            'close_rate': self.close_rate,
+            'limit_rate': self.limit_rate,
+            'stop_limit_rate': self.stop_limit_rate,
+            'is_buy': self.is_buy
+        }
 
     def get_current_profit(self, rate):
         """

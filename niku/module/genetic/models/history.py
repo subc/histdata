@@ -11,10 +11,21 @@ class GeneticHistory(models.Model):
     """
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    name = models.CharField()
-    case = models.PositiveIntegerField()
+    name = models.CharField(max_length=50)
     generation = models.PositiveIntegerField(help_text='何世代目か')
-    profit = models.PositiveIntegerField(default=0, help_text='利益')
-    profit_max = models.PositiveIntegerField(default=0, help_text='最大利益')
-    profit_min = models.PositiveIntegerField(default=0, help_text='最大損失')
+    profit = models.IntegerField(default=0, help_text='利益')
+    profit_max = models.IntegerField(default=0, help_text='最大利益')
+    profit_min = models.IntegerField(default=0, help_text='最大損失')
     ai = ObjectField(null=True, default=None, help_text='aiのデータ')
+
+    class Meta(object):
+        app_label = 'genetic'
+
+    @classmethod
+    def record_history(cls, ai):
+        cls.objects.create(name=ai.name,
+                           generation=ai.generation,
+                           profit=ai.market.profit(),
+                           profit_max=ai.market.profit_max,
+                           profit_min=ai.market.profit_min,
+                           ai=ai.to_dict())
