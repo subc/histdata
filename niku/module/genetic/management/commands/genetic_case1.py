@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import random
 from module.genetic.models.case1 import LogicPatternCase1, AiBaseCase1
 from module.genetic.models.history import GeneticHistory
 from module.rate.models import CandleEurUsdH1Rate, CandleEurUsdDRate
 from utils.command import CustomBaseCommand
+import copy
 
 
 class Command(CustomBaseCommand):
@@ -13,11 +15,34 @@ class Command(CustomBaseCommand):
 
     def run(self):
         h1_candles = CandleEurUsdH1Rate.get_all()
-        # h1_candles = CandleEurUsdDRate.get_all()
+
+        # 初期AI集団生成
+        generation = 0
+        ai_mother = AI(AiBaseCase1, 'AI_case1', generation)
+        list_of_ai = ai_mother.initial_create(3)
+
+        # 遺伝的アルゴリズムで進化させる
+        while generation <= 2:
+            # 評価
+            generation += 1
+            for ai in list_of_ai:
+                self.benchmark(h1_candles, ai)
+
+            # 選択
+            list_of_ai = sorted(list_of_ai, key=lambda x: x.score, reverse=True)
+
+            # 交叉
+            list_of_ai = self.cross(list_of_ai)
+
+            # 突然変異
+            for ai in list_of_ai:
+                ai.mutation()
+
+    def benchmark(self, candles, ai):
         prev_rate = None
         market = Market()
-        ai = AI(AiBaseCase1, 'AI_case1', 0)
-        for rate in h1_candles:
+        for rate in candles:
+
             # 購入判断
             market = ai.order(market, prev_rate, rate)
 
@@ -34,6 +59,15 @@ class Command(CustomBaseCommand):
                                                                       len(market.open_positions),
                                                                       len(market.close_positions)))
         self.echo('最大利益:{}円 最小利益:{}円'.format(market.profit_max, market.profit_min))
+
+    def cross(self, list_of_ai):
+        """
+        遺伝的アルゴリズム
+        交叉 配合する
+        """
+        for ai in list_of_ai:
+            ai.generation += 1
+        return list_of_ai
 
 
 class Market(object):
@@ -196,6 +230,22 @@ class AI(object):
         market.profit_result = market.profit_summary(rate)
         self.market = market
 
+    def initial_create(self, num):
+        """
+        遺伝的アルゴリズム
+        初期集団を生成数
+        """
+        return [copy.deepcopy(self).mutation() for x in xrange(num)]
+
+    def mutation(self):
+        """
+        遺伝的アルゴリズム
+        突然変異させる
+        """
+        if random.randint(1, 5) == 1 or 1:
+            self.ai_dict['base_tick'] += random.randint(-2, 2)
+        return self
+
     def to_dict(self):
         return {
             'AI_LOGIC': self.ai_dict,
@@ -205,6 +255,10 @@ class AI(object):
     @property
     def p(self):
         return self.ai_dict.get('base_tick')
+
+    @property
+    def score(self):
+        return self.market.profit_result
 
 
 class Position(object):
