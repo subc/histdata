@@ -31,5 +31,8 @@ def parse_time(time_text):
                             int(t[14:16]),
                             int(t[17:19]),
                             int(t[20:26]), tzinfo=pytz.utc)
-    jst = utc.astimezone(pytz.timezone('Asia/Tokyo'))
-    return jst
+    return utc
+
+
+def utc_to_jst(utc):
+    return utc.astimezone(pytz.timezone('Asia/Tokyo'))

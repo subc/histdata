@@ -6,6 +6,9 @@ import datetime
 
 
 class CustomBaseCommand(BaseCommand):
+    class Meta(object):
+        abstract = True
+
     def echo(self, txt):
         """
         :param txt: string

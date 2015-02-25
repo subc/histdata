@@ -110,7 +110,8 @@ INSTALLED_APPS += (
     'south',
     'tests',
     'module.bbs',
-    'module.trading'
+    'module.trading',
+    'module.rate',
 )
 
 # テンプレート

@@ -1,13 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from module.rate.models.eur import Granularity
 from utils.utc_to_jst import parse_time
-from enum import Enum
-
-
-class Granularity(Enum):
-    H1 = 60 * 60
-    M5 = 60 * 5
 
 
 class OandaCandle(object):
