@@ -31,10 +31,24 @@ class Granularity(Enum):
 
 class CandleEurUsdM5Rate(CurrencyCandleBase):
     _granularity = Granularity.M5
-
+    tick = 0.0001
 
 class CandleEurUsdH1Rate(CurrencyCandleBase):
     _granularity = Granularity.H1
+
+    def get_type(self):
+        """
+        向きを返却
+        :rtype : int
+        """
+        alpha = 20
+        beta = 40
+
+
+
+
+
+
 
 
 class CandleEurUsdDRate(CurrencyCandleBase):
