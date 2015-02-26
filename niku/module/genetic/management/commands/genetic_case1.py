@@ -2,40 +2,52 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import random
+import datetime
+from enum import Enum
+import numpy
 from module.genetic.models.case1 import LogicPatternCase1, AiBaseCase1
 from module.genetic.models.history import GeneticHistory
+from module.genetic.models.parameter import OrderType
 from module.rate.models import CandleEurUsdH1Rate, CandleEurUsdDRate
 from utils.command import CustomBaseCommand
 import copy
 
 
 class Command(CustomBaseCommand):
+    AI_NAME = None
+
     def handle(self, *args, **options):
+        self.init()
         self.run()
+
+    def init(self):
+        self.AI_NAME = 'AI_case1_{}'.format(datetime.datetime.now())
 
     def run(self):
         h1_candles = CandleEurUsdH1Rate.get_all()
 
         # 初期AI集団生成
         generation = 0
-        ai_mother = AI(AiBaseCase1, 'AI_case1', generation)
-        list_of_ai = ai_mother.initial_create(3)
+        size = 20  # 初期集団サイズ
+        selection = 4  # 選択するサイズ
+        ai_mother = AI(AiBaseCase1, self.AI_NAME, generation)
+        ai_group = ai_mother.initial_create(3)
 
         # 遺伝的アルゴリズムで進化させる
         while generation <= 2:
             # 評価
             generation += 1
-            for ai in list_of_ai:
+            for ai in ai_group:
                 self.benchmark(h1_candles, ai)
 
             # 選択
-            list_of_ai = sorted(list_of_ai, key=lambda x: x.score, reverse=True)
+            ai_group = self.selection(ai_group, selection)
 
             # 交叉
-            list_of_ai = self.cross(list_of_ai)
+            ai_group = self.cross_over(ai_group, size)
 
             # 突然変異
-            for ai in list_of_ai:
+            for ai in ai_group:
                 ai.mutation()
 
     def benchmark(self, candles, ai):
@@ -60,14 +72,125 @@ class Command(CustomBaseCommand):
                                                                       len(market.close_positions)))
         self.echo('最大利益:{}円 最小利益:{}円'.format(market.profit_max, market.profit_min))
 
-    def cross(self, list_of_ai):
+    def selection(self, ai_group, selection):
+        """
+        遺伝的アルゴリズム
+        選別する
+        :param ai_group: list of AI
+        :param selection: int
+        :rtype : list of AI
+        """
+        r = []
+        ai_group = sorted(ai_group, key=lambda x: x.score, reverse=True)
+        # ランキング方式 1位が2体で2,3位が1体
+        r.append(copy.deepcopy(ai_group[0]))
+        r.append(copy.deepcopy(ai_group[0]))
+        r.append(copy.deepcopy(ai_group[1]))
+        r.append(copy.deepcopy(ai_group[2]))
+        assert(len(r) == selection)
+        return r
+
+    def cross_over(self, ai_group, size):
         """
         遺伝的アルゴリズム
         交叉 配合する
+
+        t = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
+        zip(t[::2], t[1::2])
+        [('a', 'b'), ('c', 'd'), ('e', 'f'), ('g', 'h')]
         """
-        for ai in list_of_ai:
-            ai.generation += 1
-        return list_of_ai
+        # 偶数個に親の数をそろえる
+        if len(ai_group) % 2:
+            ai_group.append(ai_group[0])
+
+        # pairを生成
+        ai_pair = zip(ai_group[::2], ai_group[1::2])
+
+        # 交叉する
+        next_ai_group = []
+        for ai_a, ai_b in ai_pair:
+            next_ai_group += self._cross(ai_a, ai_b)
+
+        random.shuffle(next_ai_group)
+        return next_ai_group[:size]
+
+    def _cross(self, ai_a, ai_b):
+        """
+        2体の親を交叉して、子供を2体生成
+        :param ai_a: AI
+        :param ai_b: AI
+        :return: list of AI
+        """
+        generation = ai_a.generation + 1
+        child_a_dict = {}
+        child_b_dict = {}
+        for key in ai_a.ai_dict:
+            _value_a = ai_a.ai_dict.get(key)
+            _value_b = ai_b.ai_dict.get(key)
+            _a, _b = self._cross_value(_value_a, _value_b)
+            child_a_dict[key] = _a
+            child_b_dict[key] = _b
+
+        # 子を生成
+        print "-----------------------"
+        print child_a_dict
+        print child_b_dict
+        print "-----------------------"
+        child_a = AI(child_a_dict, self.AI_NAME, generation)
+        child_b = AI(child_b_dict, self.AI_NAME, generation)
+        return [child_a, child_b]
+
+    def _cross_value(self, value_a, value_b):
+        """
+        値を混ぜて、それぞれの遺伝子を持った値を返却
+        :param value_a: int or list
+        :param value_b: int or list
+        :return: int or list
+        """
+        if type(value_a) == type(value_b) == int:
+            # 値の交換(一様交叉)
+            if random.randint(1, 3) == 1:
+                if random.randint(1, 2) == 1:
+                    return value_a, value_b
+                else:
+                    return value_a, value_b
+            # 値が混ざる(一点交叉)
+            if random.randint(1, 3) == 1:
+                if random.randint(1, 2) == 1:
+                    return value_a, value_a
+                else:
+                    return value_b, value_b
+            # 値の強化
+            if random.randint(1, 3) == 1:
+                summary = sum([value_a, value_b])
+                return summary, summary
+
+            # 値の平均
+            average = int(numpy.average([value_a, value_b]))
+            return average, average
+
+        if type(value_a) == type(value_b) == list:
+            list_a = []
+            list_b = []
+            _value_a = copy.deepcopy(value_a)
+            _value_b = copy.deepcopy(value_b)
+            print "************************************"
+            for index in range(len(_value_a)):
+                _a, _b = self._cross_value(_value_a[index], _value_b[index])
+                print "_a, _b is.....", _a, _b
+                list_a.append(_a)
+                list_b.append(_b)
+            print "************************************"
+            print list_a
+            print list_b
+            print "_a, _b is.....", _a, _b
+            print "************************************"
+            return list_a, list_b
+
+        if type(value_a) == type(value_b) == OrderType:
+            return OrderType.cross_over(value_a, value_b)
+
+        raise ValueError
 
 
 class Market(object):
@@ -205,14 +328,15 @@ class AI(object):
         candle_type = get_type(prev_rate, self.p)
         candle_type_id = LogicPatternCase1.get(candle_type)
         order_ai_list = self.ai_dict.get(candle_type_id)
-        assert (len(order_ai_list) == 3)
+        print "gene:{}".format(self.generation)
+        assert (len(order_ai_list) == 3), order_ai_list
 
         # 発注
         _o = order_ai_list
         trade_type = _o[0]
-        if trade_type == 2:
+        if trade_type == OrderType.WAIT:
             return market
-        is_buy = True if trade_type == 3 else False
+        is_buy = True if trade_type == OrderType.BUY else False
         if is_buy:
             order_rate = rate.open_bid + rate.tick * _o[1]
             stop_order_rate = rate.open_bid - rate.tick * _o[2]
@@ -248,9 +372,24 @@ class AI(object):
 
     def to_dict(self):
         return {
-            'AI_LOGIC': self.ai_dict,
+            'AI_LOGIC': self.ai_to_dict(),
             'MARKET': self.market.to_dict(),
         }
+
+    def ai_to_dict(self):
+        result_dict = {}
+        for key in self.ai_dict:
+            value = self.ai_dict[key]
+            if type(value) == list:
+                result_dict[key] = [self.value_to_dict(_v) for _v in value]
+            else:
+                result_dict[key] = self.value_to_dict(value)
+        return result_dict
+
+    def value_to_dict(self, value):
+        if type(value) == OrderType:
+            return value.value
+        return value
 
     @property
     def p(self):
