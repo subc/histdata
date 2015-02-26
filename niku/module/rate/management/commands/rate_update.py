@@ -10,6 +10,7 @@ from module.rate.models import CandleEurUsdM5Rate
 from module.rate.models.eur import Granularity
 from module.title.models.title import TitleSettings
 from module.oanda.models.candle import OandaCandle
+from utils import get_password
 from utils.timeit import timeit
 from utils.oanda_api import OandaAPI, Streamer
 import ujson
@@ -19,6 +20,7 @@ import random
 
 MODE = {
     'sandbox': 'api-sandbox.oanda.com',
+    'production': 'api-fxtrade.oanda.com',
 }
 
 
@@ -29,15 +31,15 @@ class Command(BaseCommand):
     def run(self):
         # レート取得
         self.update_rate(Granularity.M5)
-        self.update_rate(Granularity.H1)
-        self.update_rate(Granularity.D)
+        # self.update_rate(Granularity.H1)
+        # self.update_rate(Granularity.D)
 
     def update_rate(self, granularity):
         """
         :param granularity: Granularity
         """
         # レート取得
-        base_domain = MODE.get('sandbox')
+        base_domain = MODE.get('production')
         url_base = 'https://{}/v1/candles?'.format(base_domain)
         url = url_base + 'instrument=EUR_USD&' + \
             'count=1&' +\
@@ -45,7 +47,7 @@ class Command(BaseCommand):
             'granularity={}&'.format(granularity.name) +\
             'dailyAlignment=0&' +\
             'alignmentTimezone=Asia%2FTokyo&' +\
-            'start=2001-06-19T15%3A40%3A00Z'
+            'start=2005-06-19T00%3A00%3A00Z'
 
         response = requests_api(url)
         assert response.status_code == 200, response.status_code
@@ -58,19 +60,17 @@ class Command(BaseCommand):
 
 
 def requests_api(url, payload=None):
-    auth = ''
-    # headers = {'Content-type': 'application/json; charset=utf-8',
-    #            'Authorization': auth,
-    #            'User-Agent': 'mac'}
+    auth = 'Bearer {}'.format(get_password('OandaRestAPIToken'))
     headers = {'Accept-Encoding': 'identity, deflate, compress, gzip',
                'Accept': '*/*', 'User-Agent': 'python-requests/1.2.0',
-               'Content-type': 'application/json; charset=utf-8',}
-
+               'Content-type': 'application/json; charset=utf-8',
+               'Authorization': auth}
+    print headers
     print url
-    headers = {}
     if payload:
         response = requests.post(url, headers=headers, data=payload)
     else:
         response = requests.get(url, headers=headers)
     print 'API_TEST: {}'.format(url)
+    print response.text
     return response

@@ -6,7 +6,7 @@ import pytz
 
 def parse_time(time_text):
     """
-    UTCの文字列をJSTへ変換する。
+    文字列をUTCへ変換する。
     例)
     2015-02-22T15:00:00.000000Z
     :param time_text: char
