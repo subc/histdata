@@ -22,11 +22,18 @@ class CurrencyCandleBase(models.Model):
         unique_together = ('start_at',)
 
     @classmethod
+    def get(cls, pk):
+        """
+        :return: CurrencyCandleBase
+        """
+        return cls.objects.get(id=pk)
+
+    @classmethod
     def get_all(cls):
         """
         :return: list of CurrencyCandleBase
         """
-        return sorted(list(cls.objects.filter()), key=lambda x: x.start_at)
+        return cls.sort(list(cls.objects.filter()))
 
     @classmethod
     def create(cls, **kwargs):
@@ -35,6 +42,10 @@ class CurrencyCandleBase(models.Model):
         :return: CurrencyCandleBase
         """
         cls.objects.create(**kwargs)
+
+    @classmethod
+    def sort(cls, candles):
+        return sorted(candles, key=lambda x: x.start_at)
 
     @classmethod
     def safe_bulk_create_by_oanda(cls, oanda_candles):

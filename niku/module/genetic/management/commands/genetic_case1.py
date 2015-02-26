@@ -40,6 +40,7 @@ class Command(CustomBaseCommand):
         while True:
             # 評価
             generation += 1
+            [ai.normalization() for ai in ai_group]
             pool = mp.Pool(proc)
             callback = pool.map(benchmark, ai_group)
 
@@ -52,6 +53,9 @@ class Command(CustomBaseCommand):
             # 突然変異
             for ai in ai_group:
                 ai.mutation()
+
+            # マルチプロセスを破棄
+            pool.terminate()
             print '第{}世代 完了!'.format(ai_group[0].generation)
 
     def selection(self, ai_group, selection):
@@ -136,7 +140,7 @@ class Command(CustomBaseCommand):
                 if random.randint(1, 2) == 1:
                     return value_a, value_b
                 else:
-                    return value_a, value_b
+                    return value_b, value_a
             # 値が混ざる(一点交叉)
             if random.randint(1, 3) == 1:
                 if random.randint(1, 2) == 1:
@@ -173,7 +177,7 @@ def benchmark(ai):
     print "start benchmark"
     prev_rate = None
     market = Market()
-    candles = CandleEurUsdH1Rate.get_all()
+    candles = CandleEurUsdH1Rate.get_test_data2()
 
     for rate in candles:
 
@@ -301,6 +305,8 @@ class Market(object):
 
 class AI(object):
     LIMIT_POSITION = 10
+    LIMIT_TICK = 60
+    LIMIT_BASE_TICK = 15
     market = None
     generation = None
     ai_dict = {}
@@ -309,6 +315,7 @@ class AI(object):
         self.ai_dict = ai_dict
         self.name = name
         self.generation = generation
+        self.normalization()
 
     def save(self):
         """
@@ -403,6 +410,8 @@ class AI(object):
         }
 
     def ai_to_dict(self):
+        # パラメータを平坦化する
+        self.normalization()
         result_dict = {}
         for key in self.ai_dict:
             value = self.ai_dict[key]
@@ -416,6 +425,23 @@ class AI(object):
         if type(value) == OrderType:
             return value.value
         return value
+
+    def normalization(self):
+        """
+        過剰最適化するAIの進化に制限を儲ける
+        利確, 損切り 800pip先とかを禁止
+        """
+        ai = copy.deepcopy(self.ai_dict)
+        for key in ai:
+            if key == 'base_tick':
+                if ai[key] <= self.LIMIT_BASE_TICK:
+                    ai[key] = self.LIMIT_BASE_TICK
+                continue
+            if ai[key][1] >= self.LIMIT_TICK:
+                ai[key][1] = self.LIMIT_TICK
+            if ai[key][2] >= self.LIMIT_TICK:
+                ai[key][2] = self.LIMIT_TICK
+        self.ai_dict = ai
 
     @property
     def p(self):

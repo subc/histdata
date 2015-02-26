@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import datetime
 from enum import Enum
+import pytz
 from .base import CurrencyCandleBase
 
 
@@ -44,6 +46,14 @@ class CandleEurUsdM5Rate(CandleEurUsdBase):
 
 class CandleEurUsdH1Rate(CandleEurUsdBase):
     _granularity = Granularity.H1
+
+    @classmethod
+    def get_test_data(cls):
+        return cls.sort(list(cls.objects.filter(id__lte=5001)))
+
+    @classmethod
+    def get_test_data2(cls):
+        return cls.sort(list(cls.objects.filter(start_at__gte=datetime.datetime(2010, 1, 1, tzinfo=pytz.utc))))
 
 
 class CandleEurUsdDRate(CandleEurUsdBase):
