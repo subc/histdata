@@ -11,6 +11,7 @@ from module.genetic.models.parameter import OrderType
 from module.rate.models import CandleEurUsdH1Rate, CandleEurUsdDRate
 from utils.command import CustomBaseCommand
 import copy
+import multiprocessing as mp
 
 
 class Command(CustomBaseCommand):
@@ -24,7 +25,7 @@ class Command(CustomBaseCommand):
         self.AI_NAME = 'AI_case1_{}'.format(datetime.datetime.now())
 
     def run(self):
-        h1_candles = CandleEurUsdH1Rate.get_all()
+        # h1_candles = CandleEurUsdH1Rate.get_all()
 
         # 初期AI集団生成
         generation = 0
@@ -32,16 +33,17 @@ class Command(CustomBaseCommand):
         selection = 4  # 選択するサイズ
         ai_mother = AI(AiBaseCase1, self.AI_NAME, generation)
         ai_group = ai_mother.initial_create(3)
+        proc = 8    # 8並列とする
 
         # 遺伝的アルゴリズムで進化させる
-        while generation <= 2:
+        while generation <= 20:
             # 評価
             generation += 1
-            for ai in ai_group:
-                self.benchmark(h1_candles, ai)
+            pool = mp.Pool(proc)
+            callback = pool.map(benchmark, ai_group)
 
             # 選択
-            ai_group = self.selection(ai_group, selection)
+            ai_group = self.selection(callback, selection)
 
             # 交叉
             ai_group = self.cross_over(ai_group, size)
@@ -49,28 +51,7 @@ class Command(CustomBaseCommand):
             # 突然変異
             for ai in ai_group:
                 ai.mutation()
-
-    def benchmark(self, candles, ai):
-        prev_rate = None
-        market = Market()
-        for rate in candles:
-
-            # 購入判断
-            market = ai.order(market, prev_rate, rate)
-
-            # 決済
-            market.payment(rate)
-
-            prev_rate = rate
-
-        # 確定処理
-        ai.update_market(market, rate)
-        ai.save()
-        self.echo('ただいまの利益:{}円 ポジション損益:{}円 ポジション数:{} 総取引回数:{}'.format(market.profit_summary(rate),
-                                                                      market.current_profit(rate),
-                                                                      len(market.open_positions),
-                                                                      len(market.close_positions)))
-        self.echo('最大利益:{}円 最小利益:{}円'.format(market.profit_max, market.profit_min))
+            print '第{}世代 完了!'.format(ai_group[0].generation)
 
     def selection(self, ai_group, selection):
         """
@@ -110,8 +91,13 @@ class Command(CustomBaseCommand):
         next_ai_group = []
         for ai_a, ai_b in ai_pair:
             next_ai_group += self._cross(ai_a, ai_b)
-
+        next_ai_group += [ai.incr_generation() for ai in ai_group]  # 優秀な親を残す
         random.shuffle(next_ai_group)
+
+        # 数が足りるまで複製
+        while len(next_ai_group) < size:
+            mutant = copy.deepcopy(next_ai_group)
+            next_ai_group += [x.mutation() for x in mutant]
         return next_ai_group[:size]
 
     def _cross(self, ai_a, ai_b):
@@ -132,10 +118,6 @@ class Command(CustomBaseCommand):
             child_b_dict[key] = _b
 
         # 子を生成
-        print "-----------------------"
-        print child_a_dict
-        print child_b_dict
-        print "-----------------------"
         child_a = AI(child_a_dict, self.AI_NAME, generation)
         child_b = AI(child_b_dict, self.AI_NAME, generation)
         return [child_a, child_b]
@@ -174,23 +156,43 @@ class Command(CustomBaseCommand):
             list_b = []
             _value_a = copy.deepcopy(value_a)
             _value_b = copy.deepcopy(value_b)
-            print "************************************"
             for index in range(len(_value_a)):
                 _a, _b = self._cross_value(_value_a[index], _value_b[index])
-                print "_a, _b is.....", _a, _b
                 list_a.append(_a)
                 list_b.append(_b)
-            print "************************************"
-            print list_a
-            print list_b
-            print "_a, _b is.....", _a, _b
-            print "************************************"
             return list_a, list_b
 
         if type(value_a) == type(value_b) == OrderType:
             return OrderType.cross_over(value_a, value_b)
 
         raise ValueError
+
+
+def benchmark(ai):
+    print "start benchmark"
+    prev_rate = None
+    market = Market()
+    candles = CandleEurUsdH1Rate.get_all()
+
+    for rate in candles:
+
+        # 購入判断
+        market = ai.order(market, prev_rate, rate)
+
+        # 決済
+        market.payment(rate)
+
+        prev_rate = rate
+
+    # 確定処理
+    ai.update_market(market, rate)
+    ai.save()
+    print('ただいまの利益:{}円 ポジション損益:{}円 ポジション数:{} 総取引回数:{}'.format(market.profit_summary(rate),
+                                                                  market.current_profit(rate),
+                                                                  len(market.open_positions),
+                                                                  len(market.close_positions)))
+    print('最大利益:{}円 最小利益:{}円'.format(market.profit_max, market.profit_min))
+    return ai
 
 
 class Market(object):
@@ -208,7 +210,7 @@ class Market(object):
         """
         position = Position.open(rate.start_at, rate.open_bid, is_buy, limit_rate=order_rate,
                                  stop_limit_rate=stop_order_rate)
-        print 'OPEN![{}]:{}:{}:利確:{} 損切り:{}'.format(rate.start_at, is_buy, rate.open_bid, order_rate, stop_order_rate)
+        # print 'OPEN![{}]:{}:{}:利確:{} 損切り:{}'.format(rate.start_at, is_buy, rate.open_bid, order_rate, stop_order_rate)
         self.positions.append(position)
 
     def payment(self, rate):
@@ -328,7 +330,6 @@ class AI(object):
         candle_type = get_type(prev_rate, self.p)
         candle_type_id = LogicPatternCase1.get(candle_type)
         order_ai_list = self.ai_dict.get(candle_type_id)
-        print "gene:{}".format(self.generation)
         assert (len(order_ai_list) == 3), order_ai_list
 
         # 発注
@@ -357,7 +358,7 @@ class AI(object):
     def initial_create(self, num):
         """
         遺伝的アルゴリズム
-        初期集団を生成数
+        初期集団を生成
         """
         return [copy.deepcopy(self).mutation() for x in xrange(num)]
 
@@ -366,8 +367,29 @@ class AI(object):
         遺伝的アルゴリズム
         突然変異させる
         """
-        if random.randint(1, 5) == 1 or 1:
+        # tick 20%
+        if random.randint(1, 100) <= 20:
             self.ai_dict['base_tick'] += random.randint(-2, 2)
+        # 各パラメータは3%の確率で変異
+        for key in self.ai_dict:
+            if key == 'base_tick':
+                continue
+            value = self.ai_dict[key]
+            if type(value) != list:
+                continue
+            for index in range(len(value)):
+                if random.randint(1, 100) <= 3:
+                    if type(value[index]) == OrderType:
+                        self.ai_dict[key][index] = OrderType.mutation(value[index])
+                    else:
+                        self.ai_dict[key][index] += random.randint(-10, 10)
+        return self
+
+    def incr_generation(self):
+        """
+        世代を1世代増やす
+        """
+        self.generation += 1
         return self
 
     def to_dict(self):
@@ -478,7 +500,7 @@ class Position(object):
 
         self.end_at = end_at
         self.close_rate = rate_bid
-        print 'CLOSE![{}] :open:{} close:{} 利益:¥{}'.format(end_at, self.open_rate, self.close_rate, self.get_profit())
+        # print 'CLOSE![{}] :open:{} close:{} 利益:¥{}'.format(end_at, self.open_rate, self.close_rate, self.get_profit())
 
 
 def _tick_to_yen(tick):
@@ -499,8 +521,6 @@ def get_type(rate, p):
     p_high = get_type_by_diff((rate.high_bid - rate.open_bid) / tick, p)
     p_low = get_type_by_diff((rate.low_bid - rate.open_bid) / tick, p)
     p_close = get_type_by_diff(int((rate.close_bid - rate.open_bid) / tick), p)
-
-    # print p_high, p_low, p_close
     return p_high * 100 + p_low * 10 + p_close
 
 
@@ -508,7 +528,6 @@ def get_type_by_diff(_d, p):
     """
     :param _d: int
     """
-    # print _d
     if _d >= p * 2:
         return 5
     if _d <= p * -2:

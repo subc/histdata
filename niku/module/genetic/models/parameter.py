@@ -30,3 +30,17 @@ class OrderType(Enum):
                 return value_a, value_a
             else:
                 return value_b, value_b
+
+    @classmethod
+    def mutation(cls, value):
+        """
+        突然変異
+        :param value: OrderType
+        :rtype : OrderType
+        """
+        _all = list(cls)
+        random.shuffle(_all)
+        for _a in _all:
+            if value != _a:
+                return value
+        raise ValueError
