@@ -40,11 +40,12 @@ class Command(BaseCommand):
         base_domain = MODE.get('sandbox')
         url_base = 'https://{}/v1/candles?'.format(base_domain)
         url = url_base + 'instrument=EUR_USD&' + \
-            'count=5000&' +\
+            'count=1&' +\
             'candleFormat=midpoint&' +\
             'granularity={}&'.format(granularity.name) +\
             'dailyAlignment=0&' +\
-            'alignmentTimezone=Asia%2FTokyo'    # 日足にだけ影響
+            'alignmentTimezone=Asia%2FTokyo&' +\
+            'start=2001-06-19T15%3A40%3A00Z'
 
         response = requests_api(url)
         assert response.status_code == 200, response.status_code
