@@ -12,6 +12,7 @@ from module.rate.models import CandleEurUsdH1Rate, CandleEurUsdDRate
 from utils.command import CustomBaseCommand
 import copy
 import multiprocessing as mp
+from django.db import connection
 
 
 class Command(CustomBaseCommand):
@@ -36,7 +37,7 @@ class Command(CustomBaseCommand):
         proc = 8    # 8並列とする
 
         # 遺伝的アルゴリズムで進化させる
-        while generation <= 20:
+        while True:
             # 評価
             generation += 1
             pool = mp.Pool(proc)
@@ -192,6 +193,9 @@ def benchmark(ai):
                                                                   len(market.open_positions),
                                                                   len(market.close_positions)))
     print('最大利益:{}円 最小利益:{}円'.format(market.profit_max, market.profit_min))
+
+    # DBコネクションを閉じる
+    connection.close()
     return ai
 
 
