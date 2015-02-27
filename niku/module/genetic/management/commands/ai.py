@@ -8,7 +8,7 @@ from django.core.management import BaseCommand, CommandError
 import requests
 from module.genetic.models import GeneticHistory
 from module.rate.models import CandleEurUsdM5Rate
-from module.rate.models.eur import Granularity
+from module.rate.models.eur import Granularity, CandleEurUsdH1Rate
 from module.title.models.title import TitleSettings
 from module.oanda.models.candle import OandaCandle
 from utils import get_password
@@ -39,4 +39,20 @@ class Command(BaseCommand):
 
     def run(self, history_id):
         history = GeneticHistory.objects.get(id=history_id)
+        print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+        print 'STATUS'
+        print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+        print '取引回数: {}'.format(len(history.ai.get('MARKET').get('positions')))
+
+        print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+        print 'AI LOGIC'
+        print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
         print history.ai.get('AI_LOGIC')
+
+        print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+        print 'MARKET'
+        print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+        print history.ai.get('MARKET')
+
+        # for x in CandleEurUsdH1Rate.get_test_data2():
+        #     print x.start_at, x.open_bid, x.close_bid, x.high_bid, x.low_bid

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.db import models
+import django
+from django.db import models, OperationalError
+from django.db.transaction import commit_on_success
 from utils import ObjectField
 
 
@@ -17,16 +19,23 @@ class GeneticHistory(models.Model):
     profit_max = models.IntegerField(default=0, help_text='最大利益')
     profit_min = models.IntegerField(default=0, help_text='最大損失')
     ai = ObjectField(null=True, default=None, help_text='aiのデータ')
-    ai_id = models.PositiveIntegerField(help_text='AIのID')
+    ai_id = models.PositiveIntegerField(null=True, default=None, help_text='AIのID')
 
     class Meta(object):
         app_label = 'genetic'
 
     @classmethod
     def record_history(cls, ai):
-        cls.objects.create(name=ai.name,
-                           generation=ai.generation,
-                           profit=ai.market.profit(),
-                           profit_max=ai.market.profit_max,
-                           profit_min=ai.market.profit_min,
-                           ai=ai.to_dict())
+        success = False
+        while not success:
+            try:
+                cls.objects.create(name=ai.name,
+                                   generation=ai.generation,
+                                   profit=ai.profit,
+                                   profit_max=ai.profit_max,
+                                   profit_min=ai.profit_min,
+                                   ai=ai.to_dict())
+                success = True
+            except OperationalError:
+                print OperationalError
+                django.db.close_old_connections()

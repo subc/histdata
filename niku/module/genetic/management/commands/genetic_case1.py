@@ -3,8 +3,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import random
 import datetime
+import django
 from enum import Enum
 import numpy
+import time
 from module.genetic.models.case1 import LogicPatternCase1, AiBaseCase1
 from module.genetic.models.history import GeneticHistory
 from module.genetic.models.parameter import OrderType
@@ -12,7 +14,14 @@ from module.rate.models import CandleEurUsdH1Rate, CandleEurUsdDRate
 from utils.command import CustomBaseCommand
 import copy
 import multiprocessing as mp
-from django.db import connection
+from django.db import connection, connections
+from utils.timeit import timeit
+from django.core.cache import cache
+
+
+def f(p):
+    print p
+    return p
 
 
 class Command(CustomBaseCommand):
@@ -27,6 +36,7 @@ class Command(CustomBaseCommand):
 
     def run(self):
         # h1_candles = CandleEurUsdH1Rate.get_all()
+        candles = CandleEurUsdH1Rate.get_test_data2()[:100]
 
         # 初期AI集団生成
         generation = 0
@@ -34,18 +44,18 @@ class Command(CustomBaseCommand):
         selection = 4  # 選択するサイズ
         ai_mother = AI(AiBaseCase1, self.AI_NAME, generation)
         ai_group = ai_mother.initial_create(3)
-        proc = 8    # 8並列とする
+        proc = 8  # 8並列とする
 
         # 遺伝的アルゴリズムで進化させる
-        while True:
+        while generation < 100:
             # 評価
             generation += 1
             [ai.normalization() for ai in ai_group]
             pool = mp.Pool(proc)
-            callback = pool.map(benchmark, ai_group)
+            ai_group = pool.map(benchmark, ai_group)
 
             # 選択
-            ai_group = self.selection(callback, selection)
+            ai_group = self.selection(ai_group, selection)
 
             # 交叉
             ai_group = self.cross_over(ai_group, size)
@@ -54,9 +64,10 @@ class Command(CustomBaseCommand):
             for ai in ai_group:
                 ai.mutation()
 
-            # マルチプロセスを破棄
-            pool.terminate()
             print '第{}世代 完了!'.format(ai_group[0].generation)
+
+            # pool内のワーカープロセスを停止する
+            pool.close()
 
     def selection(self, ai_group, selection):
         """
@@ -173,13 +184,17 @@ class Command(CustomBaseCommand):
         raise ValueError
 
 
+@timeit
 def benchmark(ai):
     print "start benchmark"
+
     prev_rate = None
     market = Market()
     candles = CandleEurUsdH1Rate.get_test_data2()
 
     for rate in candles:
+        # おまじない
+        re_connection()
 
         # 購入判断
         market = ai.order(market, prev_rate, rate)
@@ -191,7 +206,7 @@ def benchmark(ai):
 
     # 確定処理
     ai.update_market(market, rate)
-    ai.save()
+    ai.save(rate)
     print('ただいまの利益:{}円 ポジション損益:{}円 ポジション数:{} 総取引回数:{}'.format(market.profit_summary(rate),
                                                                   market.current_profit(rate),
                                                                   len(market.open_positions),
@@ -201,6 +216,23 @@ def benchmark(ai):
     # DBコネクションを閉じる
     connection.close()
     return ai
+
+
+def re_connection():
+    """
+    wait_timeout対策
+    バックグラウンドでループして動かすと、playerのshardはcommit_on_success外でコネクションが生きている可能性があるので
+    カーソルを取り直すおまじないです
+    """
+    # db_name = 'default'
+    # timeout = 36000
+    # con = connections[db_name].connection
+    # if con:
+    #     cur = con.cursor()
+    # else:
+    #     cur = connections[db_name].cursor()
+    # cur.execute('set session wait_timeout = {}'.format(timeout))
+    pass
 
 
 class Market(object):
@@ -276,7 +308,7 @@ class Market(object):
         r = 0
         for position in self.positions:
             if not position.is_open:
-                r += position.get_profit()
+                r += position.profit
         return r
 
     def profit_summary(self, rate):
@@ -306,7 +338,9 @@ class Market(object):
 class AI(object):
     LIMIT_POSITION = 10
     LIMIT_TICK = 60
-    LIMIT_BASE_TICK = 15
+    LIMIT_LOWER_TICK = 5
+    LIMIT_BASE_HIGHER_TICK = 100
+    LIMIT_BASE_LOWER_TICK = 15
     market = None
     generation = None
     ai_dict = {}
@@ -323,13 +357,15 @@ class AI(object):
         AIのdictからAIを生成して返却
         :param : AI
         """
-
         return None
 
-    def save(self):
+    def save(self, rate):
         """
         AIを記録する
         """
+        self._profit = self.market.profit_summary(rate)
+        self._profit_max = self.market.profit_max
+        self._profit_min = self.market.profit_min
         GeneticHistory.record_history(self)
 
     def order(self, market, prev_rate, rate):
@@ -443,18 +479,38 @@ class AI(object):
         ai = copy.deepcopy(self.ai_dict)
         for key in ai:
             if key == 'base_tick':
-                if ai[key] <= self.LIMIT_BASE_TICK:
-                    ai[key] = self.LIMIT_BASE_TICK
+                if ai[key] <= self.LIMIT_BASE_LOWER_TICK:
+                    ai[key] = self.LIMIT_BASE_LOWER_TICK
+                if ai[key] >= self.LIMIT_BASE_HIGHER_TICK:
+                    ai[key] = self.LIMIT_BASE_HIGHER_TICK
                 continue
-            if ai[key][1] >= self.LIMIT_TICK:
-                ai[key][1] = self.LIMIT_TICK
-            if ai[key][2] >= self.LIMIT_TICK:
-                ai[key][2] = self.LIMIT_TICK
+            for index in [1, 2]:
+                if ai[key][index] >= self.LIMIT_TICK:
+                    ai[key][index] = self.LIMIT_TICK
+                if ai[key][index] <= self.LIMIT_LOWER_TICK:
+                    ai[key][index] = self.LIMIT_LOWER_TICK
         self.ai_dict = ai
+
+        # print "~~~~~~~~~~~~~~~~~~~~~~~~"
+        # print ai
+        # print "~~~~~~~~~~~~~~~~~~~~~~~~"
+        # raise
 
     @property
     def p(self):
         return self.ai_dict.get('base_tick')
+
+    @property
+    def profit(self):
+        return self._profit
+
+    @property
+    def profit_max(self):
+        return self._profit_max
+
+    @property
+    def profit_min(self):
+        return self._profit_min
 
     @property
     def score(self):
@@ -472,6 +528,7 @@ class Position(object):
     limit_rate = None
     stop_limit_rate = None
     is_buy = None
+    profit = None
     cost = 100
 
     def __init__(self, start_at, open_rate, is_buy, limit_rate=None, stop_limit_rate=None):
@@ -539,6 +596,7 @@ class Position(object):
 
         self.end_at = end_at
         self.close_rate = rate_bid
+        self.profit = self.get_profit()
         # print 'CLOSE![{}] :open:{} close:{} 利益:¥{}'.format(end_at, self.open_rate, self.close_rate, self.get_profit())
 
 
