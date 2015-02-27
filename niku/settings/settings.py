@@ -65,7 +65,7 @@ DB_USER = 'root'
 DB_PASS = ''
 DB_HOST = '127.0.0.1'
 DB_PORT = ''
-CONN_MAX_AGE = '200000'
+CONN_MAX_AGE = 36000
 
 DATABASES = {
     'default': {
@@ -75,8 +75,12 @@ DATABASES = {
         'PASSWORD': DB_PASS,
         'HOST': DB_HOST,
         'PORT': DB_PORT,
-#        'CONN_MAX_AGE': CONN_MAX_AGE,
+        'CONN_MAX_AGE': CONN_MAX_AGE,
     },
+}
+
+DATABASE_OPTIONS = {
+    "connect_timeout": CONN_MAX_AGE,
 }
 
 # Internationalization
@@ -124,3 +128,5 @@ TEMPLATE_DIRS = (
 STATICFILES_DIRS = (
     './static/',
 )
+
+

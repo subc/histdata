@@ -17,6 +17,7 @@ class GeneticHistory(models.Model):
     profit_max = models.IntegerField(default=0, help_text='最大利益')
     profit_min = models.IntegerField(default=0, help_text='最大損失')
     ai = ObjectField(null=True, default=None, help_text='aiのデータ')
+    ai_id = models.PositiveIntegerField(help_text='AIのID')
 
     class Meta(object):
         app_label = 'genetic'

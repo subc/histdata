@@ -317,6 +317,15 @@ class AI(object):
         self.generation = generation
         self.normalization()
 
+    @classmethod
+    def get_ai(cls, ai_dict):
+        """
+        AIのdictからAIを生成して返却
+        :param : AI
+        """
+
+        return None
+
     def save(self):
         """
         AIを記録する
