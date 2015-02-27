@@ -36,7 +36,7 @@ class Command(CustomBaseCommand):
 
     def run(self):
         # h1_candles = CandleEurUsdH1Rate.get_all()
-        candles = CandleEurUsdH1Rate.get_test_data2()[:100]
+        # candles = CandleEurUsdH1Rate.get_test_data2()[:100]
 
         # 初期AI集団生成
         generation = 0
@@ -44,15 +44,23 @@ class Command(CustomBaseCommand):
         selection = 4  # 選択するサイズ
         ai_mother = AI(AiBaseCase1, self.AI_NAME, generation)
         ai_group = ai_mother.initial_create(3)
-        proc = 8  # 8並列とする
+        proc = 2  # 8並列とする
+
+        # 計算元データを計算
+        candles = CandleEurUsdH1Rate.get_test_data2()[:5000]
+        cache.set('candles', candles, timeout=7200)
+
+        # re_connection()
 
         # 遺伝的アルゴリズムで進化させる
-        while generation < 100:
+        while generation < 5:
             # 評価
             generation += 1
             [ai.normalization() for ai in ai_group]
             pool = mp.Pool(proc)
             ai_group = pool.map(benchmark, ai_group)
+            # django.db.close_old_connections()
+            GeneticHistory.bulk_create_by_ai(ai_group)
 
             # 選択
             ai_group = self.selection(ai_group, selection)
@@ -65,6 +73,8 @@ class Command(CustomBaseCommand):
                 ai.mutation()
 
             print '第{}世代 完了!'.format(ai_group[0].generation)
+
+            time.sleep(3)
 
             # pool内のワーカープロセスを停止する
             pool.close()
@@ -187,15 +197,11 @@ class Command(CustomBaseCommand):
 @timeit
 def benchmark(ai):
     print "start benchmark"
-
+    candles = cache.get('candles')
     prev_rate = None
     market = Market()
-    candles = CandleEurUsdH1Rate.get_test_data2()
 
     for rate in candles:
-        # おまじない
-        re_connection()
-
         # 購入判断
         market = ai.order(market, prev_rate, rate)
 
@@ -206,15 +212,11 @@ def benchmark(ai):
 
     # 確定処理
     ai.update_market(market, rate)
-    ai.save(rate)
     print('ただいまの利益:{}円 ポジション損益:{}円 ポジション数:{} 総取引回数:{}'.format(market.profit_summary(rate),
                                                                   market.current_profit(rate),
                                                                   len(market.open_positions),
                                                                   len(market.close_positions)))
     print('最大利益:{}円 最小利益:{}円'.format(market.profit_max, market.profit_min))
-
-    # DBコネクションを閉じる
-    connection.close()
     return ai
 
 
@@ -224,15 +226,15 @@ def re_connection():
     バックグラウンドでループして動かすと、playerのshardはcommit_on_success外でコネクションが生きている可能性があるので
     カーソルを取り直すおまじないです
     """
-    # db_name = 'default'
-    # timeout = 36000
-    # con = connections[db_name].connection
-    # if con:
-    #     cur = con.cursor()
-    # else:
-    #     cur = connections[db_name].cursor()
-    # cur.execute('set session wait_timeout = {}'.format(timeout))
-    pass
+    db_name = 'default'
+    timeout = 36000
+    con = connections[db_name].connection
+    if con:
+        cur = con.cursor()
+    else:
+        cur = connections[db_name].cursor()
+    cur.execute('set session wait_timeout = {}'.format(timeout))
+    # pass
 
 
 class Market(object):
@@ -257,7 +259,7 @@ class Market(object):
         """
         ポジションを精算する
         """
-        self.record_profit(rate)
+        # self.record_profit(rate)
         for position in self.open_positions:
             if position.is_buy:
                 # 損切り
@@ -359,13 +361,10 @@ class AI(object):
         """
         return None
 
-    def save(self, rate):
+    def save(self):
         """
         AIを記録する
         """
-        self._profit = self.market.profit_summary(rate)
-        self._profit_max = self.market.profit_max
-        self._profit_min = self.market.profit_min
         GeneticHistory.record_history(self)
 
     def order(self, market, prev_rate, rate):
@@ -409,6 +408,9 @@ class AI(object):
 
     def update_market(self, market, rate):
         market.profit_result = market.profit_summary(rate)
+        self._profit = market.profit_summary(rate)
+        self._profit_max = market.profit_max
+        self._profit_min = market.profit_min
         self.market = market
 
     def initial_create(self, num):

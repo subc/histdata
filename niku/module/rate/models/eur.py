@@ -46,7 +46,6 @@ class CandleEurUsdM5Rate(CandleEurUsdBase):
 
 class CandleEurUsdH1Rate(CandleEurUsdBase):
     _granularity = Granularity.H1
-    CACHE_TEST_DATA2 = None
 
     @classmethod
     def get_test_data(cls):
@@ -54,11 +53,7 @@ class CandleEurUsdH1Rate(CandleEurUsdBase):
 
     @classmethod
     def get_test_data2(cls):
-        if cls.CACHE_TEST_DATA2:
-            return cls.CACHE_TEST_DATA2
-
         r = cls.sort(list(cls.objects.filter(start_at__gte=datetime.datetime(2010, 1, 1, tzinfo=pytz.utc))))
-        cls.CACHE_TEST_DATA2 = r
         return r
 
 

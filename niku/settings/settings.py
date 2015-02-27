@@ -65,8 +65,8 @@ NAME_PREFIX = 'fx'
 DB_USER = 'root'
 DB_PASS = ''
 DB_HOST = '127.0.0.1'
-DB_PORT = ''
-CONN_MAX_AGE = 36000
+DB_PORT = 3306
+CONN_MAX_AGE = 10
 
 DATABASES = {
     'default': {
