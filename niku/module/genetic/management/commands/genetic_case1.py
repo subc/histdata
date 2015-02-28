@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import random
 import datetime
 import django
+from django.utils.functional import cached_property
 from enum import Enum
 import numpy
 import time
@@ -21,13 +22,14 @@ from utils.timeit import timeit
 from django.core.cache import cache
 from line_profiler import LineProfiler
 from module.ai.models import AI1EurUsd as AI
+from module.ai.models import AI2EurUsd as AI
 
 
 @timeit
 def benchmark(ai):
     print "start benchmark"
     candles = cache.get('candles')
-    market = Market()
+    market = Market(ai.generation)
 
     loop(ai, candles, market)
 
@@ -42,35 +44,29 @@ def benchmark(ai):
     print('最大利益:{}円 最小利益:{}円'.format(market.profit_max, market.profit_min))
     return ai
 
-def loop(ai, candles, market):
-    prev_rate = None
-    # prf = LineProfiler() #インスタンスに複数の関数を与えても良い。
-    for rate in candles:
 
-        # prf.add_function(ai.order)
-        # market = prf.runcall(ai.order, market, prev_rate, rate)
-        #
-        # prf.add_function(market.payment)
-        # prf.runcall(market.payment, rate)
+def loop(ai, candles, market):
+    rates = []
+    for rate in candles:
+        rates.append(rate)
+
         # 購入判断
-        market = ai.order(market, prev_rate, rate)
+        market = ai.order(market, rates)
 
         # 決済
         market.payment(rate)
 
-        prev_rate = rate
-    # prf.print_stats()
 
 
 class Command(CustomBaseCommand):
     AI_NAME = None
 
     def handle(self, *args, **options):
-        self.init()
         self.run()
 
-    def init(self):
-        self.AI_NAME = 'AI_case1_{}'.format(datetime.datetime.now())
+    @cached_property
+    def suffix(self):
+        return ':{}'.format(datetime.datetime.now())
 
     def run(self):
         # h1_candles = CandleEurUsdH1Rate.get_all()
@@ -79,9 +75,9 @@ class Command(CustomBaseCommand):
         # 初期AI集団生成
         generation = 0
         size = 20  # 集団サイズ
-        ai_mother = AI(AiBaseCase1, self.AI_NAME, generation)
-        ai_group = ai_mother.initial_create(4)
-        proc = 4  # 並列処理数 コア数以上にしても無駄
+        ai_mother = AI(AiBaseCase1, self.suffix, generation)
+        ai_group = ai_mother.initial_create(10)
+        proc = 6  # 並列処理数 コア数以上にしても無駄
 
         # 計算元データを計算
         candles = CandleEurUsdH1Rate.get_test_data2()
@@ -94,8 +90,14 @@ class Command(CustomBaseCommand):
             # 評価
             generation += 1
             [ai.normalization() for ai in ai_group]
+
+            # 試験用コード
+            if generation == 1:
+                benchmark(ai_group[0])
+
             pool = mp.Pool(proc)
             ai_group = pool.map(benchmark, ai_group)
+            max_profit = max([ai.profit for ai in ai_group])
             history_write(ai_group)
 
             # 選択と交叉
@@ -106,7 +108,7 @@ class Command(CustomBaseCommand):
             for ai in ai_group:
                 ai.normalization()
 
-            print '第{}世代 完了!'.format(ai_group[0].generation)
+            print '第{}世代 完了![score:{}]'.format(ai_group[0].generation, max_profit)
 
             # pool内のワーカープロセスを停止する
             pool.close()
@@ -166,13 +168,13 @@ class Command(CustomBaseCommand):
         for key in ai_a.ai_dict:
             _value_a = ai_a.ai_dict.get(key)
             _value_b = ai_b.ai_dict.get(key)
-            _a, _b = self._cross_value(_value_a, _value_b, ai_a.LIMIT_TICK, ai_a.LIMIT_LOWER_TICK)
+            _a, _b = self._cross_value(_value_a, _value_b, ai_a.MUTATION_MAX, ai_a.MUTATION_MIN)
             child_a_dict[key] = _a
             child_b_dict[key] = _b
 
         # 子を生成
-        child_a = AI(child_a_dict, self.AI_NAME, generation)
-        child_b = AI(child_b_dict, self.AI_NAME, generation)
+        child_a = AI(child_a_dict, self.suffix, generation)
+        child_b = AI(child_b_dict, self.suffix, generation)
         return [child_a, child_b]
 
     def _cross_value(self, value_a, value_b, _max, _min):
@@ -223,9 +225,12 @@ class Market(object):
     profit_max = 0
     profit_min = 0
     profit_result = 0  # 最終利益
+    close_profit = 0  # 確定した利益
+    generation = 0
 
-    def __init__(self):
+    def __init__(self, generation):
         self.positions = []
+        self.generation = generation
 
     def order(self, rate, order):
         """
@@ -235,14 +240,16 @@ class Market(object):
         """
         position = Position.open(rate.start_at, rate.open_bid, order.is_buy, limit_rate=order.limit_bid,
                                  stop_limit_rate=order.stop_limit_bid)
-        # print 'OPEN![{}]:{}:{}:利確:{} 損切り:{}'.format(rate.start_at, is_buy, rate.open_bid, order_rate, stop_order_rate)
+        # print 'OPEN![{}]:{}:{}:利確:{} 損切り:{}'.format(rate.start_at, order.is_buy, rate.open_bid, order.limit_bid, order.stop_limit_bid)
         self.open_positions.append(position)
 
     def payment(self, rate):
         """
         ポジションを精算する
         """
-        # self.record_profit(rate)
+        # ドローダウン調査(重い)
+        if self.generation % 10 == 9:
+            self.record_profit(rate)
         for position in self.open_positions:
             if position.is_buy:
                 # 損切り
@@ -264,7 +271,8 @@ class Market(object):
                     continue
 
     def _close(self, start_at, rate, position):
-        position.close(start_at, rate)
+        profit = position.close(start_at, rate)
+        self.close_profit += profit
         self.positions.append(position)
         self.open_positions.remove(position)
 
@@ -285,7 +293,7 @@ class Market(object):
         :rtype : int
         """
         r = 0
-        for position in self.positions:
+        for position in self.open_positions:
             if position.is_open:
                 r += position.get_current_profit(rate)
         return r
@@ -295,11 +303,7 @@ class Market(object):
         確定利益
         :rtype : int
         """
-        r = 0
-        for position in self.positions:
-            if not position.is_open:
-                r += position.profit
-        return r
+        return self.close_profit
 
     def profit_summary(self, rate):
         """
@@ -329,7 +333,7 @@ class Position(object):
     stop_limit_rate = None
     is_buy = None
     profit = None
-    cost = 100
+    cost = 50
 
     def __init__(self, start_at, open_rate, is_buy, limit_rate=None, stop_limit_rate=None):
         self.start_at = start_at
@@ -398,7 +402,7 @@ class Position(object):
         self.close_rate = rate_bid
         self.profit = self.get_profit()
         # print 'CLOSE![{}] :open:{} close:{} 利益:¥{}'.format(end_at, self.open_rate, self.close_rate, self.get_profit())
-
+        return self.profit
 
 
 def _tick_to_yen(tick):

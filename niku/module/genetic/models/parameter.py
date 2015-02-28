@@ -30,3 +30,10 @@ class OrderType(Enum):
             if value != _a:
                 return value
         raise ValueError
+
+    def order_reverse(self):
+        """
+        注文方向を反転させる
+        :rtype : OrderType
+        """
+        return OrderType(-1 * self.value)

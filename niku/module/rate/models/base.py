@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.db import models
+from django.utils.functional import cached_property
 from .candle_type import CandleTypeMixin
 
 
@@ -100,3 +101,33 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
         if self._granularity is None:
             raise NotImplementedError
         return self._granularity
+
+
+class MultiCandles(CandleTypeMixin):
+    """
+    複数のローソク足を透過的に扱うクラス
+    """
+    rates = None
+
+    def __init__(self, rates):
+        self.rates = rates
+
+    @property
+    def open_bid(self):
+        return self.rates[0].open_bid
+
+    @cached_property
+    def high_bid(self):
+        return max([r.high_bid for r in self.rates])
+
+    @cached_property
+    def low_bid(self):
+        return min([r.low_bid for r in self.rates])
+
+    @property
+    def close_bid(self):
+        return self.rates[-1].close_bid
+
+    @property
+    def tick(self):
+        return self.rates[-1].tick
