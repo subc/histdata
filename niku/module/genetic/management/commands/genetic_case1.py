@@ -20,6 +20,8 @@ from django.db import connection, connections
 from utils.timeit import timeit
 from django.core.cache import cache
 from line_profiler import LineProfiler
+from module.ai.models import AI1EurUsd as AI
+
 
 @timeit
 def benchmark(ai):
@@ -50,7 +52,6 @@ def loop(ai, candles, market):
         #
         # prf.add_function(market.payment)
         # prf.runcall(market.payment, rate)
-
         # 購入判断
         market = ai.order(market, prev_rate, rate)
 
@@ -59,6 +60,7 @@ def loop(ai, candles, market):
 
         prev_rate = rate
     # prf.print_stats()
+
 
 class Command(CustomBaseCommand):
     AI_NAME = None
@@ -80,7 +82,7 @@ class Command(CustomBaseCommand):
         selection = 4  # 選択するサイズ
         ai_mother = AI(AiBaseCase1, self.AI_NAME, generation)
         ai_group = ai_mother.initial_create(20)
-        proc = 8  # 8並列とする
+        proc = 1  # 8並列とする
 
         # 計算元データを計算
         candles = CandleEurUsdH1Rate.get_test_data2()
@@ -255,12 +257,14 @@ class Market(object):
     def __init__(self):
         self.positions = []
 
-    def order(self, rate, is_buy, order_rate, stop_order_rate):
+    def order(self, rate, order):
         """
         発注
+        :param rate: Rate
+        :param order: MarketOrder
         """
-        position = Position.open(rate.start_at, rate.open_bid, is_buy, limit_rate=order_rate,
-                                 stop_limit_rate=stop_order_rate)
+        position = Position.open(rate.start_at, rate.open_bid, order.is_buy, limit_rate=order.limit_bid,
+                                 stop_limit_rate=order.stop_limit_bid)
         # print 'OPEN![{}]:{}:{}:利確:{} 損切り:{}'.format(rate.start_at, is_buy, rate.open_bid, order_rate, stop_order_rate)
         self.open_positions.append(position)
 
@@ -341,212 +345,6 @@ class Market(object):
             'profit_min': self.profit_min,
             'profit_result': self.profit_result,
         }
-
-    # @property
-    # def open_positions(self):
-    #
-    #     return [x for x in self.positions if x.is_open]
-
-    # @property
-    # def close_positions(self):
-    #     return [x for x in self.positions if not x.is_open]
-
-
-class AI(object):
-    LIMIT_POSITION = 10
-    LIMIT_TICK = 60
-    LIMIT_LOWER_TICK = 5
-    LIMIT_BASE_HIGHER_TICK = 100
-    LIMIT_BASE_LOWER_TICK = 15
-    market = None
-    generation = None
-    ai_dict = {}
-
-    def __init__(self, ai_dict, name, generation):
-        self.ai_dict = ai_dict
-        self.name = name
-        self.generation = generation
-        self.normalization()
-
-    @classmethod
-    def get_ai(cls, history):
-        """
-        AIのdictからAIを生成して返却
-        :param : AI
-        """
-        ai = {}
-        for key in history.ai:
-            if key == 'base_tick':
-                ai[key] = history.ai[key]
-                continue
-            if type(history.ai[key]) == list:
-                l = history.ai[key]
-                ai[key] = [OrderType(l[0]), l[1], l[2]]
-                continue
-            raise ValueError
-        return cls(ai, history.name, history.generation)
-
-    def save(self):
-        """
-        AIを記録する
-        """
-        GeneticHistory.record_history(self)
-
-    def order(self, market, prev_rate, rate):
-        """
-        条件に沿って注文する
-        :param market: Market
-        :param prev_rate: CandleEurUsdH1Rate
-        :param rate: CandleEurUsdH1Rate
-        """
-        if prev_rate is None:
-            return market
-
-        # 既にポジション持ち過ぎ
-        if len(market.open_positions) >= self.LIMIT_POSITION:
-            return market
-
-        # 前回のレートから型を探す
-        candle_type = get_type(prev_rate, self.p)
-        candle_type_id = LogicPatternCase1.get(candle_type)
-        order_ai_list = self.ai_dict.get(candle_type_id)
-        assert (len(order_ai_list) == 3), order_ai_list
-
-        # 発注
-        _o = order_ai_list
-        trade_type = _o[0]
-        if trade_type == OrderType.WAIT:
-            return market
-        is_buy = True if trade_type == OrderType.BUY else False
-        if is_buy:
-            order_rate = rate.open_bid + rate.tick * _o[1]
-            stop_order_rate = rate.open_bid - rate.tick * _o[2]
-        else:
-            order_rate = rate.open_bid - rate.tick * _o[1]
-            stop_order_rate = rate.open_bid + rate.tick * _o[2]
-
-        market.order(rate,
-                     is_buy,
-                     order_rate,
-                     stop_order_rate)
-        return market
-
-    def update_market(self, market, rate):
-        market.profit_result = market.profit_summary(rate)
-        self._profit = market.profit_summary(rate)
-        self._profit_max = market.profit_max
-        self._profit_min = market.profit_min
-        self.market = market
-
-    def initial_create(self, num):
-        """
-        遺伝的アルゴリズム
-        初期集団を生成
-        """
-        return [copy.deepcopy(self).mutation() for x in xrange(num)]
-
-    def mutation(self):
-        """
-        遺伝的アルゴリズム
-        突然変異させる
-        """
-        # tick 20%
-        if random.randint(1, 100) <= 20:
-            self.ai_dict['base_tick'] += random.randint(-2, 2)
-        # 各パラメータは3%の確率で変異
-        for key in self.ai_dict:
-            if key == 'base_tick':
-                continue
-            value = self.ai_dict[key]
-            if type(value) != list:
-                continue
-            for index in range(len(value)):
-                if random.randint(1, 100) <= 3:
-                    if type(value[index]) == OrderType:
-                        self.ai_dict[key][index] = OrderType.mutation(value[index])
-                    else:
-                        self.ai_dict[key][index] += random.randint(-10, 10)
-        return self
-
-    def incr_generation(self):
-        """
-        世代を1世代増やす
-        """
-        self.generation += 1
-        return self
-
-    def to_dict(self):
-        return {
-            'NAME': self.name,
-            'GENERATION': self.generation,
-            'PROFIT': self.profit,
-            'PROFIT_MAX': self.profit_max,
-            'PROFIT_MIN': self.profit_min,
-            'AI_LOGIC': self.ai_to_dict(),
-            # 'MARKET': self.market.to_dict(),
-        }
-
-    def ai_to_dict(self):
-        # パラメータを平坦化する
-        self.normalization()
-        result_dict = {}
-        for key in self.ai_dict:
-            value = self.ai_dict[key]
-            if type(value) == list:
-                result_dict[key] = [self.value_to_dict(_v) for _v in value]
-            else:
-                result_dict[key] = self.value_to_dict(value)
-        return result_dict
-
-    def value_to_dict(self, value):
-        if type(value) == OrderType:
-            return value.value
-        return value
-
-    def normalization(self):
-        """
-        過剰最適化するAIの進化に制限を儲ける
-        利確, 損切り 800pip先とかを禁止
-        """
-        ai = copy.deepcopy(self.ai_dict)
-        for key in ai:
-            if key == 'base_tick':
-                if ai[key] <= self.LIMIT_BASE_LOWER_TICK:
-                    ai[key] = self.LIMIT_BASE_LOWER_TICK
-                if ai[key] >= self.LIMIT_BASE_HIGHER_TICK:
-                    ai[key] = self.LIMIT_BASE_HIGHER_TICK
-                continue
-            for index in [1, 2]:
-                if ai[key][index] >= self.LIMIT_TICK:
-                    ai[key][index] = self.LIMIT_TICK
-                if ai[key][index] <= self.LIMIT_LOWER_TICK:
-                    ai[key][index] = self.LIMIT_LOWER_TICK
-        self.ai_dict = ai
-
-        # print "~~~~~~~~~~~~~~~~~~~~~~~~"
-        # print ai
-        # print "~~~~~~~~~~~~~~~~~~~~~~~~"
-        # raise
-
-    @property
-    def p(self):
-        return self.ai_dict.get('base_tick')
-
-    @property
-    def profit(self):
-        return self._profit
-
-    @property
-    def profit_max(self):
-        return self._profit_max
-
-    @property
-    def profit_min(self):
-        return self._profit_min
-
-    @property
-    def score(self):
-        return self.market.profit_result
 
 
 class Position(object):
@@ -632,6 +430,7 @@ class Position(object):
         # print 'CLOSE![{}] :open:{} close:{} 利益:¥{}'.format(end_at, self.open_rate, self.close_rate, self.get_profit())
 
 
+
 def _tick_to_yen(tick):
     """
     1tickを円に変換する
@@ -639,36 +438,6 @@ def _tick_to_yen(tick):
     :rtype : int
     """
     return int(tick * 10000 * 120)
-
-
-def get_type(rate, p):
-    """
-    :param rate: Rate
-    :param p: int
-    """
-    tick = rate.tick
-    p_high = get_type_by_diff((rate.high_bid - rate.open_bid) / tick, p)
-    p_low = get_type_by_diff((rate.low_bid - rate.open_bid) / tick, p)
-    p_close = get_type_by_diff(int((rate.close_bid - rate.open_bid) / tick), p)
-    return p_high * 100 + p_low * 10 + p_close
-
-
-def get_type_by_diff(_d, p):
-    """
-    :param _d: int
-    :param : int
-    """
-    if _d >= p * 2:
-        return 5
-    if _d <= p * -2:
-        return 1
-    if p * 2 > _d >= p:
-        return 4
-    if p > _d > p * -1:
-        return 3
-    if p * -1 >= _d > p * -2:
-        return 2
-    raise ValueError
 
 
 def history_write(ai_group):

@@ -5,7 +5,7 @@ import copy
 import random
 
 from module.genetic.models.parameter import OrderType
-from .market_order import MarketOrder
+from .market_order import MarketOrder, OrderAI
 from module.currency import EurUsdMixin
 
 
@@ -36,7 +36,7 @@ class AIInterFace(object):
         from module.genetic.models import GeneticHistory
         GeneticHistory.record_history(self)
 
-    def order(self, market, rate, prev_rate, *args, **kwargs):
+    def order(self, market, prev_rate, rate):
         """
         条件に沿って注文する
         :param market: Market
@@ -49,12 +49,12 @@ class AIInterFace(object):
         # 既にポジション持ち過ぎ
         if len(market.open_positions) >= self.LIMIT_POSITION:
             return market
-
-        order_ai = self.get_order_ai(market, *args, **kwargs)
-        market.order(rate, MarketOrder(rate, order_ai))
+        order_ai = self.get_order_ai(market, rate, prev_rate)
+        if order_ai.order_type != OrderType.WAIT:
+            market.order(rate, MarketOrder(rate, order_ai))
         return market
 
-    def get_order_ai(self, market, *args, **kwargs):
+    def get_order_ai(self, market, rate, prev_rate):
         """
         :param market: Market
         :rtype : OrderAI
@@ -200,7 +200,7 @@ class AI1EurUsd(EurUsdMixin, AIInterFace):
                         self.ai_dict[key][index] += random.randint(-10, 10)
         return self
 
-    def get_order_ai(self, market, rate, prev_rate, **kwargs):
+    def get_order_ai(self, market, rate, prev_rate):
         """
         条件に沿って注文する
         :param market: Market
@@ -209,7 +209,8 @@ class AI1EurUsd(EurUsdMixin, AIInterFace):
         """
         # 前回のレートから型を探す
         candle_type_id = prev_rate.get_candle_type(self.base_tick)
-        return self.ai_dict.get(candle_type_id)
+        order_type, limit, stop_limit = self.ai_dict.get(candle_type_id)
+        return OrderAI(order_type, limit, stop_limit)
 
     @classmethod
     def get_ai(cls, history):

@@ -18,6 +18,7 @@ class MarketOrder(object):
         :param rate: Rate
         :param order_ai: OrderAI
         """
+        self.order_type = order_ai.order_type
         if order_ai.order_type == OrderType.WAIT:
             return
         self.open_bid = rate.open_bid
@@ -29,6 +30,14 @@ class MarketOrder(object):
         else:
             self.limit_bid = rate.open_bid - rate.tick * order_ai.limit
             self.stop_limit_bid = rate.open_bid + rate.tick * order_ai.stop_limit
+
+    @property
+    def is_wait(self):
+        return self.order_type == OrderType.WAIT
+
+    @property
+    def is_buy(self):
+        return self.order_type == OrderType.BUY
 
 
 class OrderAI(object):
