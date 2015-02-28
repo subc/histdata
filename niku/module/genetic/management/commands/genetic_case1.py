@@ -369,12 +369,22 @@ class AI(object):
         self.normalization()
 
     @classmethod
-    def get_ai(cls, ai_dict):
+    def get_ai(cls, history):
         """
         AIのdictからAIを生成して返却
         :param : AI
         """
-        return None
+        ai = {}
+        for key in history.ai:
+            if key == 'base_tick':
+                ai[key] = history.ai[key]
+                continue
+            if type(history.ai[key]) == list:
+                l = history.ai[key]
+                ai[key] = [OrderType(l[0]), l[1], l[2]]
+                continue
+            raise ValueError
+        return cls(ai, history.name, history.generation)
 
     def save(self):
         """
@@ -633,10 +643,10 @@ def _tick_to_yen(tick):
 
 def get_type(rate, p):
     """
-    :param rate: CandleEurUsdH1Rate
+    :param rate: Rate
     :param p: int
     """
-    tick = 0.0001
+    tick = rate.tick
     p_high = get_type_by_diff((rate.high_bid - rate.open_bid) / tick, p)
     p_low = get_type_by_diff((rate.low_bid - rate.open_bid) / tick, p)
     p_close = get_type_by_diff(int((rate.close_bid - rate.open_bid) / tick), p)
@@ -646,6 +656,7 @@ def get_type(rate, p):
 def get_type_by_diff(_d, p):
     """
     :param _d: int
+    :param : int
     """
     if _d >= p * 2:
         return 5
