@@ -51,21 +51,7 @@ class GeneticHistory(models.Model):
     @classmethod
     def bulk_create_by_ai(cls, ai_group):
         objects = [cls.get_by_ai(ai) for ai in ai_group]
-        success = False
-        while not success:
-            try:
-                cls.objects.bulk_create(objects)
-                success = True
-            except OperationalError:
-                print OperationalError
-                print traceback.print_exc()
-                # django.db.close_old_connections()
-                time.sleep(random.randint(1, 10))
-                re_connection()
-                re_connection2()
-                re_connection3()
-                from django import db
-                # db.reconnect()
+        cls.objects.bulk_create(objects)
 
     @classmethod
     def get_by_ai(cls, ai):
@@ -74,7 +60,7 @@ class GeneticHistory(models.Model):
                    profit=ai.profit,
                    profit_max=ai.profit_max,
                    profit_min=ai.profit_min,
-                   ai=ai.to_dict())
+                   ai=ai.ai_logic)
 
 
 def re_connection():

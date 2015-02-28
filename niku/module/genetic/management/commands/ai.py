@@ -40,19 +40,21 @@ class Command(BaseCommand):
     def run(self, history_id):
         history = GeneticHistory.objects.get(id=history_id)
         print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-        print 'STATUS'
-        print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-        print '取引回数: {}'.format(len(history.ai.get('MARKET').get('positions')))
-
-        print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
         print 'AI LOGIC'
         print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+        print history.ai
         print history.ai.get('AI_LOGIC')
 
         print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
         print 'MARKET'
         print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
         print history.ai.get('MARKET')
+
+        print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+        print 'STATUS'
+        print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+        print '取引回数: {}'.format(len(history.ai.get('MARKET').get('positions')))
+
 
         # for x in CandleEurUsdH1Rate.get_test_data2():
         #     print x.start_at, x.open_bid, x.close_bid, x.high_bid, x.low_bid

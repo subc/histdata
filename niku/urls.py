@@ -12,4 +12,5 @@ urlpatterns = patterns('',
 
     url(r'^i/', include('apps.web.urls')),
     url(r'^parse/', include('apps.parse.urls')),
+    url(r'^genetic/', include('apps.genetic.urls')),
 )

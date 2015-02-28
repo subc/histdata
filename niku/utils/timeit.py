@@ -12,8 +12,10 @@ def timeit(fun=None):
             ts = time.time()
             result = f(*args, **kwargs)
             te = time.time()
-            print u'task:{} args:[{}, {}] took: {} sec\n' \
-                  .format(f.__name__, args, kwargs, te-ts)
+            # print u'task:{} args:[{}, {}] took: {} sec\n' \
+            #       .format(f.__name__, args, kwargs, te-ts)
+            print u'task:{} took: {} sec\n' \
+                  .format(f.__name__, te-ts)
             return result
 
         return _inner

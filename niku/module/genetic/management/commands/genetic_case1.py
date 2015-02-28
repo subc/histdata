@@ -7,6 +7,8 @@ import django
 from enum import Enum
 import numpy
 import time
+import ujson
+import requests
 from module.genetic.models.case1 import LogicPatternCase1, AiBaseCase1
 from module.genetic.models.history import GeneticHistory
 from module.genetic.models.parameter import OrderType
@@ -17,12 +19,46 @@ import multiprocessing as mp
 from django.db import connection, connections
 from utils.timeit import timeit
 from django.core.cache import cache
+from line_profiler import LineProfiler
 
+@timeit
+def benchmark(ai):
+    print "start benchmark"
+    candles = cache.get('candles')
+    market = Market()
 
-def f(p):
-    print p
-    return p
+    loop(ai, candles, market)
 
+    # 確定処理
+    rate = candles[-1]
+    ai.update_market(market, rate)
+    print('ただいまの利益:{}円 ポジション損益:{}円 ポジション数:{} 総取引回数:{}'.format(market.profit_summary(rate),
+                                                                  market.current_profit(rate),
+                                                                  len(market.open_positions),
+                                                                  len(market.positions)))
+    print('最大利益:{}円 最小利益:{}円'.format(market.profit_max, market.profit_min))
+    return ai
+
+@timeit
+def loop(ai, candles, market):
+    prev_rate = None
+    # prf = LineProfiler() #インスタンスに複数の関数を与えても良い。
+    for rate in candles:
+
+        # prf.add_function(ai.order)
+        # market = prf.runcall(ai.order, market, prev_rate, rate)
+        #
+        # prf.add_function(market.payment)
+        # prf.runcall(market.payment, rate)
+
+        # 購入判断
+        market = ai.order(market, prev_rate, rate)
+
+        # 決済
+        market.payment(rate)
+
+        prev_rate = rate
+    # prf.print_stats()
 
 class Command(CustomBaseCommand):
     AI_NAME = None
@@ -43,38 +79,37 @@ class Command(CustomBaseCommand):
         size = 20  # 初期集団サイズ
         selection = 4  # 選択するサイズ
         ai_mother = AI(AiBaseCase1, self.AI_NAME, generation)
-        ai_group = ai_mother.initial_create(3)
-        proc = 2  # 8並列とする
+        ai_group = ai_mother.initial_create(20)
+        proc = 8  # 8並列とする
 
         # 計算元データを計算
-        candles = CandleEurUsdH1Rate.get_test_data2()[:5000]
+        candles = CandleEurUsdH1Rate.get_test_data2()
         cache.set('candles', candles, timeout=7200)
 
         # re_connection()
 
         # 遺伝的アルゴリズムで進化させる
-        while generation < 5:
+        while generation < 100:
             # 評価
             generation += 1
             [ai.normalization() for ai in ai_group]
             pool = mp.Pool(proc)
             ai_group = pool.map(benchmark, ai_group)
             # django.db.close_old_connections()
-            GeneticHistory.bulk_create_by_ai(ai_group)
+            # GeneticHistory.bulk_create_by_ai(ai_group)
+            history_write(ai_group)
 
             # 選択
             ai_group = self.selection(ai_group, selection)
 
             # 交叉
-            ai_group = self.cross_over(ai_group, size)
+            next_ai_group = self.cross_over(ai_group, size)
 
             # 突然変異
-            for ai in ai_group:
+            for ai in next_ai_group:
                 ai.mutation()
 
             print '第{}世代 完了!'.format(ai_group[0].generation)
-
-            time.sleep(3)
 
             # pool内のワーカープロセスを停止する
             pool.close()
@@ -117,7 +152,6 @@ class Command(CustomBaseCommand):
         next_ai_group = []
         for ai_a, ai_b in ai_pair:
             next_ai_group += self._cross(ai_a, ai_b)
-        next_ai_group += [ai.incr_generation() for ai in ai_group]  # 優秀な親を残す
         random.shuffle(next_ai_group)
 
         # 数が足りるまで複製
@@ -194,32 +228,6 @@ class Command(CustomBaseCommand):
         raise ValueError
 
 
-@timeit
-def benchmark(ai):
-    print "start benchmark"
-    candles = cache.get('candles')
-    prev_rate = None
-    market = Market()
-
-    for rate in candles:
-        # 購入判断
-        market = ai.order(market, prev_rate, rate)
-
-        # 決済
-        market.payment(rate)
-
-        prev_rate = rate
-
-    # 確定処理
-    ai.update_market(market, rate)
-    print('ただいまの利益:{}円 ポジション損益:{}円 ポジション数:{} 総取引回数:{}'.format(market.profit_summary(rate),
-                                                                  market.current_profit(rate),
-                                                                  len(market.open_positions),
-                                                                  len(market.close_positions)))
-    print('最大利益:{}円 最小利益:{}円'.format(market.profit_max, market.profit_min))
-    return ai
-
-
 def re_connection():
     """
     wait_timeout対策
@@ -239,6 +247,7 @@ def re_connection():
 
 class Market(object):
     positions = []
+    open_positions = []
     profit_max = 0
     profit_min = 0
     profit_result = 0  # 最終利益
@@ -253,7 +262,7 @@ class Market(object):
         position = Position.open(rate.start_at, rate.open_bid, is_buy, limit_rate=order_rate,
                                  stop_limit_rate=stop_order_rate)
         # print 'OPEN![{}]:{}:{}:利確:{} 損切り:{}'.format(rate.start_at, is_buy, rate.open_bid, order_rate, stop_order_rate)
-        self.positions.append(position)
+        self.open_positions.append(position)
 
     def payment(self, rate):
         """
@@ -264,21 +273,26 @@ class Market(object):
             if position.is_buy:
                 # 損切り
                 if rate.low_bid <= position.stop_limit_rate:
-                    position.close(rate.start_at, position.stop_limit_rate)
+                    self._close(rate.start_at, position.stop_limit_rate, position)
                     continue
                 # 利益確定
                 if rate.high_bid >= position.limit_rate:
-                    position.close(rate.start_at, position.limit_rate)
+                    self._close(rate.start_at, position.limit_rate, position)
                     continue
             else:
                 # 損切り
                 if rate.high_bid >= position.stop_limit_rate:
-                    position.close(rate.start_at, position.stop_limit_rate)
+                    self._close(rate.start_at, position.stop_limit_rate, position)
                     continue
                 # 利益確定
                 if rate.low_bid <= position.limit_rate:
-                    position.close(rate.start_at, position.limit_rate)
+                    self._close(rate.start_at, position.limit_rate, position)
                     continue
+
+    def _close(self, start_at, rate, position):
+        position.close(start_at, rate)
+        self.positions.append(position)
+        self.open_positions.remove(position)
 
     def record_profit(self, rate):
         """
@@ -328,13 +342,14 @@ class Market(object):
             'profit_result': self.profit_result,
         }
 
-    @property
-    def open_positions(self):
-        return [x for x in self.positions if x.is_open]
+    # @property
+    # def open_positions(self):
+    #
+    #     return [x for x in self.positions if x.is_open]
 
-    @property
-    def close_positions(self):
-        return [x for x in self.positions if not x.is_open]
+    # @property
+    # def close_positions(self):
+    #     return [x for x in self.positions if not x.is_open]
 
 
 class AI(object):
@@ -452,8 +467,13 @@ class AI(object):
 
     def to_dict(self):
         return {
+            'NAME': self.name,
+            'GENERATION': self.generation,
+            'PROFIT': self.profit,
+            'PROFIT_MAX': self.profit_max,
+            'PROFIT_MIN': self.profit_min,
             'AI_LOGIC': self.ai_to_dict(),
-            'MARKET': self.market.to_dict(),
+            # 'MARKET': self.market.to_dict(),
         }
 
     def ai_to_dict(self):
@@ -638,3 +658,24 @@ def get_type_by_diff(_d, p):
     if p * -1 >= _d > p * -2:
         return 2
     raise ValueError
+
+
+def history_write(ai_group):
+    """
+    HTTP通信で書き込む
+    """
+    url_base = 'http://{}/genetic/history/'
+    payload = ujson.dumps({
+        'ai_group': [ai.to_dict() for ai in ai_group],
+    })
+    response = requests_post_api(url_base, payload=payload)
+    assert response.status_code == 200, response.text
+
+
+def requests_post_api(url_base, payload=None):
+    TEST_HOST = '127.0.0.1:8000'
+    url = url_base.format(TEST_HOST)
+    payload = {'data': payload}
+    response = requests.post(url, data=payload)
+    print 'URL SUCCESS: {}'.format(url)
+    return response
