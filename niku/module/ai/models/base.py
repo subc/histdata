@@ -130,6 +130,9 @@ class AIInterFace(object):
         """
         raise NotImplementedError
 
+    def score(self, correct_value):
+        return self.market.profit_result - correct_value
+
     @property
     def base_tick(self):
         return self.ai_dict.get('base_tick')
@@ -145,10 +148,6 @@ class AIInterFace(object):
     @property
     def profit_min(self):
         return self._profit_min
-
-    @property
-    def score(self):
-        return self.market.profit_result
 
 
 class AI1EurUsd(EurUsdMixin, AIInterFace):

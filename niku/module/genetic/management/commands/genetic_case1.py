@@ -34,14 +34,14 @@ def benchmark(ai):
     # 確定処理
     rate = candles[-1]
     ai.update_market(market, rate)
-    print('ただいまの利益:{}円 ポジション損益:{}円 ポジション数:{} 総取引回数:{}'.format(market.profit_summary(rate),
+    print('[ID:{}]ただいまの利益:{}円 ポジション損益:{}円 ポジション数:{} 総取引回数:{}'.format(ai.generation,
+                                                                  market.profit_summary(rate),
                                                                   market.current_profit(rate),
                                                                   len(market.open_positions),
                                                                   len(market.positions)))
     print('最大利益:{}円 最小利益:{}円'.format(market.profit_max, market.profit_min))
     return ai
 
-@timeit
 def loop(ai, candles, market):
     prev_rate = None
     # prf = LineProfiler() #インスタンスに複数の関数を与えても良い。
@@ -78,89 +78,80 @@ class Command(CustomBaseCommand):
 
         # 初期AI集団生成
         generation = 0
-        size = 20  # 初期集団サイズ
-        selection = 4  # 選択するサイズ
+        size = 20  # 集団サイズ
         ai_mother = AI(AiBaseCase1, self.AI_NAME, generation)
-        ai_group = ai_mother.initial_create(20)
-        proc = 1  # 8並列とする
+        ai_group = ai_mother.initial_create(4)
+        proc = 4  # 並列処理数 コア数以上にしても無駄
 
         # 計算元データを計算
         candles = CandleEurUsdH1Rate.get_test_data2()
-        cache.set('candles', candles, timeout=7200)
+        cache.set('candles', candles, timeout=72000)
 
         # re_connection()
 
         # 遺伝的アルゴリズムで進化させる
-        while generation < 100:
+        while generation <= 3000:
             # 評価
             generation += 1
             [ai.normalization() for ai in ai_group]
             pool = mp.Pool(proc)
             ai_group = pool.map(benchmark, ai_group)
-            # django.db.close_old_connections()
-            # GeneticHistory.bulk_create_by_ai(ai_group)
             history_write(ai_group)
 
-            # 選択
-            ai_group = self.selection(ai_group, selection)
+            # 選択と交叉
+            assert(type(ai_group[0]) == AI)
+            ai_group = self.cross_over(size, ai_group)
 
-            # 交叉
-            next_ai_group = self.cross_over(ai_group, size)
-
-            # 突然変異
-            for ai in next_ai_group:
-                ai.mutation()
+            # normalization
+            for ai in ai_group:
+                ai.normalization()
 
             print '第{}世代 完了!'.format(ai_group[0].generation)
 
             # pool内のワーカープロセスを停止する
             pool.close()
 
-    def selection(self, ai_group, selection):
+    def roulette_selection(self, ai_group):
         """
         遺伝的アルゴリズム
-        選別する
+        ルーレット選択方式 スコアを重みとして選択
         :param ai_group: list of AI
-        :param selection: int
-        :rtype : list of AI
+        :rtype : AI
         """
-        r = []
-        ai_group = sorted(ai_group, key=lambda x: x.score, reverse=True)
-        # ランキング方式 1位が2体で2,3位が1体
-        r.append(copy.deepcopy(ai_group[0]))
-        r.append(copy.deepcopy(ai_group[0]))
-        r.append(copy.deepcopy(ai_group[1]))
-        r.append(copy.deepcopy(ai_group[2]))
-        assert(len(r) == selection)
-        return r
+        # スコアがマイナスのときは補正値を使う
+        correct_value = min([ai.score(0) for ai in ai_group])
+        if correct_value > 0:
+            correct_value = 0
 
-    def cross_over(self, ai_group, size):
+        total = sum([ai.score(correct_value) for ai in ai_group])
+        r = random.randint(0, total)
+        _total = 0
+        for ai in ai_group:
+            _total += ai.score(correct_value)
+            if r <= _total:
+                return ai
+        raise ValueError
+
+    def cross_over(self, size, ai_group):
         """
         遺伝的アルゴリズム
         交叉 配合する
-
-        t = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
-        zip(t[::2], t[1::2])
-        [('a', 'b'), ('c', 'd'), ('e', 'f'), ('g', 'h')]
         """
-        # 偶数個に親の数をそろえる
-        if len(ai_group) % 2:
-            ai_group.append(ai_group[0])
+        # sizeは偶数であること
+        if size % 2 != 0:
+            raise ValueError
 
-        # pairを生成
-        ai_pair = zip(ai_group[::2], ai_group[1::2])
+        # エリート主義(上位3名を残す)
+        # elite_group = sorted(ai_group, key=lambda x: x.score(0), reverse=True)[:3]
+        # elite_group = copy.deepcopy(elite_group)
+        # elite_group = [ai.incr_generation() for ai in elite_group]
 
-        # 交叉する
+        # ルーレット選択方式で親を選択して交叉する
         next_ai_group = []
-        for ai_a, ai_b in ai_pair:
-            next_ai_group += self._cross(ai_a, ai_b)
-        random.shuffle(next_ai_group)
-
-        # 数が足りるまで複製
-        while len(next_ai_group) < size:
-            mutant = copy.deepcopy(next_ai_group)
-            next_ai_group += [x.mutation() for x in mutant]
-        return next_ai_group[:size]
+        while len(next_ai_group) != size:
+            next_ai_group += self._cross(self.roulette_selection(ai_group),
+                                         self.roulette_selection(ai_group))
+        return next_ai_group
 
     def _cross(self, ai_a, ai_b):
         """
@@ -175,7 +166,7 @@ class Command(CustomBaseCommand):
         for key in ai_a.ai_dict:
             _value_a = ai_a.ai_dict.get(key)
             _value_b = ai_b.ai_dict.get(key)
-            _a, _b = self._cross_value(_value_a, _value_b)
+            _a, _b = self._cross_value(_value_a, _value_b, ai_a.LIMIT_TICK, ai_a.LIMIT_LOWER_TICK)
             child_a_dict[key] = _a
             child_b_dict[key] = _b
 
@@ -184,7 +175,7 @@ class Command(CustomBaseCommand):
         child_b = AI(child_b_dict, self.AI_NAME, generation)
         return [child_a, child_b]
 
-    def _cross_value(self, value_a, value_b):
+    def _cross_value(self, value_a, value_b, _max, _min):
         """
         値を混ぜて、それぞれの遺伝子を持った値を返却
         :param value_a: int or list
@@ -192,59 +183,38 @@ class Command(CustomBaseCommand):
         :return: int or list
         """
         if type(value_a) == type(value_b) == int:
-            # 値の交換(一様交叉)
-            if random.randint(1, 3) == 1:
-                if random.randint(1, 2) == 1:
-                    return value_a, value_b
-                else:
-                    return value_b, value_a
-            # 値が混ざる(一点交叉)
-            if random.randint(1, 3) == 1:
-                if random.randint(1, 2) == 1:
-                    return value_a, value_a
-                else:
-                    return value_b, value_b
-            # 値の強化
-            if random.randint(1, 3) == 1:
-                summary = sum([value_a, value_b])
-                return summary, summary
-
-            # 値の平均
-            average = int(numpy.average([value_a, value_b]))
-            return average, average
-
+            if random.randint(1, 100) == 2:
+                # 突然変異
+                _v = random.randint(_min, _max)
+                return _v, _v
+            elif random.randint(1, 100) <= 85:
+                # 2点交叉
+                return cross_2point(value_a, value_b)
+            else:
+                # 何もしない
+                return value_a, value_b
         if type(value_a) == type(value_b) == list:
             list_a = []
             list_b = []
             _value_a = copy.deepcopy(value_a)
             _value_b = copy.deepcopy(value_b)
             for index in range(len(_value_a)):
-                _a, _b = self._cross_value(_value_a[index], _value_b[index])
+                _a, _b = self._cross_value(_value_a[index], _value_b[index], _max, _min)
                 list_a.append(_a)
                 list_b.append(_b)
             return list_a, list_b
 
         if type(value_a) == type(value_b) == OrderType:
-            return OrderType.cross_over(value_a, value_b)
-
+            if random.randint(1, 100) == 2:
+                # 突然変異
+                return OrderType.mutation(value_b), OrderType.mutation(value_a)
+            elif random.randint(1, 100) <= 85:
+                # 交叉
+                return OrderType.cross_over(value_a, value_b)
+            else:
+                # 何もしない
+                return value_a, value_b
         raise ValueError
-
-
-def re_connection():
-    """
-    wait_timeout対策
-    バックグラウンドでループして動かすと、playerのshardはcommit_on_success外でコネクションが生きている可能性があるので
-    カーソルを取り直すおまじないです
-    """
-    db_name = 'default'
-    timeout = 36000
-    con = connections[db_name].connection
-    if con:
-        cur = con.cursor()
-    else:
-        cur = connections[db_name].cursor()
-    cur.execute('set session wait_timeout = {}'.format(timeout))
-    # pass
 
 
 class Market(object):
@@ -459,3 +429,25 @@ def requests_post_api(url_base, payload=None):
     response = requests.post(url, data=payload)
     print 'URL SUCCESS: {}'.format(url)
     return response
+
+
+def cross_2point(a, b):
+    """
+    2点交叉
+    :param a: int
+    :param b: int
+    """
+    a = format(a, 'b')
+    b = format(b, 'b')
+    max_length = max([len(a), len(b)])
+    if len(a) < max_length:
+        a = '0' * (max_length - len(a)) + a
+    if len(b) < max_length:
+        b = '0' * (max_length - len(b)) + b
+    point1 = random.randint(1, max_length)
+    point2 = random.randint(1, max_length)
+    point_max = max(point1, point2)
+    point_min = min(point1, point2)
+    a = a[:point_min] + b[point_min:point_max] + a[point_max:]
+    b = b[:point_min] + a[point_min:point_max] + b[point_max:]
+    return int(a, 2), int(b, 2)
