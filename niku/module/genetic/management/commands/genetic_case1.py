@@ -101,18 +101,17 @@ class Command(CustomBaseCommand):
                 print "取引平均回数が2000を下回ったので自殺:count:{}".format(trade_count)
                 generation += 100000
             # 最高値制限
-            _max_profit = max([ai.profit_max for ai in ai_group])
-            if generation >= 10 and _max_profit < 0:
+            if generation >= 10 and max_profit < 0:
                 generation += 100000
-            if generation >= 20 and _max_profit < 100 * 10000:
+            if generation >= 20 and max_profit < 100 * 10000:
                 generation += 100000
-            if generation >= 30 and _max_profit < 150 * 10000:
+            if generation >= 30 and max_profit < 150 * 10000:
                 generation += 100000
-            if generation >= 40 and _max_profit < 250 * 10000:
+            if generation >= 40 and max_profit < 250 * 10000:
                 generation += 100000
-            if generation >= 60 and _max_profit < 350 * 10000:
+            if generation >= 60 and max_profit < 350 * 10000:
                 generation += 100000
-            if generation >= 80 and _max_profit < 420 * 10000:
+            if generation >= 80 and max_profit < 420 * 10000:
                 generation += 100000
 
             # 選択と交叉
