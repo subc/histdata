@@ -265,6 +265,29 @@ class AI2EurUsd(AI1EurUsd):
         if 'depth' not in self.ai_dict:
             self.ai_dict['depth'] = 10
 
+    @classmethod
+    def get_ai(cls, history):
+        """
+        AIのdictからAIを生成して返却
+        :param : AI
+        """
+        ai = {}
+        for key in history.ai:
+            if key == 'base_tick':
+                ai[key] = history.ai[key]
+                continue
+            if key == 'depth':
+                ai[key] = history.ai[key]
+                continue
+            if type(history.ai[key]) == list:
+                l = history.ai[key]
+                ai[int(key)] = [OrderType(l[0]), l[1], l[2]]
+                continue
+            raise ValueError
+        ai = cls(ai, history.name, history.generation)
+        ai.pk = history.id
+        return ai
+
     def set_start_data(self):
         """
         初期データを生成する
@@ -333,6 +356,31 @@ class AI2EurUsd(AI1EurUsd):
         candle_type_id = prev_rate.get_candle_type(self.base_tick)
         order_type, limit, stop_limit = self.ai_dict.get(candle_type_id)
         return OrderAI(order_type, limit, stop_limit)
+
+    def incr_depth(self, x):
+        self.ai_dict['depth'] += x
+        return self
+
+    def incr_base_tick(self, x):
+        self.ai_dict['base_tick'] += x
+        return self
+
+    def mutation(self):
+        """
+        AIの変化耐性を調べるために突然変異させる
+        """
+        for key in self.ai_dict:
+            if key in ('base_tick', 'depth'):
+                continue
+            value = self.ai_dict[key]
+            if type(value) != list:
+                continue
+            # 20%で変わる
+            if random.randint(1, 5) == 1:
+                self.ai_dict[key][1] += random.randint(-10, 10)
+                self.ai_dict[key][2] += random.randint(-10, 10)
+        self.normalization()
+        return self
 
     @property
     def depth(self):

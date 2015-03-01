@@ -11,6 +11,7 @@ class Granularity(Enum):
     D = 60 * 60 * 24
     H1 = 60 * 60
     M5 = 60 * 5
+    M1 = 60
 
     @property
     def db_table_class(self):
@@ -27,6 +28,7 @@ class Granularity(Enum):
             Granularity.D: CandleEurUsdDRate,
             Granularity.H1: CandleEurUsdH1Rate,
             Granularity.M5: CandleEurUsdM5Rate,
+            Granularity.M1: CandleEurUsdM1Rate,
         }
         return GranularityToDBTable.get(self)
 
@@ -38,6 +40,10 @@ class CandleEurUsdBase(CurrencyCandleBase):
         app_label = 'rate'
         abstract = True
         unique_together = ('start_at',)
+
+
+class CandleEurUsdM1Rate(CandleEurUsdBase):
+    _granularity = Granularity.M1
 
 
 class CandleEurUsdM5Rate(CandleEurUsdBase):

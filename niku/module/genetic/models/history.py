@@ -24,9 +24,14 @@ class GeneticHistory(models.Model):
     profit_min = models.IntegerField(default=0, help_text='最大損失')
     ai = ObjectField(null=True, default=None, help_text='aiのデータ')
     ai_id = models.PositiveIntegerField(null=True, default=None, help_text='AIのID')
+    elite = models.PositiveIntegerField(null=True, default=None, help_text='優秀なAI')
 
     class Meta(object):
         app_label = 'genetic'
+
+    @classmethod
+    def get(cls, pk):
+        return cls.objects.get(id=pk)
 
     @classmethod
     def record_history(cls, ai):

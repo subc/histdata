@@ -32,7 +32,7 @@ class Command(BaseCommand):
 
     def _parse_args(self, args):
         if len(args) != 1:
-            raise CommandError(u'Usage: manage.py gen_serial <campaign-name> <serial-count> --settings=<your-settings-file>')
+            raise CommandError(u'Usage: manage.py ai <ai_id>')
         history_id = int(args[0])
 
         return history_id

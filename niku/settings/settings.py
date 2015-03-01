@@ -118,6 +118,7 @@ INSTALLED_APPS += (
     'module.trading',
     'module.rate',
     'module.genetic',
+    'module.ai',
 )
 
 # テンプレート

@@ -57,10 +57,7 @@ def loop(ai, candles, market):
         market.payment(rate)
 
 
-
 class Command(CustomBaseCommand):
-    AI_NAME = None
-
     def handle(self, *args, **options):
         self.run()
 
@@ -227,10 +224,12 @@ class Market(object):
     profit_result = 0  # 最終利益
     close_profit = 0  # 確定した利益
     generation = 0
+    calc_draw_down = False  # ドローダウンを計算するか(Trueで重くなる)
 
-    def __init__(self, generation):
+    def __init__(self, generation, calc_draw_down=False):
         self.positions = []
         self.generation = generation
+        self.calc_draw_down = calc_draw_down
 
     def order(self, rate, order):
         """
@@ -248,7 +247,7 @@ class Market(object):
         ポジションを精算する
         """
         # ドローダウン調査(重い)
-        if self.generation % 10 == 9:
+        if self.calc_draw_down:
             self.record_profit(rate)
         for position in self.open_positions:
             if position.is_buy:

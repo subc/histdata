@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import datetime
 from django.db import models
 from django.utils.functional import cached_property
 from .candle_type import CandleTypeMixin
@@ -92,6 +93,14 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
                    start_at=oanda_candle.c_time,
                    interval=oanda_candle.granularity.value)
 
+    @classmethod
+    def by_limit(cls, limit):
+        """
+        :param limit: int
+        :rtype : list of CurrencyCandleBase
+        """
+        return cls.objects.filter().order_by('start_at')[:limit]
+
     @property
     def granularity(self):
         """
@@ -101,6 +110,10 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
         if self._granularity is None:
             raise NotImplementedError
         return self._granularity
+
+    @property
+    def end_at(self):
+        return self.start_at + datetime.timedelta(seconds=self.interval)
 
 
 class MultiCandles(CandleTypeMixin):
@@ -131,3 +144,11 @@ class MultiCandles(CandleTypeMixin):
     @property
     def tick(self):
         return self.rates[-1].tick
+
+    @property
+    def start_at(self):
+        return self.rates[0].start_at
+
+    @property
+    def end_at(self):
+        return self.rates[-1].end_at

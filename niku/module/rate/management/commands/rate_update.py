@@ -33,15 +33,16 @@ class Command(BaseCommand):
 
     def run(self):
         # レート取得
-        # self.update_rate(Granularity.M5)
-        self.update_rate(Granularity.H1)
-        # self.update_rate(Granularity.D)
+        # self.update_rate(Granularity.D, 700)
+        # self.update_rate(Granularity.H1, 100)
+        self.update_rate(Granularity.M5, 15)
+        self.update_rate(Granularity.M1, 2)
 
-    def update_rate(self, granularity):
+    def update_rate(self, granularity, span):
         """
         :param granularity: Granularity
         """
-        for _date in H1_start_generator():
+        for _date in start_date_generator(span):
             start = '%02d-%02d-%02d' % (int(_date.year), int(_date.month), int(_date.day))
             # レート取得
             base_domain = MODE.get('production')
@@ -78,13 +79,14 @@ def requests_api(url, payload=None):
     return response
 
 
-def H1_start_generator():
+def start_date_generator(span):
     """
     現在から2003年までの日付を100日毎に返却する
     """
     now = datetime.datetime.now()
     limit = datetime.datetime(2005, 1, 1, 0, 0, 0)
-    span = datetime.timedelta(days=100)
+    span = datetime.timedelta(days=span)
+    # now = now + span - datetime.timedelta(days=1)
     while now > limit:
         now = now - span
         yield now
