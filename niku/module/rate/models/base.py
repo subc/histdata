@@ -37,7 +37,7 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
         """
         :return: list of CurrencyCandleBase
         """
-        return cls.sort(list(cls.objects.filter()))
+        return list(cls.objects.filter().order_by('start_at'))
 
     @classmethod
     def create(cls, **kwargs):
@@ -46,10 +46,6 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
         :return: CurrencyCandleBase
         """
         cls.objects.create(**kwargs)
-
-    @classmethod
-    def sort(cls, candles):
-        return sorted(candles, key=lambda x: x.start_at)
 
     @classmethod
     def safe_bulk_create_by_oanda(cls, oanda_candles):
@@ -95,17 +91,20 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
                    interval=oanda_candle.granularity.value)
 
     @classmethod
+    def by_start_at(cls, start_at):
+        """
+        :param limit: int
+        :rtype : list of CurrencyCandleBase
+        """
+        return cls.objects.filter(start_at__gte=start_at).order_by('start_at')
+
+    @classmethod
     def by_limit(cls, limit):
         """
         :param limit: int
         :rtype : list of CurrencyCandleBase
         """
         return cls.objects.filter().order_by('start_at')[:limit]
-
-    @classmethod
-    def get_test_data(cls):
-        r = cls.sort(list(cls.objects.filter(start_at__gte=datetime.datetime(201, 2, 10, tzinfo=pytz.utc))))
-        return r
 
     @property
     def granularity(self):

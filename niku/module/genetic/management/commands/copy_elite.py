@@ -6,8 +6,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management import BaseCommand, CommandError
 import requests
-from module.genetic.models import GeneticHistory
-from module.genetic.models.history import GeneticEliteHistory
+from module.genetic.models import GeneticHistory, GeneticBackTestHistory
 from module.rate.models import CandleEurUsdM5Rate
 from module.rate.models.eur import Granularity, CandleEurUsdH1Rate
 from module.title.models.title import TitleSettings
@@ -26,5 +25,5 @@ class Command(BaseCommand):
         self.run()
 
     def run(self):
-        num = GeneticEliteHistory.copy_by_history()
+        num = GeneticBackTestHistory.create_test_story()
         print "COPY ELITE COUNT:{}".format(num)

@@ -3,19 +3,23 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import copy
 import random
-
+from line_profiler import LineProfiler
+from module.rate.models import CurrencyPair
 from module.genetic.models.parameter import OrderType
 from .market_order import MarketOrder, OrderAI
 from module.currency import EurUsdMixin
 from module.rate.models.base import MultiCandles
 from module.rate.models.eur import Granularity
+from django.utils.six import text_type
 
 
 class AIInterFace(object):
     LIMIT_POSITION = 10
     market = None
     generation = None
+    currency_pair = None
     ai_dict = {}
+    genetic_history_id = None
 
     def __init__(self, ai_dict, suffix, generation):
         self.ai_dict = ai_dict
@@ -117,6 +121,10 @@ class AIInterFace(object):
             'PROFIT_MIN': self.profit_min,
             'AI_LOGIC': self._ai_to_dict(),
             'MARKET': self.market.to_dict(),
+            'CURRENCY_PAIR': self.currency_pair.value,
+            'END_AT': text_type(self.end_at),
+            'TRADE_COUNT': len(self.market.positions),
+            'GENETIC_HISTORY_ID': self.genetic_history_id if self.genetic_history_id else 0
         }
 
     def _ai_to_dict(self):
@@ -160,8 +168,18 @@ class AIInterFace(object):
     def profit_min(self):
         return self._profit_min
 
+    @property
+    def start_at(self):
+        return self.market.start_at
+
+    @property
+    def end_at(self):
+        return self.market.end_at
+
 
 class AI1EurUsd(EurUsdMixin, AIInterFace):
+    currency_pair = CurrencyPair.EUR_USD
+
     # 進化乱数
     MUTATION_MAX = 60
     MUTATION_MIN = 10
@@ -253,6 +271,7 @@ class AI2EurUsd(AI1EurUsd):
     """
     数時間前にさかのぼってレートを参照する
     """
+    currency_pair = CurrencyPair.EUR_USD
     # 進化乱数
     MUTATION_MAX = 60
     MUTATION_MIN = 10
@@ -262,7 +281,7 @@ class AI2EurUsd(AI1EurUsd):
     LIMIT_LOWER_TICK = 15
     LIMIT_BASE_HIGHER_TICK = 60
     LIMIT_BASE_LOWER_TICK = 10
-    LIMIT_DEPTH = 10
+    LIMIT_DEPTH = 48
     LIMIT_LOWER_DEPTH = 2
 
     # 対象とするローソク足のスパン
@@ -416,9 +435,10 @@ def convert_rate(rates, g):
     if len(rates) < count:
         return []
 
-    # 直近10要素しか返さない
+    # MultiCandlesに取りまとめて返却
     r = []
-    range_max = 10 if count * 10 < len(rates) else int(len(rates) / count)
+    limit = 100
+    range_max = limit if count * limit < len(rates) else int(len(rates) / count)
     for index in xrange(0, range_max):
         r.append(MultiCandles(rates[len(rates) - count - index * count:len(rates) - index * count], g))
 

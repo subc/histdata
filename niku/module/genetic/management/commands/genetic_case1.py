@@ -60,7 +60,8 @@ def loop(ai, candles, market):
 
 class Command(CustomBaseCommand):
     def handle(self, *args, **options):
-        self.run()
+        while True:
+            self.run()
 
     @cached_property
     def suffix(self):
@@ -84,7 +85,7 @@ class Command(CustomBaseCommand):
         # re_connection()
 
         # 遺伝的アルゴリズムで進化させる
-        while generation <= 3000:
+        while generation <= 40:
             # 評価
             generation += 1
             [ai.normalization() for ai in ai_group]
@@ -226,6 +227,8 @@ class Market(object):
     close_profit = 0  # 確定した利益
     generation = 0
     calc_draw_down = False  # ドローダウンを計算するか(Trueで重くなる)
+    start_at = None
+    end_at = None
 
     def __init__(self, generation, calc_draw_down=False):
         self.positions = []
@@ -248,8 +251,13 @@ class Market(object):
         """
         ポジションを精算する
         """
+        # マーケット日時更新
+        if self.start_at is None:
+            self.start_at = rate.start_at
+        self.end_at = rate.start_at
+
         # ドローダウン調査(重い)
-        if self.calc_draw_down:
+        if self.calc_draw_down and random.randint(1, 10) == 1:
             self.record_profit(rate)
         for position in self.open_positions:
             if position.is_buy:
@@ -431,6 +439,7 @@ def requests_post_api(url_base, payload=None):
     TEST_HOST = '127.0.0.1:8000'
     url = url_base.format(TEST_HOST)
     payload = {'data': payload}
+    requests.adapters.DEFAULT_RETRIES = 100
     response = requests.post(url, data=payload)
     print 'URL SUCCESS: {}'.format(url)
     return response

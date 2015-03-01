@@ -3,8 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django import http
 from apps.base.views import BasePostView
-from module.genetic.models import GeneticHistory
-from module.genetic.models.history import GeneticEliteHistory
+from module.genetic.models import GeneticHistory, GeneticBackTestHistory
 
 
 class HistoryView(BasePostView):
@@ -16,20 +15,10 @@ class HistoryView(BasePostView):
         return http.HttpResponse('1')
 
 
-class HistoryEliteView(BasePostView):
+class BackTestHistoryView(BasePostView):
     def post(self, request, params, *args, **kwargs):
-        genetic_id = params.get('genetic_id')
-        history = GeneticEliteHistory.get_by_genetic(genetic_id)
-        history.profitH1 = params.get('profitH1')
-        history.profitH1_max = params.get('profitH1_max')
-        history.profitH1_min = params.get('profitH1_min')
-        history.profitM5 = params.get('profitM5')
-        history.profitM5_max = params.get('profitM5_max')
-        history.profitM5_min = params.get('profitM5_min')
-        history.profitM1 = params.get('profitM1')
-        history.profitM1_max = params.get('profitM1_max')
-        history.profitM1_min = params.get('profitM1_min')
-        history.save()
+        for ai_str in params.get('ai_group'):
+            GeneticBackTestHistory.result(AI(ai_str))
         return http.HttpResponse('1')
 
 
@@ -64,3 +53,19 @@ class AI(object):
     @property
     def market(self):
         return self.params.get('MARKET')
+
+    @property
+    def currency_pair(self):
+        return self.params.get('CURRENCY_PAIR')
+
+    @property
+    def trade_count(self):
+        return self.params.get('TRADE_COUNT')
+
+    @property
+    def end_at(self):
+        return self.params.get('END_AT')
+
+    @property
+    def genetic_history_id(self):
+        return self.params.get('GENETIC_HISTORY_ID')
