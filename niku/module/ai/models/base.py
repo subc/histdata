@@ -8,6 +8,7 @@ from module.genetic.models.parameter import OrderType
 from .market_order import MarketOrder, OrderAI
 from module.currency import EurUsdMixin
 from module.rate.models.base import MultiCandles
+from module.rate.models.eur import Granularity
 
 
 class AIInterFace(object):
@@ -41,31 +42,34 @@ class AIInterFace(object):
         from module.genetic.models import GeneticHistory
         GeneticHistory.record_history(self)
 
-    def order(self, market, rates):
+    def order(self, market, prev_rates, open_bid, start_at):
         """
         条件に沿って注文する
         :param market: Market
-        :param rates: list of Rate
+        :param prev_rates: list of Rate
+        :param open_bid: float
+        :param start_at: datetime
         :rtype market: Market
         """
-        if not rates:
+        if not prev_rates:
             return market
 
         # 既にポジション持ち過ぎ
         if len(market.open_positions) >= self.LIMIT_POSITION:
             return market
-        order_ai = self.get_order_ai(market, rates)
+        order_ai = self.get_order_ai(market, prev_rates, open_bid)
         if not order_ai:
             return market
 
         if order_ai.order_type != OrderType.WAIT:
-            market.order(rates[-1], MarketOrder(rates[-1], order_ai))
+            market.order(open_bid, MarketOrder(open_bid, self.base_tick, order_ai), start_at)
         return market
 
-    def get_order_ai(self, market, rates):
+    def get_order_ai(self, market, prev_rates, open_bid):
         """
         :param market: Market
-        :param rates: list of Rate
+        :param prev_rates: list of Rate
+        :param open_bid: int
         :rtype : OrderAI
         """
         raise NotImplemented
@@ -258,8 +262,11 @@ class AI2EurUsd(AI1EurUsd):
     LIMIT_LOWER_TICK = 15
     LIMIT_BASE_HIGHER_TICK = 60
     LIMIT_BASE_LOWER_TICK = 10
-    LIMIT_DEPTH = 48
+    LIMIT_DEPTH = 10
     LIMIT_LOWER_DEPTH = 2
+
+    # 対象とするローソク足のスパン
+    RATE_SPAN = Granularity.H1
 
     def _dispatch(self):
         if 'depth' not in self.ai_dict:
@@ -338,19 +345,22 @@ class AI2EurUsd(AI1EurUsd):
                     ai[key][index] = self.LIMIT_LOWER_TICK
         self.ai_dict = ai
 
-    def get_order_ai(self, market, rates):
+    def get_order_ai(self, market, prev_rates, open_bid):
         """
         条件に沿って注文する
         :param market: Market
-        :param rates: list of Rate
+        :param prev_rates: list of Rate
+        :param open_bid: int
         :rtype market: Market
         """
-        if len(rates) < self.depth:
+        rates = convert_rate(prev_rates, self.RATE_SPAN)
+
+        if len(rates) - 1 < self.depth:
             return None
         c = len(rates)
         prev_rates = rates[c - self.depth:c]
         assert len(prev_rates) == self.depth, (len(prev_rates), self.depth)
-        prev_rate = MultiCandles(prev_rates)
+        prev_rate = MultiCandles(prev_rates, Granularity.UNKNOWN)
 
         # 前回のレートから型を探す
         candle_type_id = prev_rate.get_candle_type(self.base_tick)
@@ -385,3 +395,31 @@ class AI2EurUsd(AI1EurUsd):
     @property
     def depth(self):
         return self.ai_dict['depth']
+
+
+def convert_rate(rates, g):
+    """
+    キャンドル足を対象のスパンのキャンドル足に変換する
+    1時間足3本 >> 5分足36本とか
+    :param rates: list of Rate
+    :param g: Granularity
+    :rtype: list of Rate
+    """
+    if rates[0].granularity == g:
+        return rates
+
+    # 4時間足から1時間足は生成できない
+    if rates[0].granularity.value > g.value:
+        raise ValueError
+
+    count = g.value / rates[0].granularity.value
+    if len(rates) < count:
+        return []
+
+    # 直近10要素しか返さない
+    r = []
+    range_max = 10 if count * 10 < len(rates) else int(len(rates) / count)
+    for index in xrange(0, range_max):
+        r.append(MultiCandles(rates[len(rates) - count - index * count:len(rates) - index * count], g))
+
+    return list(reversed(r))

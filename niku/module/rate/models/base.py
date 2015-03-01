@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import datetime
 from django.db import models
 from django.utils.functional import cached_property
+import pytz
 from .candle_type import CandleTypeMixin
 
 
@@ -101,6 +102,11 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
         """
         return cls.objects.filter().order_by('start_at')[:limit]
 
+    @classmethod
+    def get_test_data(cls):
+        r = cls.sort(list(cls.objects.filter(start_at__gte=datetime.datetime(201, 2, 10, tzinfo=pytz.utc))))
+        return r
+
     @property
     def granularity(self):
         """
@@ -121,9 +127,11 @@ class MultiCandles(CandleTypeMixin):
     複数のローソク足を透過的に扱うクラス
     """
     rates = None
+    _granularity = None
 
-    def __init__(self, rates):
+    def __init__(self, rates, granularity):
         self.rates = rates
+        self._granularity = granularity
 
     @property
     def open_bid(self):
@@ -152,3 +160,7 @@ class MultiCandles(CandleTypeMixin):
     @property
     def end_at(self):
         return self.rates[-1].end_at
+
+    @property
+    def granularity(self):
+        return self._granularity

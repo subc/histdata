@@ -13,23 +13,24 @@ class MarketOrder(object):
     limit_bid = None
     stop_limit_bid = None
 
-    def __init__(self, rate, order_ai):
+    def __init__(self, open_bid, base_tick, order_ai):
         """
-        :param rate: Rate
+        :param open_bid: float
+        :param base_tick: float
         :param order_ai: OrderAI
         """
         self.order_type = order_ai.order_type
         if order_ai.order_type == OrderType.WAIT:
             return
-        self.open_bid = rate.open_bid
+        self.open_bid = open_bid
 
         is_buy = True if order_ai.order_type == OrderType.BUY else False
         if is_buy:
-            self.limit_bid = rate.open_bid + rate.tick * order_ai.limit
-            self.stop_limit_bid = rate.open_bid - rate.tick * order_ai.stop_limit
+            self.limit_bid = open_bid + base_tick * order_ai.limit
+            self.stop_limit_bid = open_bid - base_tick * order_ai.stop_limit
         else:
-            self.limit_bid = rate.open_bid - rate.tick * order_ai.limit
-            self.stop_limit_bid = rate.open_bid + rate.tick * order_ai.stop_limit
+            self.limit_bid = open_bid - base_tick * order_ai.limit
+            self.stop_limit_bid = open_bid + base_tick * order_ai.stop_limit
 
     @property
     def is_wait(self):

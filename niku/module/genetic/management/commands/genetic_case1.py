@@ -36,25 +36,26 @@ def benchmark(ai):
     # 確定処理
     rate = candles[-1]
     ai.update_market(market, rate)
-    print('[ID:{}]ただいまの利益:{}円 ポジション損益:{}円 ポジション数:{} 総取引回数:{}'.format(ai.generation,
+    print('[ID:{}]SCORE:{} OPEN-SCORE:{} ポジション数:{} TRADE-COUNT:{}'.format(ai.generation,
                                                                   market.profit_summary(rate),
                                                                   market.current_profit(rate),
                                                                   len(market.open_positions),
                                                                   len(market.positions)))
-    print('最大利益:{}円 最小利益:{}円'.format(market.profit_max, market.profit_min))
+    print('SCORE-MAX:{}円 SCORE-MIN:{}円'.format(market.profit_max, market.profit_min))
     return ai
 
 
 def loop(ai, candles, market):
-    rates = []
+    prev_rates = []
     for rate in candles:
-        rates.append(rate)
-
-        # 購入判断
-        market = ai.order(market, rates)
+        # 購入判断(prev rateに未来データを投入しないこと！！)
+        market = ai.order(market, prev_rates, rate.open_bid, rate.start_at)
 
         # 決済
         market.payment(rate)
+
+        # 過去のレートを更新
+        prev_rates.append(rate)
 
 
 class Command(CustomBaseCommand):
@@ -77,7 +78,7 @@ class Command(CustomBaseCommand):
         proc = 6  # 並列処理数 コア数以上にしても無駄
 
         # 計算元データを計算
-        candles = CandleEurUsdH1Rate.get_test_data2()
+        candles = CandleEurUsdH1Rate.get_test_data()
         cache.set('candles', candles, timeout=72000)
 
         # re_connection()
@@ -231,13 +232,14 @@ class Market(object):
         self.generation = generation
         self.calc_draw_down = calc_draw_down
 
-    def order(self, rate, order):
+    def order(self, open_bid, order, start_at):
         """
         発注
-        :param rate: Rate
+        :param open_bid: float
         :param order: MarketOrder
+        :param start_at: datetime
         """
-        position = Position.open(rate.start_at, rate.open_bid, order.is_buy, limit_rate=order.limit_bid,
+        position = Position.open(start_at, open_bid, order.is_buy, limit_rate=order.limit_bid,
                                  stop_limit_rate=order.stop_limit_bid)
         # print 'OPEN![{}]:{}:{}:利確:{} 損切り:{}'.format(rate.start_at, order.is_buy, rate.open_bid, order.limit_bid, order.stop_limit_bid)
         self.open_positions.append(position)

@@ -16,9 +16,16 @@ class Command(BaseCommand):
         self.run()
 
     def run(self):
-        url_base = 'http://{}/genetic/history/'
+        # url_base = 'http://{}/genetic/history/'
+        # payload = ujson.dumps({
+        #     'ai_group': [AI().to_dict() for x in xrange(10)],
+        # })
+        # response = requests_api(url_base, payload=payload)
+        # assert response.status_code == 200, response.text
+
+        url_base = 'http://{}/genetic/history/elite'
         payload = ujson.dumps({
-            'ai_group': [AI().to_dict() for x in xrange(10)],
+            'genetic_id': 179,
         })
         response = requests_api(url_base, payload=payload)
         assert response.status_code == 200, response.text

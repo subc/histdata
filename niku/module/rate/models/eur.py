@@ -12,6 +12,7 @@ class Granularity(Enum):
     H1 = 60 * 60
     M5 = 60 * 5
     M1 = 60
+    UNKNOWN = 10000000000
 
     @property
     def db_table_class(self):
@@ -52,15 +53,6 @@ class CandleEurUsdM5Rate(CandleEurUsdBase):
 
 class CandleEurUsdH1Rate(CandleEurUsdBase):
     _granularity = Granularity.H1
-
-    @classmethod
-    def get_test_data(cls):
-        return cls.sort(list(cls.objects.filter(id__lte=5001)))
-
-    @classmethod
-    def get_test_data2(cls):
-        r = cls.sort(list(cls.objects.filter(start_at__gte=datetime.datetime(2010, 1, 1, tzinfo=pytz.utc))))
-        return r
 
 
 class CandleEurUsdDRate(CandleEurUsdBase):

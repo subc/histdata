@@ -34,26 +34,6 @@ class GeneticHistory(models.Model):
         return cls.objects.get(id=pk)
 
     @classmethod
-    def record_history(cls, ai):
-        # success = False
-        # while not success:
-        #     try:
-        #         cls.objects.create(name=ai.name,
-        #                            generation=ai.generation,
-        #                            profit=ai.profit,
-        #                            profit_max=ai.profit_max,
-        #                            profit_min=ai.profit_min,
-        #                            ai=ai.to_dict())
-        #         success = True
-        #     except OperationalError:
-        #         print OperationalError
-        #         print traceback.print_exc()
-        #         django.db.close_old_connections()
-        #         time.sleep(random.randint(1, 10))
-        raise
-        pass
-
-    @classmethod
     def bulk_create_by_ai(cls, ai_group):
         objects = [cls.get_by_ai(ai) for ai in ai_group]
         cls.objects.bulk_create(objects)
@@ -67,33 +47,65 @@ class GeneticHistory(models.Model):
                    profit_min=ai.profit_min,
                    ai=ai.ai_logic)
 
-
-def re_connection():
-    """
-    wait_timeout対策
-    バックグラウンドでループして動かすと、playerのshardはcommit_on_success外でコネクションが生きている可能性があるので
-    カーソルを取り直すおまじないです
-    """
-    db_name = 'default'
-    timeout = 36000
-    con = connections[db_name].connection
-    if con:
-        cur = con.cursor()
-    else:
-        cur = connections[db_name].cursor()
-    cur.execute('set session wait_timeout = {}'.format(timeout))
+    @classmethod
+    def by_elite(cls):
+        return list(cls.objects.filter(elite__gte=1))
 
 
-def re_connection2():
-    connections['default'].cursor()
+class GeneticEliteHistory(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    name = models.CharField(max_length=50)
+    profitH1 = models.IntegerField(default=0, help_text='利益')
+    profitH1_max = models.IntegerField(default=0, help_text='最大利益')
+    profitH1_min = models.IntegerField(default=0, help_text='最大損失')
+    profitM5 = models.IntegerField(default=0, help_text='利益')
+    profitM5_max = models.IntegerField(default=0, help_text='最大利益')
+    profitM5_min = models.IntegerField(default=0, help_text='最大損失')
+    profitM1 = models.IntegerField(default=0, help_text='利益')
+    profitM1_max = models.IntegerField(default=0, help_text='最大利益')
+    profitM1_min = models.IntegerField(default=0, help_text='最大損失')
+    genetic_id = models.PositiveIntegerField(null=True, default=None, help_text='GeneticHistoryに紐づくID', db_index=True)
+    elite = models.PositiveIntegerField(null=True, default=None, help_text='優秀なAI')
+    progress = models.CharField(max_length=50, help_text='進捗', null=True, default=None)
 
+    class Meta(object):
+        app_label = 'genetic'
+        unique_together = ('genetic_id',)
 
-def re_connection3():
-    import MySQLdb
-    from django.conf import settings
-    print settings.DATABASES
-    db_settings = settings.DATABASES['default']
-    connection = MySQLdb.connect(host=db_settings['HOST'], port=int(db_settings['PORT']), db=db_settings['NAME'],
-                                 user=db_settings['USER'], passwd=db_settings['PASSWORD'])
-    connection.stat()
-    connection.cursor()
+    @classmethod
+    def get_by_genetic(cls, genetic_id, for_update=False):
+        if for_update:
+            return cls.objects.select_for_update(genetic_id=genetic_id)
+        return cls.objects.get(genetic_id=genetic_id)
+
+    @classmethod
+    def copy_by_history(cls):
+        """
+        GeneticHistoryから優秀なAIをコピーする
+        :param genetic_id: int
+        :rtype : int
+        """
+        elite_group = GeneticHistory.by_elite()
+
+        # 登録済みデータは排除する
+        genetic_ids = cls.get_genetic_ids()
+        target = []
+        for elite in elite_group:
+            if elite.id not in genetic_ids:
+                target.append(elite)
+        # bulk!
+        cls.objects.bulk_create([cls(name=x.name,
+                                     profitH1=x.profit,
+                                     profitH1_max=x.profit_max,
+                                     profitH1_min=x.profit_min,
+                                     genetic_id=x.id) for x in target])
+        return len(target)
+
+    @classmethod
+    def get_genetic_ids(cls):
+        return [x.genetic_id for x in cls.objects.filter()]
+
+    @property
+    def history(self):
+        return GeneticHistory.get(self.genetic_id)
