@@ -57,7 +57,7 @@ def benchmark(ai, candles):
                                                                           market.current_profit(rate),
                                                                           len(market.open_positions),
                                                                           len(market.positions)))
-    print('SCORE-MAX:{}円 SCORE-MIN:{}円'.format(market.profit_max, market.profit_min))
+    print('SCORE-MAX:{} SCORE-MIN:{}'.format(market.profit_max, market.profit_min))
 
     return ai
 
