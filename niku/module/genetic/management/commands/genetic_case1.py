@@ -90,14 +90,16 @@ class Command(CustomBaseCommand):
             generation += 1
             [ai.normalization() for ai in ai_group]
 
-            # 試験用コード
-            if generation == 1:
-                benchmark(ai_group[0])
-
             pool = mp.Pool(proc)
             ai_group = pool.map(benchmark, ai_group)
             max_profit = max([ai.profit for ai in ai_group])
             history_write(ai_group)
+
+            # 詰み回避
+            trade_count = numpy.average([len(ai.market.positions) for ai in ai_group])
+            if trade_count < 2000:
+                print "取引平均回数が2000を下回ったので自殺:count:{}".format(trade_count)
+                generation += 100000
 
             # 選択と交叉
             assert(type(ai_group[0]) == AI)
