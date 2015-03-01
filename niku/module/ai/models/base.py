@@ -273,16 +273,16 @@ class AI2EurUsd(AI1EurUsd):
     """
     currency_pair = CurrencyPair.EUR_USD
     # 進化乱数
-    MUTATION_MAX = 60
+    MUTATION_MAX = 100
     MUTATION_MIN = 10
 
     # 値の制限
-    LIMIT_TICK = 60
-    LIMIT_LOWER_TICK = 15
+    LIMIT_TICK = 100
+    LIMIT_LOWER_TICK = 10
     LIMIT_BASE_HIGHER_TICK = 60
     LIMIT_BASE_LOWER_TICK = 10
-    LIMIT_DEPTH = 48
-    LIMIT_LOWER_DEPTH = 2
+    LIMIT_DEPTH = 72
+    LIMIT_LOWER_DEPTH = 1
 
     # 対象とするローソク足のスパン
     RATE_SPAN = Granularity.H1

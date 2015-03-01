@@ -41,7 +41,7 @@ def benchmark(ai):
                                                                   market.current_profit(rate),
                                                                   len(market.open_positions),
                                                                   len(market.positions)))
-    print('SCORE-MAX:{}円 SCORE-MIN:{}円'.format(market.profit_max, market.profit_min))
+    print('SCORE-MAX:{} SCORE-MIN:{}'.format(market.profit_max, market.profit_min))
     return ai
 
 
@@ -73,10 +73,10 @@ class Command(CustomBaseCommand):
 
         # 初期AI集団生成
         generation = 0
-        size = 20  # 集団サイズ
+        size = 10  # 集団サイズ
         ai_mother = AI(AiBaseCase1, self.suffix, generation)
-        ai_group = ai_mother.initial_create(10)
-        proc = 6  # 並列処理数 コア数以上にしても無駄
+        ai_group = ai_mother.initial_create(20)
+        proc = 8  # 並列処理数 コア数以上にしても無駄
 
         # 計算元データを計算
         candles = CandleEurUsdH1Rate.get_test_data()
