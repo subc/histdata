@@ -4,12 +4,11 @@ from __future__ import unicode_literals
 import copy
 import random
 from line_profiler import LineProfiler
-from module.rate.models import CurrencyPair
+from module.rate import CurrencyPair, Granularity
 from module.genetic.models.parameter import OrderType
 from .market_order import MarketOrder, OrderAI
 from module.currency import EurUsdMixin
 from module.rate.models.base import MultiCandles
-from module.rate.models.eur import Granularity
 from django.utils.six import text_type
 
 
@@ -273,15 +272,15 @@ class AI2EurUsd(AI1EurUsd):
     """
     currency_pair = CurrencyPair.EUR_USD
     # 進化乱数
-    MUTATION_MAX = 100
+    MUTATION_MAX = 70
     MUTATION_MIN = 10
 
     # 値の制限
-    LIMIT_TICK = 80
+    LIMIT_TICK = 70
     LIMIT_LOWER_TICK = 10
     LIMIT_BASE_HIGHER_TICK = 60
     LIMIT_BASE_LOWER_TICK = 10
-    LIMIT_DEPTH = 72
+    LIMIT_DEPTH = 48
     LIMIT_LOWER_DEPTH = 1
 
     # 対象とするローソク足のスパン

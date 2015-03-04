@@ -20,6 +20,8 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
     interval = models.PositiveIntegerField(default=0)
     _granularity = None
 
+    CACHE_BETWEEN = {}
+
     class Meta(object):
         app_label = 'rate'
         abstract = True
@@ -38,6 +40,23 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
         :return: list of CurrencyCandleBase
         """
         return list(cls.objects.filter().order_by('start_at'))
+
+    @classmethod
+    def fuzzy_filter_between(cls, start_at, end_at):
+        """
+        曖昧な結果を返すbetween
+        :return: list of CurrencyCandleBase
+        """
+        key = "{}/{}/{}-{}/{}/{}".format(start_at.year, start_at.month, start_at.day,
+                                         end_at.year, end_at.month, end_at.day)
+        cache = cls.CACHE_BETWEEN.get(key, None)
+        if cache:
+            return cache
+
+        r = list(cls.objects.filter(start_at__gte=start_at,
+                                    start_at__lte=end_at))
+        cls.CACHE_BETWEEN[key] = r
+        return r
 
     @classmethod
     def create(cls, **kwargs):

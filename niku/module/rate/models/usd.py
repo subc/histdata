@@ -6,10 +6,9 @@ from enum import Enum
 import pytz
 from .base import CurrencyCandleBase
 from .moving_average import MovingAverageBase
-from ..consts import Granularity
 
 
-class CandleEurUsdBase(CurrencyCandleBase):
+class CandleUsdJpyBase(CurrencyCandleBase):
     tick = 0.0001
 
     class Meta(object):
@@ -22,7 +21,7 @@ class CandleEurUsdBase(CurrencyCandleBase):
         return list(cls.objects.filter(start_at__gte=datetime.datetime(2010, 1, 1, tzinfo=pytz.utc)).order_by('start_at'))
 
 
-class CandleEurUsdM1Rate(CandleEurUsdBase):
+class CandleUsdJpyM1Rate(CandleUsdJpyBase):
     _granularity = Granularity.M1
 
     @classmethod
@@ -30,17 +29,17 @@ class CandleEurUsdM1Rate(CandleEurUsdBase):
         return list(cls.objects.filter(start_at__gte=datetime.datetime(2014, 10, 1, tzinfo=pytz.utc)).order_by('start_at'))
 
 
-class CandleEurUsdM5Rate(CandleEurUsdBase):
+class CandleUsdJpyM5Rate(CandleUsdJpyBase):
     _granularity = Granularity.M5
 
 
-class CandleEurUsdH1Rate(CandleEurUsdBase):
+class CandleUsdJpyH1Rate(CandleUsdJpyBase):
     _granularity = Granularity.H1
 
 
-class CandleEurUsdDRate(CandleEurUsdBase):
+class CandleUsdJpyDRate(CandleUsdJpyBase):
     _granularity = Granularity.D
 
 
-class EurUsdMA(MovingAverageBase):
+class UsdJpyMA(MovingAverageBase):
     pass

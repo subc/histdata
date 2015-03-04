@@ -10,12 +10,12 @@ from line_profiler import LineProfiler
 import numpy
 import requests
 from module.ai.models import AI2EurUsd
-from module.rate import CurrencyPair
+from module.rate import CurrencyPair, Granularity
 from module.genetic.models import GeneticHistory, GeneticBackTestHistory
 from module.genetic.models.back_test import get_candle_cls
 from module.rate.models import CandleEurUsdM5Rate
 from module.rate.models.base import MultiCandles
-from module.rate.models.eur import Granularity, CandleEurUsdH1Rate, CandleEurUsdM1Rate
+from module.rate.models.eur import CandleEurUsdH1Rate, CandleEurUsdM1Rate
 from module.title.models.title import TitleSettings
 from module.oanda.models.candle import OandaCandle
 from utils import get_password

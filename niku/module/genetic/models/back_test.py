@@ -6,10 +6,7 @@ import pytz
 from .history import GeneticHistory
 from django.db import models, OperationalError
 import time
-from module.rate import CurrencyPair
-from module.rate.consts import CURRENCY_PAIR_TO_TABLE
-from module.rate.models.eur import Granularity, CandleEurUsdH1Rate
-from utils import ObjectField
+from module.rate import CurrencyPair, Granularity
 
 
 class GeneticBackTestHistory(models.Model):
@@ -166,4 +163,5 @@ def get_candle_cls(currency_pair, granularity):
     :param granularity: Granularity
     :rtype : Rate
     """
-    return CURRENCY_PAIR_TO_TABLE.get(currency_pair).get(granularity)
+    from module.rate import CurrencyPairToTable
+    return CurrencyPairToTable.get_table(currency_pair, granularity)

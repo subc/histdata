@@ -59,21 +59,20 @@ def loop(ai, candles, market):
 
 
 class Command(CustomBaseCommand):
+    suffix = None
+
     def handle(self, *args, **options):
         while True:
             self.run()
-
-    @cached_property
-    def suffix(self):
-        return ':{}'.format(datetime.datetime.now())
 
     def run(self):
         # h1_candles = CandleEurUsdH1Rate.get_all()
         # candles = CandleEurUsdH1Rate.get_test_data2()[:100]
 
         # 初期AI集団生成
+        self.suffix = ':{}'.format(datetime.datetime.now())
         generation = 0
-        size = 10  # 集団サイズ
+        size = 20  # 集団サイズ
         ai_mother = AI(AiBaseCase1, self.suffix, generation)
         ai_group = ai_mother.initial_create(20)
         proc = 8  # 並列処理数 コア数以上にしても無駄
@@ -107,11 +106,11 @@ class Command(CustomBaseCommand):
                 generation += 100000
             if generation >= 30 and max_profit < 150 * 10000:
                 generation += 100000
-            if generation >= 40 and max_profit < 250 * 10000:
+            if generation >= 40 and max_profit < 200 * 10000:
                 generation += 100000
-            if generation >= 60 and max_profit < 350 * 10000:
+            if generation >= 60 and max_profit < 250 * 10000:
                 generation += 100000
-            if generation >= 80 and max_profit < 420 * 10000:
+            if generation >= 80 and max_profit < 300 * 10000:
                 generation += 100000
 
             # 選択と交叉
