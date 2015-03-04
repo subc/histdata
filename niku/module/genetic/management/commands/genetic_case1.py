@@ -14,6 +14,7 @@ from module.genetic.models.case1 import LogicPatternCase1, AiBaseCase1
 from module.genetic.models.history import GeneticHistory
 from module.genetic.models.parameter import OrderType
 from module.rate.models import CandleEurUsdH1Rate, CandleEurUsdDRate
+from module.rate.models.eur import EurUsdMA
 from utils.command import CustomBaseCommand
 import copy
 import multiprocessing as mp
@@ -30,6 +31,12 @@ def benchmark(ai):
     print "start benchmark"
     candles = cache.get('candles')
     market = Market(ai.generation)
+
+    for c in candles:
+        if c.ma:
+            print c.ma, c.ma.h1, c.ma.d75
+        else:
+            print "N/A c.ma"
 
     loop(ai, candles, market)
 
@@ -62,13 +69,18 @@ class Command(CustomBaseCommand):
     suffix = None
 
     def handle(self, *args, **options):
+        # キャンドルデータをキャッシュに設置
+        candles = CandleEurUsdH1Rate.get_test_data()
+        ma = EurUsdMA.get_all()
+        mad = {m.start_at: m for m in ma}
+        for candle in candles:
+            candle.set_ma(mad.get(candle.start_at))
+        cache.set('candles', candles, timeout=7200000)
+
         while True:
             self.run()
 
     def run(self):
-        # h1_candles = CandleEurUsdH1Rate.get_all()
-        # candles = CandleEurUsdH1Rate.get_test_data2()[:100]
-
         # 初期AI集団生成
         self.suffix = ':{}'.format(datetime.datetime.now())
         generation = 0
@@ -76,12 +88,6 @@ class Command(CustomBaseCommand):
         ai_mother = AI(AiBaseCase1, self.suffix, generation)
         ai_group = ai_mother.initial_create(20)
         proc = 8  # 並列処理数 コア数以上にしても無駄
-
-        # 計算元データを計算
-        candles = CandleEurUsdH1Rate.get_test_data()
-        cache.set('candles', candles, timeout=72000)
-
-        # re_connection()
 
         # 遺伝的アルゴリズムで進化させる
         while generation <= 100:

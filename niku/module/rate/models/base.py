@@ -19,6 +19,7 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
     start_at = models.DateTimeField(db_index=True, help_text='開始時間')
     interval = models.PositiveIntegerField(default=0)
     _granularity = None
+    _ma = None
 
     CACHE_BETWEEN = {}
 
@@ -124,6 +125,20 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
         :rtype : list of CurrencyCandleBase
         """
         return cls.objects.filter().order_by('start_at')[:limit]
+
+    def set_ma(self, ma):
+        """
+        MovingAverageを設定する
+        :param ma: MovingAverageBase
+        """
+        self._ma = ma
+
+    @property
+    def ma(self):
+        """
+        :rtype : MovingAverageBase
+        """
+        return self._ma
 
     @property
     def granularity(self):
