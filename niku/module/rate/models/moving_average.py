@@ -3,12 +3,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
 from django.db import models
-from django.utils.functional import cached_property
-import pytz
-from .candle_type import CandleTypeMixin
+from .test_data import TestDataMixin
 
 
-class MovingAverageBase(models.Model):
+class MovingAverageBase(TestDataMixin, models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     start_at = models.DateTimeField(db_index=True, help_text='開始時間')
@@ -20,6 +18,17 @@ class MovingAverageBase(models.Model):
     d25 = models.FloatField(null=True, default=None)
     d75 = models.FloatField(null=True, default=None)
     d200 = models.FloatField(null=True, default=None)
+
+    KEYS = [
+        'h1',
+        'h4',
+        'h24',
+        'd5',
+        'd10',
+        'd25',
+        'd75',
+        'd200',
+    ]
 
     class Meta(object):
         app_label = 'rate'

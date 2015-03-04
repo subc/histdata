@@ -51,6 +51,10 @@ class AI(object):
         return self.params.get('AI_LOGIC')
 
     @property
+    def ai_id(self):
+        return self.params.get('AI_ID')
+
+    @property
     def market(self):
         return self.params.get('MARKET')
 

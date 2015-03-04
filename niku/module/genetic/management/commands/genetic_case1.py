@@ -10,6 +10,7 @@ import numpy
 import time
 import ujson
 import requests
+import sys
 from module.genetic.models.case1 import LogicPatternCase1, AiBaseCase1
 from module.genetic.models.history import GeneticHistory
 from module.genetic.models.parameter import OrderType
@@ -24,6 +25,7 @@ from django.core.cache import cache
 from line_profiler import LineProfiler
 from module.ai.models import AI1EurUsd as AI
 from module.ai.models import AI2EurUsd as AI
+from module.ai.models import AI3EurUsd as AI
 
 
 @timeit
@@ -31,13 +33,6 @@ def benchmark(ai):
     print "start benchmark"
     candles = cache.get('candles')
     market = Market(ai.generation)
-
-    for c in candles:
-        if c.ma:
-            print c.ma, c.ma.h1, c.ma.d75
-        else:
-            print "N/A c.ma"
-
     loop(ai, candles, market)
 
     # 確定処理
@@ -49,6 +44,7 @@ def benchmark(ai):
                                                                   len(market.open_positions),
                                                                   len(market.positions)))
     print('SCORE-MAX:{} SCORE-MIN:{}'.format(market.profit_max, market.profit_min))
+    print('AI KEYS:{}   [{}個超えたら危険]'.format(len(ai.ai_dict), len(market.positions) / 10))
     return ai
 
 
@@ -71,7 +67,7 @@ class Command(CustomBaseCommand):
     def handle(self, *args, **options):
         # キャンドルデータをキャッシュに設置
         candles = CandleEurUsdH1Rate.get_test_data()
-        ma = EurUsdMA.get_all()
+        ma = EurUsdMA.get_test_data()
         mad = {m.start_at: m for m in ma}
         for candle in candles:
             candle.set_ma(mad.get(candle.start_at))
@@ -86,7 +82,7 @@ class Command(CustomBaseCommand):
         generation = 0
         size = 20  # 集団サイズ
         ai_mother = AI(AiBaseCase1, self.suffix, generation)
-        ai_group = ai_mother.initial_create(20)
+        ai_group = ai_mother.initial_create(1)
         proc = 8  # 並列処理数 コア数以上にしても無駄
 
         # 遺伝的アルゴリズムで進化させる
@@ -94,6 +90,22 @@ class Command(CustomBaseCommand):
             # 評価
             generation += 1
             [ai.normalization() for ai in ai_group]
+            #
+            # ai = benchmark(ai_group[0])
+            # print "~~~~~~~~~~~~~~~~~~~~~~~"
+            # print "base"
+            # print "~~~~~~~~~~~~~~~~~~~~~~~"
+            # print ai.ai_dict
+            #
+            # print "~~~~~~~~~~~~~~~~~~~~~~~"
+            # print "child"
+            # print "~~~~~~~~~~~~~~~~~~~~~~~"
+            # ai_group = self.cross_over(10, [ai, ai])
+            # for ai in ai_group:
+            #     print ai.ai_dict
+            #     print "~~~~~~~~~~~~~~~~~~~~~~~"
+            #
+            # raise
 
             pool = mp.Pool(proc)
             ai_group = pool.map(benchmark, ai_group)
@@ -203,6 +215,7 @@ class Command(CustomBaseCommand):
         :param value_b: int or list
         :return: int or list
         """
+        # int
         if type(value_a) == type(value_b) == int:
             if random.randint(1, 100) == 2:
                 # 突然変異
@@ -214,6 +227,8 @@ class Command(CustomBaseCommand):
             else:
                 # 何もしない
                 return value_a, value_b
+
+        # list
         if type(value_a) == type(value_b) == list:
             list_a = []
             list_b = []
@@ -225,6 +240,19 @@ class Command(CustomBaseCommand):
                 list_b.append(_b)
             return list_a, list_b
 
+        # dict
+        if type(value_a) == type(value_b) == dict:
+            dict_a = {}
+            dict_b = {}
+            _value_a = copy.deepcopy(value_a)
+            _value_b = copy.deepcopy(value_b)
+            for key in _value_a:
+                _a, _b = self._cross_value(_value_a[key], _value_b[key], _max, _min)
+                dict_a[key] = _a
+                dict_b[key] = _b
+            return dict_a, dict_b
+
+        # OrderType
         if type(value_a) == type(value_b) == OrderType:
             if random.randint(1, 100) == 2:
                 # 突然変異
@@ -235,7 +263,15 @@ class Command(CustomBaseCommand):
             else:
                 # 何もしない
                 return value_a, value_b
-        raise ValueError
+
+        # どちらかがNone
+        if value_a is None or value_b is None:
+            if value_a is None:
+                return value_b, value_b
+            if value_b is None:
+                return value_a, value_a
+
+        raise ValueError, "{}[type:{}]:{}[type:{}]".format(value_a, type(value_a), value_b, type(value_b))
 
 
 class Market(object):
@@ -448,9 +484,14 @@ def history_write(ai_group):
     HTTP通信で書き込む
     """
     url_base = 'http://{}/genetic/history/'
+
     payload = ujson.dumps({
         'ai_group': [ai.to_dict() for ai in ai_group],
     })
+    print "~~~~~~~~~~~~~~~~~~~~~~~~"
+    print payload
+    print "~~~~~~~~~~~~~~~~~~~~~~~~"
+    print "size:{}".format(sys.getsizeof(payload))
     response = requests_post_api(url_base, payload=payload)
     assert response.status_code == 200, response.text
 

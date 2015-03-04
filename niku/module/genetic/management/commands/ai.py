@@ -43,7 +43,7 @@ class Command(BaseCommand):
         print 'AI LOGIC'
         print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
         print history.ai
-        print history.ai.get('AI_LOGIC')
+        print 'AI_KEYS:{}'.format(len(history.ai))
 
         print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
         print 'MARKET'

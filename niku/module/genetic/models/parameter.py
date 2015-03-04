@@ -31,6 +31,12 @@ class OrderType(Enum):
                 return value
         raise ValueError
 
+    @classmethod
+    def get_random(cls):
+        _all = list(cls)
+        random.shuffle(_all)
+        return _all[0]
+
     def order_reverse(self):
         """
         注文方向を反転させる

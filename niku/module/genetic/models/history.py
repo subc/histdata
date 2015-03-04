@@ -30,8 +30,25 @@ class GeneticHistory(models.Model):
 
     @classmethod
     def bulk_create_by_ai(cls, ai_group):
-        objects = [cls.get_by_ai(ai) for ai in ai_group]
-        cls.objects.bulk_create(objects)
+        # bulkで作ろうとしたら、2006エラーでるので１個づつ作る
+        for ai in ai_group:
+            cls.create_from_ai(ai)
+        #
+        # objects = [cls.create_from_ai(ai) for ai in ai_group]
+        # for object in objects:
+        #     object.save()
+        # cls.objects.bulk_create(objects)
+
+    @classmethod
+    def create_from_ai(cls, ai):
+        return cls.objects.create(name=ai.name,
+                                  generation=ai.generation,
+                                  profit=ai.profit,
+                                  profit_max=ai.profit_max,
+                                  profit_min=ai.profit_min,
+                                  ai=ai.ai_logic,
+                                  ai_id=ai.ai_id,
+                                  currency_pair=ai.currency_pair)
 
     @classmethod
     def get_by_ai(cls, ai):

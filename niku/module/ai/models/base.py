@@ -19,6 +19,7 @@ class AIInterFace(object):
     currency_pair = None
     ai_dict = {}
     genetic_history_id = None
+    ai_id = 0
 
     def __init__(self, ai_dict, suffix, generation):
         self.ai_dict = ai_dict
@@ -60,7 +61,7 @@ class AIInterFace(object):
         # 既にポジション持ち過ぎ
         if len(market.open_positions) >= self.LIMIT_POSITION:
             return market
-        order_ai = self.get_order_ai(market, prev_rates, open_bid)
+        order_ai = self.get_order_ai(market, prev_rates, open_bid, start_at)
         if not order_ai:
             return market
 
@@ -68,11 +69,12 @@ class AIInterFace(object):
             market.order(open_bid, MarketOrder(open_bid, self.base_tick, order_ai), start_at)
         return market
 
-    def get_order_ai(self, market, prev_rates, open_bid):
+    def get_order_ai(self, market, prev_rates, open_bid, start_at):
         """
         :param market: Market
         :param prev_rates: list of Rate
-        :param open_bid: int
+        :param open_bid: float
+        :param start_at: datetime
         :rtype : OrderAI
         """
         raise NotImplemented
@@ -119,7 +121,8 @@ class AIInterFace(object):
             'PROFIT_MAX': self.profit_max,
             'PROFIT_MIN': self.profit_min,
             'AI_LOGIC': self._ai_to_dict(),
-            'MARKET': self.market.to_dict(),
+            'AI_ID': self.ai_id,
+            # 'MARKET': self.market.to_dict(),
             'CURRENCY_PAIR': self.currency_pair.value,
             'END_AT': text_type(self.end_at),
             'TRADE_COUNT': len(self.market.positions),
@@ -231,7 +234,7 @@ class AI1EurUsd(EurUsdMixin, AIInterFace):
         self.normalization()
         return self
 
-    def get_order_ai(self, market, rates):
+    def get_order_ai(self, market, prev_rates, open_bid, start_at):
         """
         条件に沿って注文する
         :param market: Market
@@ -363,7 +366,7 @@ class AI2EurUsd(AI1EurUsd):
                     ai[key][index] = self.LIMIT_LOWER_TICK
         self.ai_dict = ai
 
-    def get_order_ai(self, market, prev_rates, open_bid):
+    def get_order_ai(self, market, prev_rates, open_bid, start_at):
         """
         条件に沿って注文する
         :param market: Market
@@ -415,6 +418,86 @@ class AI2EurUsd(AI1EurUsd):
         return self.ai_dict['depth']
 
 
+class AI3EurUsd(AI2EurUsd):
+    """
+    MAを見て判断
+    """
+    ai_id = 3
+    MA_KEYS = [
+        # 'h1',
+        'h4',
+        'h24',
+        # 'd5',
+        # 'd10',
+        'd25',
+        # 'd75',
+        # 'd200',
+    ]
+
+    def _dispatch(self):
+        if 'depth' not in self.ai_dict:
+            self.ai_dict['depth'] = 10
+        if 'base_tick_ma' not in self.ai_dict:
+            self.ai_dict['base_tick_ma'] = 50
+            self.ai_dict['base_tick_ma_dict'] = {
+                'h4': 50,
+                'h24': 70,
+                'd25': 200,
+            }
+
+    def normalization(self):
+        pass
+
+    def get_order_ai(self, market, prev_rates, open_bid, start_at):
+        """
+        条件に沿って注文する
+        :param market: Market
+        :param prev_rates: list of Rate
+        :param open_bid: float
+        :param start_at: datetime
+        :rtype market: Market
+        """
+        rates = convert_rate(prev_rates, self.RATE_SPAN)
+        rate_type = self.get_ratetype(open_bid, rates)
+
+        # rateがNoneのとき注文しない
+        if rate_type is None:
+            return None
+
+        if rate_type in self.ai_dict:
+            order_type, limit, stop_limit = self.ai_dict.get(rate_type)
+        else:
+            # AIがない場合はデフォルトデータをロード
+            self.ai_dict[rate_type] = [OrderType.get_random(), 50, 50]
+            order_type, limit, stop_limit = self.ai_dict.get(rate_type)
+        return OrderAI(order_type, limit, stop_limit)
+
+    def get_ratetype(self, open_bid, rates):
+        if rates[-1].ma is None:
+            # print "rates[-1].ma is None"
+            return None
+
+        # keyの生成
+        l = []
+        ma = rates[-1].ma
+        for key in self.MA_KEYS:
+            ma_bid = getattr(ma, key)
+            if ma_bid is None:
+                return None
+
+            l.append(str(get_ma_type(open_bid, ma_bid, self.base_tick_ma_dict.get(key), rates[-1])))
+        key_value = ":".join(l)
+        return 'MA:{}'.format(key_value)
+
+    @property
+    def base_tick_ma(self):
+        return self.ai_dict['base_tick_ma']
+
+    @property
+    def base_tick_ma_dict(self):
+        return self.ai_dict['base_tick_ma_dict']
+
+
 def convert_rate(rates, g):
     """
     キャンドル足を対象のスパンのキャンドル足に変換する
@@ -442,3 +525,18 @@ def convert_rate(rates, g):
         r.append(MultiCandles(rates[len(rates) - count - index * count:len(rates) - index * count], g))
 
     return list(reversed(r))
+
+
+def get_ma_type(open_bid, ma_bid, base_tick_ma, prev_rate):
+    """
+    ma値からタイプを返却
+    100を基準に上下
+    :param open_bid: float
+    :param ma_bid: float
+    :param base_tick_ma: float
+    :param prev_rate: Rate
+    :rtype : int
+    """
+    tick = (open_bid - ma_bid) / prev_rate.tick
+    ans = 100 + int(tick / base_tick_ma)
+    return ans

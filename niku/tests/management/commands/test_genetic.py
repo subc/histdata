@@ -16,19 +16,19 @@ class Command(BaseCommand):
         self.run()
 
     def run(self):
-        # url_base = 'http://{}/genetic/history/'
-        # payload = ujson.dumps({
-        #     'ai_group': [AI().to_dict() for x in xrange(10)],
-        # })
-        # response = requests_api(url_base, payload=payload)
-        # assert response.status_code == 200, response.text
-
-        url_base = 'http://{}/genetic/history/elite'
+        url_base = 'http://{}/genetic/history/'
         payload = ujson.dumps({
-            'genetic_id': 179,
+            'ai_group': [AI().to_dict() for x in xrange(10)],
         })
         response = requests_api(url_base, payload=payload)
         assert response.status_code == 200, response.text
+
+        # url_base = 'http://{}/genetic/history/back_test'
+        # payload = ujson.dumps({
+        #     'genetic_id': 179,
+        # })
+        # response = requests_api(url_base, payload=payload)
+        # assert response.status_code == 200, response.text
 
 
 def requests_api(url_base, payload=None):
@@ -48,14 +48,30 @@ class AI(object):
     profit = random.randint(1, 2000),
     profit_max = 10000,
     profit_min = 100,
-    ai = {x: x ^ 2 for x in xrange(10)}
+    # ai = {x: x ^ 2 for x in xrange(10)}
+    ai = {'NAME': 1,
+          'GENERATION': 1,
+          'PROFIT': 1,
+          'PROFIT_MAX': 1,
+          'PROFIT_MIN': 1,
+          'AI_LOGIC': {},
+          'MARKET': 1,
+          'CURRENCY_PAIR': 1,
+          'END_AT': 1,
+          'TRADE_COUNT': 1,
+          'GENETIC_HISTORY_ID': 0,
+    }
 
     def to_dict(self):
-        return {
-            'name': self.name,
-            'generation': self.generation,
-            'profit': self.profit,
-            'profit_max': self.profit_max,
-            'profit_min': self.profit_min,
-            'ai': self.ai,
+        return {'NAME': 1,
+                'GENERATION': 1,
+                'PROFIT': 1,
+                'PROFIT_MAX': 1,
+                'PROFIT_MIN': 1,
+                'AI_LOGIC': {},
+                'MARKET': 1,
+                'CURRENCY_PAIR': 1,
+                'END_AT': 1,
+                'TRADE_COUNT': 1,
+                'GENETIC_HISTORY_ID': 0,
         }

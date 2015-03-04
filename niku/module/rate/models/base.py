@@ -197,3 +197,7 @@ class MultiCandles(CandleTypeMixin):
     @property
     def granularity(self):
         return self._granularity
+
+    @property
+    def ma(self):
+        return self.rates[-1].ma

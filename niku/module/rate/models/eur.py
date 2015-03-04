@@ -5,21 +5,18 @@ import datetime
 from enum import Enum
 import pytz
 from .base import CurrencyCandleBase
+from .test_data import TestDataMixin
 from .moving_average import MovingAverageBase
 from ..consts import Granularity
 
 
-class CandleEurUsdBase(CurrencyCandleBase):
+class CandleEurUsdBase(TestDataMixin, CurrencyCandleBase):
     tick = 0.0001
 
     class Meta(object):
         app_label = 'rate'
         abstract = True
         unique_together = ('start_at',)
-
-    @classmethod
-    def get_test_data(cls):
-        return list(cls.objects.filter(start_at__gte=datetime.datetime(2010, 1, 1, tzinfo=pytz.utc)).order_by('start_at'))
 
 
 class CandleEurUsdM1Rate(CandleEurUsdBase):
