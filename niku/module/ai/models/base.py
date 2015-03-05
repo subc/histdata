@@ -523,13 +523,33 @@ class AI5EurUsd(MAMixin, EurUsdMixin, AIInterFace):
     MUTATION_MIN = 10
 
     def _dispatch(self):
+        if 'base_tick' not in self.ai_dict:
+            self.ai_dict['base_tick'] = 20
         if 'depth' not in self.ai_dict:
             self.ai_dict['depth'] = 24
         if 'base_tick_ma' not in self.ai_dict:
             self.ai_dict['base_tick_ma'] = 50
 
     def normalization(self):
-        pass
+        """
+        過剰最適化するAIの進化に制限を儲ける
+        利確, 損切り 800pip先とかを禁止
+        """
+        ai = copy.deepcopy(self.ai_dict)
+        for key in ai:
+            if type(ai[key]) == list:
+                for index in [1, 2]:
+                    ai[key][index] = self.adjust(ai[key][index])
+                continue
+            ai[key] = self.adjust(ai[key])
+        self.ai_dict = ai
+
+    def adjust(self, value):
+        if self.MUTATION_MAX < value:
+            return self.MUTATION_MAX
+        if self.MUTATION_MIN > value:
+            return self.MUTATION_MIN
+        return value
 
     def set_start_data(self):
         return self
