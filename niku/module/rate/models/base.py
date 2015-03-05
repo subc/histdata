@@ -163,6 +163,9 @@ class MultiCandles(CandleTypeMixin):
     _granularity = None
 
     def __init__(self, rates, granularity):
+        if not rates:
+            raise ValueError
+
         self.rates = rates
         self._granularity = granularity
 

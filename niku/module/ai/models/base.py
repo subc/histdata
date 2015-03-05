@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import copy
 import random
 from line_profiler import LineProfiler
+from .mixin import MAMixin
 from module.rate import CurrencyPair, Granularity
 from module.genetic.models.parameter import OrderType
 from .market_order import MarketOrder, OrderAI
@@ -180,8 +181,6 @@ class AIInterFace(object):
 
 
 class AI1EurUsd(EurUsdMixin, AIInterFace):
-    currency_pair = CurrencyPair.EUR_USD
-
     # 進化乱数
     MUTATION_MAX = 60
     MUTATION_MIN = 10
@@ -301,17 +300,11 @@ class AI2EurUsd(AI1EurUsd):
         """
         ai = {}
         for key in history.ai:
-            if key == 'base_tick':
-                ai[key] = history.ai[key]
-                continue
-            if key == 'depth':
-                ai[key] = history.ai[key]
-                continue
             if type(history.ai[key]) == list:
                 l = history.ai[key]
-                ai[int(key)] = [OrderType(l[0]), l[1], l[2]]
+                ai[key] = [OrderType(l[0]), l[1], l[2]]
                 continue
-            raise ValueError
+            ai[str(key)] = history.ai[key]
         ai = cls(ai, history.name, history.generation)
         ai.pk = history.id
         return ai
@@ -427,7 +420,7 @@ class AI3EurUsd(AI2EurUsd):
         # 'h1',
         'h4',
         'h24',
-        # 'd5',
+        'd5',
         # 'd10',
         'd25',
         # 'd75',
@@ -439,11 +432,6 @@ class AI3EurUsd(AI2EurUsd):
             self.ai_dict['depth'] = 10
         if 'base_tick_ma' not in self.ai_dict:
             self.ai_dict['base_tick_ma'] = 50
-            self.ai_dict['base_tick_ma_dict'] = {
-                'h4': 50,
-                'h24': 70,
-                'd25': 200,
-            }
 
     def normalization(self):
         pass
@@ -458,6 +446,10 @@ class AI3EurUsd(AI2EurUsd):
         :rtype market: Market
         """
         rates = convert_rate(prev_rates, self.RATE_SPAN)
+
+        if not rates:
+            return None
+
         rate_type = self.get_ratetype(open_bid, rates)
 
         # rateがNoneのとき注文しない
@@ -474,7 +466,6 @@ class AI3EurUsd(AI2EurUsd):
 
     def get_ratetype(self, open_bid, rates):
         if rates[-1].ma is None:
-            # print "rates[-1].ma is None"
             return None
 
         # keyの生成
@@ -485,23 +476,125 @@ class AI3EurUsd(AI2EurUsd):
             if ma_bid is None:
                 return None
 
-            l.append(str(get_ma_type(open_bid, ma_bid, self.base_tick_ma_dict.get(key), rates[-1])))
+            l.append(str(get_ma_type(open_bid, ma_bid, self.base_tick_ma, rates[-1])))
         key_value = ":".join(l)
-        return 'MA:{}'.format(key_value)
+        return str('MA:{}'.format(key_value))
 
     @property
     def base_tick_ma(self):
         return self.ai_dict['base_tick_ma']
 
+
+class AI4EurUsd(AI3EurUsd):
+    """
+    MAを見て判断
+    """
+    ai_id = 4
+    MA_KEYS = [
+        # 'h1',
+        'h4',
+        'h24',
+        'd5',
+        # 'd10',
+        'd25',
+        # 'd75',
+        # 'd200',
+    ]
+
+
+class AI5EurUsd(MAMixin, EurUsdMixin, AIInterFace):
+    """
+    MAを見て判断
+    """
+    # 対象とするローソク足のスパン
+    RATE_SPAN = Granularity.H1
+
+    ai_id = 5
+    MA_KEYS = [
+        # 'h1',
+        # 'h4',
+        'h24',
+        'd5',
+        # 'd10',
+        # 'd25',
+        # 'd75',
+        # 'd200',
+    ]
+
+    def _dispatch(self):
+        if 'depth' not in self.ai_dict:
+            self.ai_dict['depth'] = 10
+        if 'base_tick_ma' not in self.ai_dict:
+            self.ai_dict['base_tick_ma'] = 50
+
+    def get_order_ai(self, market, prev_rates, open_bid, start_at):
+        """
+        条件に沿って注文する
+        :param market: Market
+        :param prev_rates: list of Rate
+        :param open_bid: float
+        :param start_at: datetime
+        :rtype market: Market
+        """
+        rates = convert_rate(prev_rates, self.RATE_SPAN)
+
+        if not rates:
+            return None
+
+        if len(rates) - 1 < self.depth:
+            return None
+
+
+        rate_type = self.get_ratetype(open_bid, rates)
+
+        # rateがNoneのとき注文しない
+        if rate_type is None:
+            print "rate type is None"
+            return None
+
+        if rate_type in self.ai_dict:
+            print "KEY HIT:{}".format(rate_type)
+            order_type, limit, stop_limit = self.ai_dict.get(rate_type)
+        else:
+            print "KEY NOT HIT:{}".format(rate_type)
+            # AIがない場合はデフォルトデータをロード
+            self.ai_dict[rate_type] = [OrderType.get_random(), random.randint(15, 50), random.randint(15, 50)]
+            order_type, limit, stop_limit = self.ai_dict.get(rate_type)
+        return OrderAI(order_type, limit, stop_limit)
+
+    def get_ratetype(self, open_bid, rates):
+        if rates[-1].ma is None:
+            return None
+
+        # key_maの生成
+        l = []
+        ma = rates[-1].ma
+        for key in self.MA_KEYS:
+            ma_bid = getattr(ma, key)
+            if ma_bid is None:
+                return None
+
+            l.append(str(get_ma_type(open_bid, ma_bid, self.base_tick_ma, rates[-1])))
+        key_value = ":".join(l)
+        key_ma = str('MA:{}'.format(key_value))
+
+        # key_candleの生成
+        c = len(rates)
+        prev_rates = rates[c - self.depth:c]
+        assert len(prev_rates) == self.depth, (len(prev_rates), self.depth)
+        prev_rate = MultiCandles(prev_rates, Granularity.UNKNOWN)
+        key_candle = prev_rate.get_candle_type(self.base_tick)
+        return "CANDLE:{}:{}".format(key_candle, key_ma)
+
     @property
-    def base_tick_ma_dict(self):
-        return self.ai_dict['base_tick_ma_dict']
+    def depth(self):
+        return self.ai_dict['depth']
 
 
 def convert_rate(rates, g):
     """
     キャンドル足を対象のスパンのキャンドル足に変換する
-    1時間足3本 >> 5分足36本とか
+    5分足36本から1時間足3本とか
     :param rates: list of Rate
     :param g: Granularity
     :rtype: list of Rate
@@ -522,7 +615,8 @@ def convert_rate(rates, g):
     limit = 100
     range_max = limit if count * limit < len(rates) else int(len(rates) / count)
     for index in xrange(0, range_max):
-        r.append(MultiCandles(rates[len(rates) - count - index * count:len(rates) - index * count], g))
+        target_rates = list(reversed(rates[len(rates) - count - index * count:len(rates) - index * count]))
+        r.append(MultiCandles(target_rates, g))
 
     return list(reversed(r))
 
@@ -538,5 +632,46 @@ def get_ma_type(open_bid, ma_bid, base_tick_ma, prev_rate):
     :rtype : int
     """
     tick = (open_bid - ma_bid) / prev_rate.tick
-    ans = 100 + int(tick / base_tick_ma)
+    ans = 100 + get_tick_category(tick, base_tick_ma)
     return ans
+
+
+def get_tick_category(tick, base_tick):
+    """
+    base_tickが50のとき
+
+    1 - 50: RETURN 1
+    51 - 200: RETURN 2
+    201 - 450: RETURN 3
+    451 - 800: RETURN 4
+    801 - 1250: RETURN 5
+    -50 - 0: RETURN 0
+    -200 - -51: RETURN -1
+    :param tick: int
+    :param base_tick: int
+    :return:
+    """
+    result = 1
+    _tick = tick
+    is_minus = False
+    if tick < 0:
+        _tick = tick * -1
+        result = 0
+        is_minus = True
+    prev_calc_rate = 0
+    ct = 1
+    for x in range(1000):
+        calc_rate = base_tick * ct + prev_calc_rate
+        if calc_rate >= _tick:
+            if result > 5:
+                return 5
+            if result < -4:
+                return -4
+            return result
+        ct += 2
+        if is_minus:
+            result -= 1
+        else:
+            result += 1
+        prev_calc_rate = calc_rate
+    raise ValueError

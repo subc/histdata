@@ -26,7 +26,13 @@ class CurrencyPair(Enum):
 
 
 class CurrencyPairToTable(object):
-    def get_table(self, currency_pair, granularity):
+    @classmethod
+    def get_table(cls, currency_pair, granularity):
+        """
+        :param currency_pair: CurrencyPair
+        :param granularity: Granularity
+        :rtype : CurrencyCandleBase
+        """
         from .models.eur import CandleEurUsdM1Rate, CandleEurUsdDRate, CandleEurUsdH1Rate, CandleEurUsdM5Rate
         CURRENCY_PAIR_TO_TABLE = {
             CurrencyPair.EUR_USD: {

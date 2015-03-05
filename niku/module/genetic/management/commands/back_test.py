@@ -15,7 +15,7 @@ from module.genetic.models import GeneticHistory, GeneticBackTestHistory
 from module.genetic.models.back_test import get_candle_cls
 from module.rate.models import CandleEurUsdM5Rate
 from module.rate.models.base import MultiCandles
-from module.rate.models.eur import CandleEurUsdH1Rate, CandleEurUsdM1Rate
+from module.rate.models.eur import CandleEurUsdH1Rate, CandleEurUsdM1Rate, EurUsdMA
 from module.title.models.title import TitleSettings
 from module.oanda.models.candle import OandaCandle
 from utils import get_password
@@ -37,10 +37,18 @@ class Command(BaseCommand):
 
     def run(self):
         for history in GeneticBackTestHistory.get_active():
-            ai = AI2EurUsd.get_ai(history.history)
-            candles = list(history.candle_cls.by_start_at(history.test_start_at))
+            # AI LOAD
+            ai = history.ai
             print '~~~~~~~~~~~~~~~~~~~~~~~'
-            print 'START-AT:{}'.format(history.test_start_at)
+            print '[AI:{} GENETIC:{}]START-AT:{}'.format(ai.ai_id, history.genetic_id, history.test_start_at)
+
+            # CANDLES
+            candles = list(history.candle_cls.by_start_at(history.test_start_at))
+            ma = EurUsdMA.by_start_at(history.test_start_at)
+            mad = {m.start_at: m for m in ma}
+            for candle in candles:
+                candle.set_ma(mad.get(candle.start_at))
+
             ai = benchmark(ai, candles)
             ai.genetic_history_id = history.id
             history_back_test_write([ai])
@@ -51,6 +59,10 @@ def benchmark(ai, candles):
     ai = loop(ai, candles, market)
     rate = candles[-1]
     ai.update_market(market, candles[-1])
+
+    # 取引回数がゼロのときはエラーで落とす
+    if len(market.positions) == 0:
+        raise ValueError, 'TRADE-COUNT IS ZERO'
 
     print('[ID:{}]SCORE:{} OPEN-SCORE:{} ポジション数:{} TRADE-COUNT:{}'.format(ai.generation,
                                                                           market.profit_summary(rate),

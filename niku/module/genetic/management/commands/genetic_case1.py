@@ -15,7 +15,7 @@ from module.genetic.models.case1 import LogicPatternCase1, AiBaseCase1
 from module.genetic.models.history import GeneticHistory
 from module.genetic.models.parameter import OrderType
 from module.rate.models import CandleEurUsdH1Rate, CandleEurUsdDRate
-from module.rate.models.eur import EurUsdMA
+from module.rate.models.eur import EurUsdMA, CandleEurUsdM5Rate
 from utils.command import CustomBaseCommand
 import copy
 import multiprocessing as mp
@@ -26,6 +26,8 @@ from line_profiler import LineProfiler
 from module.ai.models import AI1EurUsd as AI
 from module.ai.models import AI2EurUsd as AI
 from module.ai.models import AI3EurUsd as AI
+from module.ai.models import AI4EurUsd as AI
+from module.ai.models import AI5EurUsd as AI
 
 
 @timeit
@@ -44,7 +46,7 @@ def benchmark(ai):
                                                                   len(market.open_positions),
                                                                   len(market.positions)))
     print('SCORE-MAX:{} SCORE-MIN:{}'.format(market.profit_max, market.profit_min))
-    print('AI KEYS:{}   [{}個超えたら危険]'.format(len(ai.ai_dict), len(market.positions) / 10))
+    print('AI KEYS:{}   [{}個超えたら危険]'.format(len(ai.ai_dict), len(market.positions) / 20))
     return ai
 
 
@@ -67,6 +69,7 @@ class Command(CustomBaseCommand):
     def handle(self, *args, **options):
         # キャンドルデータをキャッシュに設置
         candles = CandleEurUsdH1Rate.get_test_data()
+        # candles = CandleEurUsdM5Rate.get_test_data2()
         ma = EurUsdMA.get_test_data()
         mad = {m.start_at: m for m in ma}
         for candle in candles:
@@ -81,12 +84,12 @@ class Command(CustomBaseCommand):
         self.suffix = ':{}'.format(datetime.datetime.now())
         generation = 0
         size = 20  # 集団サイズ
-        ai_mother = AI(AiBaseCase1, self.suffix, generation)
-        ai_group = ai_mother.initial_create(1)
+        ai_mother = AI({}, self.suffix, generation)
+        ai_group = ai_mother.initial_create(20)
         proc = 8  # 並列処理数 コア数以上にしても無駄
 
         # 遺伝的アルゴリズムで進化させる
-        while generation <= 100:
+        while generation <= 300:
             # 評価
             generation += 1
             [ai.normalization() for ai in ai_group]
@@ -118,17 +121,32 @@ class Command(CustomBaseCommand):
                 print "取引平均回数が2000を下回ったので自殺:count:{}".format(trade_count)
                 generation += 100000
             # 最高値制限
+            # if generation >= 10 and max_profit < 0:
+            #     generation += 100000
+            # if generation >= 20 and max_profit < 100 * 10000:
+            #     generation += 100000
+            # if generation >= 30 and max_profit < 150 * 10000:
+            #     generation += 100000
+            # if generation >= 40 and max_profit < 200 * 10000:
+            #     generation += 100000
+            # if generation >= 60 and max_profit < 250 * 10000:
+            #     generation += 100000
+            # if generation >= 80 and max_profit < 300 * 10000:
+            #     generation += 100000
+
             if generation >= 10 and max_profit < 0:
                 generation += 100000
-            if generation >= 20 and max_profit < 100 * 10000:
+            if generation >= 20 and max_profit < 50 * 10000:
                 generation += 100000
-            if generation >= 30 and max_profit < 150 * 10000:
+            if generation >= 30 and max_profit < 70 * 10000:
                 generation += 100000
-            if generation >= 40 and max_profit < 200 * 10000:
+            if generation >= 40 and max_profit < 150 * 10000:
                 generation += 100000
             if generation >= 60 and max_profit < 250 * 10000:
                 generation += 100000
             if generation >= 80 and max_profit < 300 * 10000:
+                generation += 100000
+            if generation >= 100 and max_profit < 350 * 10000:
                 generation += 100000
 
             # 選択と交叉

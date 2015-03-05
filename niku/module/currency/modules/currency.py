@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from module.rate import CurrencyPair
 
 
 class CurrencyMixinBase(object):
@@ -19,3 +20,4 @@ class CurrencyMixinBase(object):
 class EurUsdMixin(CurrencyMixinBase):
     base_tick = 0.0001
     yen = 140  # 1tick幾らか
+    currency_pair = CurrencyPair.EUR_USD

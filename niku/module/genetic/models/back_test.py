@@ -18,6 +18,7 @@ class GeneticBackTestHistory(models.Model):
     profit = models.IntegerField(default=0, help_text='利益')
     profit_max = models.IntegerField(default=0, help_text='最大利益')
     profit_min = models.IntegerField(default=0, help_text='最大損失')
+    ai_id = models.IntegerField(default=None, null=True, help_text='AIのID')
     elite = models.PositiveIntegerField(null=True, default=None, help_text='優秀なAI')
     test_start_at = models.DateTimeField(null=True, help_text='バックテストの開始期間')
     test_end_at = models.DateTimeField(null=True, help_text='バックテストの終了期間')
@@ -79,55 +80,64 @@ class GeneticBackTestHistory(models.Model):
                   genetic_id=x.id,
                   currency_pair=x.currency_pair,
                   span=Granularity.H1.value,
-                  test_start_at=t20100101)]
+                  test_start_at=t20100101,
+                  ai_id=x.ai_id)]
         # H1 2012/1/1〜
         r += [cls(name=x.name,
                   genetic_id=x.id,
                   currency_pair=x.currency_pair,
                   span=Granularity.H1.value,
-                  test_start_at=t20120101)]
+                  test_start_at=t20120101,
+                  ai_id=x.ai_id)]
         # H1 2014/1/1〜
         r += [cls(name=x.name,
                   genetic_id=x.id,
                   currency_pair=x.currency_pair,
                   span=Granularity.H1.value,
-                  test_start_at=t20140101)]
+                  test_start_at=t20140101,
+                  ai_id=x.ai_id)]
         # H1 2015/1/1〜
         r += [cls(name=x.name,
                   genetic_id=x.id,
                   currency_pair=x.currency_pair,
                   span=Granularity.H1.value,
-                  test_start_at=t20150101)]
+                  test_start_at=t20150101,
+                  ai_id=x.ai_id)]
         # M5 2012/1/1〜
         r += [cls(name=x.name,
                   genetic_id=x.id,
                   currency_pair=x.currency_pair,
                   span=Granularity.M5.value,
-                  test_start_at=t20120101)]
+                  test_start_at=t20120101,
+                  ai_id=x.ai_id)]
         # H1 2014/1/1〜
         r += [cls(name=x.name,
                   genetic_id=x.id,
                   currency_pair=x.currency_pair,
                   span=Granularity.M5.value,
-                  test_start_at=t20140101)]
+                  test_start_at=t20140101,
+                  ai_id=x.ai_id)]
         # M5 2015/1/1〜
         r += [cls(name=x.name,
                   genetic_id=x.id,
                   currency_pair=x.currency_pair,
                   span=Granularity.M5.value,
-                  test_start_at=t20150101)]
+                  test_start_at=t20150101,
+                  ai_id=x.ai_id)]
         # M1 2014/1/1〜
         r += [cls(name=x.name,
                   genetic_id=x.id,
                   currency_pair=x.currency_pair,
                   span=Granularity.M1.value,
-                  test_start_at=t20140101)]
+                  test_start_at=t20140101,
+                  ai_id=x.ai_id)]
         # M1 2015/1/1〜
         r += [cls(name=x.name,
                   genetic_id=x.id,
                   currency_pair=x.currency_pair,
                   span=Granularity.M1.value,
-                  test_start_at=t20150101)]
+                  test_start_at=t20150101,
+                  ai_id=x.ai_id)]
         return r
 
     @classmethod
@@ -155,6 +165,14 @@ class GeneticBackTestHistory(models.Model):
     @property
     def candle_cls(self):
         return get_candle_cls(CurrencyPair(self.currency_pair), Granularity(self.span))
+
+    @property
+    def ai(self):
+        """
+        :rtype : AI1EurUsd
+        """
+        from module.ai import get_ai_class_by
+        return get_ai_class_by(self.ai_id).get_ai(self.history)
 
 
 def get_candle_cls(currency_pair, granularity):

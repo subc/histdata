@@ -43,6 +43,14 @@ class MovingAverageBase(TestDataMixin, models.Model):
         return list(cls.objects.filter())
 
     @classmethod
+    def by_start_at(cls, start_at):
+        """
+        :param limit: int
+        :rtype : list of MovingAverageBase
+        """
+        return cls.objects.filter(start_at__gte=start_at).order_by('start_at')
+
+    @classmethod
     def bulk_create(cls, objects):
         return cls.objects.bulk_create(objects)
 

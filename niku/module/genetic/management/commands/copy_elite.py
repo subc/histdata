@@ -27,3 +27,7 @@ class Command(BaseCommand):
     def run(self):
         num = GeneticBackTestHistory.create_test_story()
         print "COPY ELITE COUNT:{}".format(num)
+
+        # UPDATE
+        count = GeneticHistory.objects.filter(elite=None).update(elite=0)
+        print "UPDATE HISTORY RECORD ELITE NULL TO 0:{}".format(count)
