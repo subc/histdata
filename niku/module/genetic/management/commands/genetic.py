@@ -35,7 +35,7 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
             self.history_write(ai_group)
 
             # 一定性能以下のAIグループは足切り絶滅
-            self.ai_terminate(ai_group, score)
+            # self.ai_terminate(ai_group, score)
 
             # 選択と交叉
             ai_group = self.cross_over(AI_GROUP_SIZE, ai_group)

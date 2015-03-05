@@ -43,19 +43,10 @@ class Benchmark(object):
         ベンチマークをマルチプロセスで実行する
         :rtype : list of AI
         """
-        ai_group = self.pool.map(benchmark, self.ai_group)
-        self.pool.close()  # マルチプロセス停止
+        pool = multiprocessing.Pool(self.PROCESS)
+        ai_group = pool.map(benchmark, self.ai_group)
+        pool.close()  # マルチプロセス停止
         return ai_group
-
-    @property
-    def pool(self):
-        """
-        マルチプロセスのpoolを返却
-        """
-        if self._pool:
-            return self._pool
-        self._pool = multiprocessing.Pool(self.PROCESS)
-        return self._pool
 
 
 @timeit
