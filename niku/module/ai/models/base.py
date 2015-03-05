@@ -513,7 +513,7 @@ class AI5EurUsd(MAMixin, EurUsdMixin, AIInterFace):
         # 'h1',
         # 'h4',
         'h24',
-        'd5',
+        # 'd5',
         # 'd10',
         # 'd25',
         # 'd75',
@@ -524,7 +524,7 @@ class AI5EurUsd(MAMixin, EurUsdMixin, AIInterFace):
 
     def _dispatch(self):
         if 'depth' not in self.ai_dict:
-            self.ai_dict['depth'] = 10
+            self.ai_dict['depth'] = 24
         if 'base_tick_ma' not in self.ai_dict:
             self.ai_dict['base_tick_ma'] = 50
 
@@ -551,19 +551,15 @@ class AI5EurUsd(MAMixin, EurUsdMixin, AIInterFace):
         if len(rates) - 1 < self.depth:
             return None
 
-
         rate_type = self.get_ratetype(open_bid, rates)
 
         # rateがNoneのとき注文しない
         if rate_type is None:
-            print "rate type is None"
             return None
 
         if rate_type in self.ai_dict:
-            print "KEY HIT:{}".format(rate_type)
             order_type, limit, stop_limit = self.ai_dict.get(rate_type)
         else:
-            print "KEY NOT HIT:{}".format(rate_type)
             # AIがない場合はデフォルトデータをロード
             self.ai_dict[rate_type] = [OrderType.get_random(), random.randint(15, 50), random.randint(15, 50)]
             order_type, limit, stop_limit = self.ai_dict.get(rate_type)
