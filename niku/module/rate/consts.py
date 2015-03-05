@@ -24,6 +24,16 @@ class CurrencyPair(Enum):
     EUR_USD = 1
     USD_JPY = 2
 
+    def tick_to_yen(self, tick):
+        """
+        1通貨単位分の利益を円換算する
+        """
+        if self == CurrencyPair.EUR_USD:
+            return int(tick * 10000 * 140)
+        elif self == CurrencyPair.USD_JPY:
+            return int(tick * 100 * 100)
+        raise ValueError
+
 
 class CurrencyPairToTable(object):
     @classmethod

@@ -523,7 +523,6 @@ def requests_post_api(url_base, payload=None):
     print 'URL SUCCESS: {}'.format(url)
     return response
 
-
 def cross_2point(a, b):
     """
     2点交叉

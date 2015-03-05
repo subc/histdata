@@ -36,6 +36,13 @@ class Command(BaseCommand):
         self.run()
 
     def run(self):
+
+        # MP
+        ai_group = BenchMark([ai]).set_candles(candles).run_mp()
+
+        # シングル
+        BenchMark(ai).set_candles(candles).run()
+
         for history in GeneticBackTestHistory.get_active():
             # AI LOAD
             ai = history.ai

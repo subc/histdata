@@ -67,7 +67,7 @@ class AIInterFace(object):
             return market
 
         if order_ai.order_type != OrderType.WAIT:
-            market.order(open_bid, MarketOrder(open_bid, self.base_tick, order_ai), start_at)
+            market.order(self.currency_pair, open_bid, MarketOrder(open_bid, self.base_tick, order_ai), start_at)
         return market
 
     def get_order_ai(self, market, prev_rates, open_bid, start_at):
@@ -508,7 +508,6 @@ class AI5EurUsd(MAMixin, EurUsdMixin, AIInterFace):
     """
     # 対象とするローソク足のスパン
     RATE_SPAN = Granularity.H1
-
     ai_id = 5
     MA_KEYS = [
         # 'h1',
@@ -520,12 +519,20 @@ class AI5EurUsd(MAMixin, EurUsdMixin, AIInterFace):
         # 'd75',
         # 'd200',
     ]
+    MUTATION_MAX = 100
+    MUTATION_MIN = 10
 
     def _dispatch(self):
         if 'depth' not in self.ai_dict:
             self.ai_dict['depth'] = 10
         if 'base_tick_ma' not in self.ai_dict:
             self.ai_dict['base_tick_ma'] = 50
+
+    def normalization(self):
+        pass
+
+    def set_start_data(self):
+        return self
 
     def get_order_ai(self, market, prev_rates, open_bid, start_at):
         """
