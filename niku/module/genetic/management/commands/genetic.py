@@ -20,10 +20,12 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
     generation = AI_START_GENERATION
 
     def handle(self, *args, **options):
-        self.run()
-
-    def run(self):
         candles = get_candles()
+        while True:
+            self.generation = AI_START_GENERATION
+            self.run(candles)
+
+    def run(self, candles):
         ai_group = get_ai_group(self.suffix, AI_START_NUM, self.generation)
         benchmark = Benchmark(candles)
 
