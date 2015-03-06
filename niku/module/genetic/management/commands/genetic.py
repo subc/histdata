@@ -8,6 +8,7 @@ from module.genetic.models.mixin import GeneticMixin, ApiMixin
 from module.rate.models import CandleEurUsdH1Rate
 from module.rate.models.eur import EurUsdMA
 from module.ai.models import AI5EurUsd as AI
+from module.ai.models import AI6EurUsd as AI
 
 # 最初の世代数
 AI_START_GENERATION = 1
@@ -62,15 +63,13 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
         g = self.generation
         if g >= 10 and score < 0:
             self.generation += 100000
-        if g >= 20 and score < 50 * 10000:
+        if g >= 20 and score < 100 * 10000:
             self.generation += 100000
-        if g >= 30 and score < 70 * 10000:
+        if g >= 40 and score < 180 * 10000:
             self.generation += 100000
-        if g >= 40 and score < 150 * 10000:
+        if g >= 60 and score < 200 * 10000:
             self.generation += 100000
-        if g >= 60 and score < 180 * 10000:
-            self.generation += 100000
-        if g >= 100 and score < 220 * 10000:
+        if g >= 100 and score < 250 * 10000:
             self.generation += 100000
 
     @property

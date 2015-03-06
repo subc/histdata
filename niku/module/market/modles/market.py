@@ -32,7 +32,7 @@ class Market(object):
         """
         position = Position.open(currency_pair, start_at, open_bid, order.is_buy, limit_rate=order.limit_bid,
                                  stop_limit_rate=order.stop_limit_bid)
-        # print 'OPEN![{}]:{}:{}:利確:{} 損切り:{}'.format(rate.start_at, order.is_buy, rate.open_bid, order.limit_bid, order.stop_limit_bid)
+        print 'OPEN![{}]:{}:{}:利確:{} 損切り:{}'.format(start_at, order.is_buy, open_bid, order.limit_bid, order.stop_limit_bid)
         self.open_positions.append(position)
 
     def payment(self, rate):
@@ -45,7 +45,7 @@ class Market(object):
         self.end_at = rate.start_at
 
         # ドローダウン調査(重い)
-        if self.calc_draw_down and random.randint(1, 10) == 1:
+        if self.calc_draw_down:
             self.record_profit(rate)
         for position in self.open_positions:
             if position.is_buy:
@@ -78,6 +78,7 @@ class Market(object):
         最大利益と最小利益を記録
         """
         profit_summary = self.profit_summary(rate)
+        print "sum:{}".format(profit_summary)
 
         if self.profit_max < profit_summary:
             self.profit_max = profit_summary

@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from django.core.management import BaseCommand
+from module.genetic.models import Benchmark
+from module.genetic.models.mixin import GeneticMixin, ApiMixin
+from module.rate.models import CandleEurUsdH1Rate
+from module.rate.models.eur import EurUsdMA
+from module.ai.models import AI5EurUsd as AI
 import copy
 from django.core.management import BaseCommand, CommandError
 from line_profiler import LineProfiler
@@ -31,105 +34,39 @@ from module.genetic.management.commands.genetic_case1 import Market
 import multiprocessing as mp
 
 
-class Command(BaseCommand):
+# 最初の世代数
+AI_START_GENERATION = 1
+AI_START_NUM = 2
+AI_GROUP_SIZE = 20
+GENERATION_LIMIT = 300
+
+
+class Command(ApiMixin, GeneticMixin, BaseCommand):
+    generation = AI_START_GENERATION
+
     def handle(self, *args, **options):
         self.run()
 
     def run(self):
-
-        # MP
-        ai_group = BenchMark([ai]).set_candles(candles).run_mp()
-
-        # シングル
-        BenchMark(ai).set_candles(candles).run()
-
         for history in GeneticBackTestHistory.get_active():
             # AI LOAD
             ai = history.ai
-            print '~~~~~~~~~~~~~~~~~~~~~~~'
-            print '[AI:{} GENETIC:{}]START-AT:{}'.format(ai.ai_id, history.genetic_id, history.test_start_at)
+            candles = get_candles(history)
 
-            # CANDLES
-            candles = list(history.candle_cls.by_start_at(history.test_start_at))
-            ma = EurUsdMA.by_start_at(history.test_start_at)
-            mad = {m.start_at: m for m in ma}
-            for candle in candles:
-                candle.set_ma(mad.get(candle.start_at))
-
-            ai = benchmark(ai, candles)
+            benchmark = Benchmark(candles)
+            ai = benchmark.set_ai([ai]).run(calc_draw_down=True)[0]
             ai.genetic_history_id = history.id
-            history_back_test_write([ai])
+            self.history_back_test_write([ai])
 
 
-def benchmark(ai, candles):
-    market = Market(ai.pk, calc_draw_down=True)
-    ai = loop(ai, candles, market)
-    rate = candles[-1]
-    ai.update_market(market, candles[-1])
-
-    # 取引回数がゼロのときはエラーで落とす
-    if len(market.positions) == 0:
-        raise ValueError, 'TRADE-COUNT IS ZERO'
-
-    print('[ID:{}]SCORE:{} OPEN-SCORE:{} ポジション数:{} TRADE-COUNT:{}'.format(ai.generation,
-                                                                          market.profit_summary(rate),
-                                                                          market.current_profit(rate),
-                                                                          len(market.open_positions),
-                                                                          len(market.positions)))
-    print('SCORE-MAX:{} SCORE-MIN:{}'.format(market.profit_max, market.profit_min))
-
-    return ai
-
-
-def loop(ai, candles, market):
-    prev_rates = []
-    ct = 0
-    for rate in candles:
-        # 購入判断(prev rateに未来データを投入しないこと！！)
-        market = ai.order(market, prev_rates, rate.open_bid, rate.start_at)
-
-        # 決済
-        market.payment(rate)
-
-        # 過去のレートを更新
-        prev_rates.append(rate)
-
-        if ct % 5000 == 0:
-            print ct, '/', len(candles)
-        ct += 1
-    return ai
-
-
-def set_candle_to_cache():
-    print "start get candle H1"
-    candles = CandleEurUsdH1Rate.get_test_data()
-    cache.set('candlesH1', candles, timeout=720000)
-
-    print "start get candle M5"
-    candles = CandleEurUsdM5Rate.get_test_data()
-    cache.set('candlesM5', candles, timeout=720000)
-
-    print "start get candle M1"
-    candles = CandleEurUsdM1Rate.get_test_data()
-    cache.set('candlesM1', candles, timeout=720000)
-
-
-def history_back_test_write(ai_group):
+def get_candles(history):
     """
-    HTTP通信で書き込む
+    :param history: GeneticBackTestHistory
+    :rtype : list of Rate
     """
-    url_base = 'http://{}/genetic/history/back_test'
-    payload = ujson.dumps({
-        'ai_group': [ai.to_dict() for ai in ai_group],
-    })
-    response = requests_post_api(url_base, payload=payload)
-    assert response.status_code == 200, response.text
-
-
-def requests_post_api(url_base, payload=None):
-    TEST_HOST = '127.0.0.1:8000'
-    url = url_base.format(TEST_HOST)
-    payload = {'data': payload}
-    response = requests.post(url, data=payload)
-    print 'URL SUCCESS: {}'.format(url)
-    return response
+    candles = history.candle_cls.by_start_at(history.test_start_at)
+    ma = EurUsdMA.by_start_at(history.test_start_at)
+    mad = {m.start_at: m for m in ma}
+    for candle in candles:
+        candle.set_ma(mad.get(candle.start_at))
+    return candles

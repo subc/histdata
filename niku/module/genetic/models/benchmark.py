@@ -31,12 +31,12 @@ class Benchmark(object):
         cache.set(CACHE_CANDLES, candles, timeout=720000)
         return self
 
-    def run(self):
+    def run(self, calc_draw_down=False):
         """
         ベンチマーク実行
         :rtype : list of AI
         """
-        return [benchmark(ai) for ai in self.ai_group]
+        return [benchmark(ai, calc_draw_down=calc_draw_down) for ai in self.ai_group]
 
     def run_mp(self):
         """
@@ -50,16 +50,18 @@ class Benchmark(object):
 
 
 @timeit
-def benchmark(ai):
+def benchmark(ai, calc_draw_down=False):
     """
     :param ai: AI
+    :param calc_draw_down: bool
     """
     print "START BENCHMARK"
     candles = cache.get(CACHE_CANDLES)
-    market = Market(ai.generation)
+    market = Market(ai.generation, calc_draw_down=calc_draw_down)
     loop(ai, candles, market)
 
     # 確定処理
+    # print "candles:{},{}".format(candles, len(candles))
     rate = candles[-1]
     ai.update_market(market, rate)
     print('[ID:{}]SCORE:{} OPEN-SCORE:{} ポジション数:{} TRADE-COUNT:{}'.format(ai.generation,

@@ -48,7 +48,7 @@ class MovingAverageBase(TestDataMixin, models.Model):
         :param limit: int
         :rtype : list of MovingAverageBase
         """
-        return cls.objects.filter(start_at__gte=start_at).order_by('start_at')
+        return list(cls.objects.filter(start_at__gte=start_at).order_by('start_at'))
 
     @classmethod
     def bulk_create(cls, objects):

@@ -116,7 +116,7 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
         :param limit: int
         :rtype : list of CurrencyCandleBase
         """
-        return cls.objects.filter(start_at__gte=start_at).order_by('start_at')
+        return list(cls.objects.filter(start_at__gte=start_at).order_by('start_at'))
 
     @classmethod
     def by_limit(cls, limit):

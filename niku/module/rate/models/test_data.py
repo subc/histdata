@@ -8,7 +8,7 @@ import pytz
 class TestDataMixin(object):
     @classmethod
     def get_test_data(cls):
-        return list(cls.objects.filter(start_at__gte=datetime.datetime(2012, 2, 1, tzinfo=pytz.utc)).order_by('start_at'))
+        return list(cls.objects.filter(start_at__gte=datetime.datetime(2010, 1, 1, tzinfo=pytz.utc)).order_by('start_at'))
 
     @classmethod
     def get_test_data2(cls):

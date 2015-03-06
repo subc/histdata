@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import copy
 import random
+import datetime
 from line_profiler import LineProfiler
 from .mixin import MAMixin
 from module.rate import CurrencyPair, Granularity
@@ -15,6 +16,8 @@ from django.utils.six import text_type
 
 class AIInterFace(object):
     LIMIT_POSITION = 10
+    buy_limit_time = datetime.timedelta(seconds=3120)
+    buy_time = None
     market = None
     generation = None
     currency_pair = None
@@ -35,7 +38,16 @@ class AIInterFace(object):
         AIのdictからAIを生成して返却
         :param : AI
         """
-        raise NotImplementedError
+        ai = {}
+        for key in history.ai:
+            if type(history.ai[key]) == list:
+                l = history.ai[key]
+                ai[key] = [OrderType(l[0]), l[1], l[2]]
+                continue
+            ai[str(key)] = history.ai[key]
+        ai = cls(ai, history.name, history.generation)
+        ai.pk = history.id
+        return ai
 
     def _dispatch(self):
         pass
@@ -56,17 +68,26 @@ class AIInterFace(object):
         :param start_at: datetime
         :rtype market: Market
         """
+        # 前回レートがない
         if not prev_rates:
             return market
-
-        # 既にポジション持ち過ぎ
+        # ポジション数による購入制限
         if len(market.open_positions) >= self.LIMIT_POSITION:
             return market
+        # 時間による購入制限
+        if self.buy_time and start_at < self.buy_time + self.buy_limit_time:
+            print "LOCK AS TIME:{}, {}".format(start_at, self.buy_time + self.buy_limit_time)
+            return market
+
+        # if self.buy_time:
+        #     print "OK BUY AS TIME:{}, {}".format(start_at, self.buy_time + self.buy_limit_time)
+
         order_ai = self.get_order_ai(market, prev_rates, open_bid, start_at)
         if not order_ai:
             return market
 
         if order_ai.order_type != OrderType.WAIT:
+            self.buy_time = start_at
             market.order(self.currency_pair, open_bid, MarketOrder(open_bid, self.base_tick, order_ai), start_at)
         return market
 
@@ -571,7 +592,7 @@ class AI5EurUsd(MAMixin, EurUsdMixin, AIInterFace):
         if len(rates) - 1 < self.depth:
             return None
 
-        rate_type = self.get_ratetype(open_bid, rates)
+        rate_type = self.get_ratetype(open_bid, rates, start_at)
 
         # rateがNoneのとき注文しない
         if rate_type is None:
@@ -585,7 +606,7 @@ class AI5EurUsd(MAMixin, EurUsdMixin, AIInterFace):
             order_type, limit, stop_limit = self.ai_dict.get(rate_type)
         return OrderAI(order_type, limit, stop_limit)
 
-    def get_ratetype(self, open_bid, rates):
+    def get_ratetype(self, open_bid, rates, start_at):
         if rates[-1].ma is None:
             return None
 
@@ -612,6 +633,86 @@ class AI5EurUsd(MAMixin, EurUsdMixin, AIInterFace):
     @property
     def depth(self):
         return self.ai_dict['depth']
+
+
+class AI6EurUsd(AI5EurUsd):
+    ai_id = 6
+    buy_span = datetime.timedelta(seconds=3120)
+    buy_time = None
+    MA_KEYS = [
+        # 'h1',
+        # 'h4',
+        'h24',
+        # 'd5',
+        # 'd10',
+        # 'd25',
+        # 'd75',
+        # 'd200',
+    ]
+
+    def _dispatch(self):
+        if 'base_tick' not in self.ai_dict:
+            self.ai_dict['base_tick'] = 20
+        if 'depth' not in self.ai_dict:
+            self.ai_dict['depth'] = 24
+        if 'base_tick_ma' not in self.ai_dict:
+            self.ai_dict['base_tick_ma'] = 50
+
+    def get_ratetype(self, open_bid, rates, start_at):
+        if rates[-1].ma is None:
+            return None
+
+        # key_ma_diffの生成
+        prev_rate = rates[-1]
+        error_range = datetime.timedelta(hours=24)   # 許容する後方誤差
+        error_range2 = datetime.timedelta(hours=48)   # 許容する後方誤差
+        # print '~~~~~~~~~~~~~~~~~~'
+        # print 'START AT:{}'.format(start_at)
+        # print 'PREV START AT:{} RATE:{}'.format(prev_rate.start_at, prev_rate.ma.h24)
+        rate24h_ago = get_range_rates(rates, start_at - datetime.timedelta(days=1), error_range)
+        rate96h_ago = get_range_rates(rates, start_at - datetime.timedelta(days=4), error_range2)
+        if rate24h_ago and rate24h_ago.ma and rate24h_ago.ma.h24:
+            # print 'T1:RATE START AT:{} RATE:{}'.format(rate24h_ago.start_at, rate24h_ago.ma.h24)
+            pass
+        else:
+            return None
+
+        if rate96h_ago and rate96h_ago.ma and rate96h_ago.ma.h24:
+            # print 'T2:RATE START AT:{} RATE:{}'.format(rate96h_ago.start_at, rate96h_ago.ma.h24)
+            pass
+        else:
+            return None
+        # print '~~~~~~~~~~~~~~~~~~'
+
+        if rate24h_ago and rate96h_ago and prev_rate.ma and prev_rate.ma.h24:
+            key1 = get_tick_category(prev_rate.ma.h24 - open_bid, self.base_tick)
+            key2 = get_tick_category(rate24h_ago.ma.h24 - open_bid, self.base_tick)
+            key3 = get_tick_category(rate96h_ago.ma.h24 - open_bid, self.base_tick)
+            key_ma_diff = '{}:{}:{}'.format(key1, key2, key3)
+        else:
+            return None
+        #
+        #
+        # # key_maの生成
+        # l = []
+        # ma = rates[-1].ma
+        # for key in self.MA_KEYS:
+        #     ma_bid = getattr(ma, key)
+        #     if ma_bid is None:
+        #         return None
+        #
+        #     l.append(str(get_ma_type(open_bid, ma_bid, self.base_tick_ma, rates[-1])))
+        # key_value = ":".join(l)
+        # key_ma = str('MA:{}'.format(key_value))
+        #
+        # key_candleの生成
+        c = len(rates)
+        prev_rates = rates[c - self.depth:c]
+        assert len(prev_rates) == self.depth, (len(prev_rates), self.depth)
+        prev_rate = MultiCandles(prev_rates, Granularity.UNKNOWN)
+        key_candle = 'CANDLE:{}'.format(prev_rate.get_candle_type(self.base_tick))
+        return ':'.join([key_ma_diff, key_candle])
+    pass
 
 
 def convert_rate(rates, g):
@@ -698,3 +799,22 @@ def get_tick_category(tick, base_tick):
             result += 1
         prev_calc_rate = calc_rate
     raise ValueError
+
+
+def get_range_rates(rates, target_date, error_range):
+    """
+    誤差内のレートを返却
+    :param rates: Rate
+    :param target_date: datetime
+    :param error_range: timedelta
+    :rtype :rate
+    """
+    _from = target_date - error_range
+    _to = target_date
+    for rate in reversed(rates):
+        if _from <= rate.start_at <= _to:
+            if rate.ma:
+                return rate
+        if rate.start_at < _from:
+            return None
+    return None

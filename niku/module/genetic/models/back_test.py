@@ -75,6 +75,13 @@ class GeneticBackTestHistory(models.Model):
         t20120101 = datetime.datetime(2012, 1, 1, tzinfo=pytz.utc)
         t20140101 = datetime.datetime(2014, 1, 1, tzinfo=pytz.utc)
         t20150101 = datetime.datetime(2015, 1, 1, tzinfo=pytz.utc)
+        # M5 2015/1/1〜
+        r += [cls(name=x.name,
+                  genetic_id=x.id,
+                  currency_pair=x.currency_pair,
+                  span=Granularity.M5.value,
+                  test_start_at=t20150101,
+                  ai_id=x.ai_id)]
         # H1 2010/1/1〜
         r += [cls(name=x.name,
                   genetic_id=x.id,
@@ -116,13 +123,6 @@ class GeneticBackTestHistory(models.Model):
                   currency_pair=x.currency_pair,
                   span=Granularity.M5.value,
                   test_start_at=t20140101,
-                  ai_id=x.ai_id)]
-        # M5 2015/1/1〜
-        r += [cls(name=x.name,
-                  genetic_id=x.id,
-                  currency_pair=x.currency_pair,
-                  span=Granularity.M5.value,
-                  test_start_at=t20150101,
                   ai_id=x.ai_id)]
         # M1 2014/1/1〜
         r += [cls(name=x.name,
