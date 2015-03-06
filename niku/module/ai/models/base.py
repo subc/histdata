@@ -174,7 +174,7 @@ class AIInterFace(object):
         raise NotImplementedError
 
     def score(self, correct_value):
-        return self.market.profit_result - correct_value
+        return self.profit - correct_value
 
     @property
     def base_tick(self):

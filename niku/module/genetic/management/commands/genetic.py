@@ -9,6 +9,7 @@ from module.rate.models import CandleEurUsdH1Rate
 from module.rate.models.eur import EurUsdMA
 from module.ai.models import AI5EurUsd as AI
 from module.ai.models import AI6EurUsd as AI
+from module.ai import AI7EurUsd as AI
 
 # 最初の世代数
 AI_START_GENERATION = 1
@@ -34,12 +35,13 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
         while self.generation <= GENERATION_LIMIT:
             # ベンチマーク実行
             ai_group = benchmark.set_ai(ai_group).run_mp()
-            score = max([ai.profit for ai in ai_group])
+            score = max([ai.score(0) for ai in ai_group])
+            profit = max([ai.profit for ai in ai_group])
             self.history_write(ai_group)
 
             # 一定性能以下のAIグループは足切り絶滅
             self.generation += 1
-            self.ai_terminate(ai_group, score)
+            self.ai_terminate(ai_group, profit)
 
             # 選択と交叉
             ai_group = self.cross_over(AI_GROUP_SIZE, ai_group)
@@ -47,7 +49,7 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
             # normalization
             for ai in ai_group:
                 ai.normalization()
-            print '第{}世代 完了![score:{}]'.format(self.generation, score)
+            print '第{}世代 完了![score:{}] profit:{}'.format(self.generation, score, profit)
 
     def ai_terminate(self, ai_group, score):
         """

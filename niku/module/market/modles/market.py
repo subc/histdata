@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from collections import defaultdict
 import random
 from .position import Position
 
 
 class Market(object):
-    positions = []
+    positions = []  # 閉じたポジション
     open_positions = []
     profit_max = 0
     profit_min = 0
@@ -32,7 +33,7 @@ class Market(object):
         """
         position = Position.open(currency_pair, start_at, open_bid, order.is_buy, limit_rate=order.limit_bid,
                                  stop_limit_rate=order.stop_limit_bid)
-        print 'OPEN![{}]:{}:{}:利確:{} 損切り:{}'.format(start_at, order.is_buy, open_bid, order.limit_bid, order.stop_limit_bid)
+        # print 'OPEN![{}]:{}:{}:利確:{} 損切り:{}'.format(start_at, order.is_buy, open_bid, order.limit_bid, order.stop_limit_bid)
         self.open_positions.append(position)
 
     def payment(self, rate):
@@ -78,8 +79,6 @@ class Market(object):
         最大利益と最小利益を記録
         """
         profit_summary = self.profit_summary(rate)
-        print "sum:{}".format(profit_summary)
-
         if self.profit_max < profit_summary:
             self.profit_max = profit_summary
         if profit_summary < self.profit_min:
@@ -117,3 +116,13 @@ class Market(object):
             'profit_min': self.profit_min,
             'profit_result': self.profit_result,
         }
+
+    def get_monthly_profit(self):
+        """
+        月毎の利益を返却
+        :rtype : list of int
+        """
+        d = defaultdict(int)
+        for position in self.positions:
+            d['{}:{}'.format(position.start_at.year, position.start_at.month)] += position.get_profit()
+        return d.values()

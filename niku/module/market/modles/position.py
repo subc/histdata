@@ -86,7 +86,7 @@ class Position(object):
         self.close_rate = rate_bid
         self.profit = self.get_profit()
         result = 'WIN' if self.profit >0 else 'LOSE'
-        print '[{}]CLOSE![{}] :open:{} close:{} profit:{}'.format(result, end_at, self.open_rate, self.close_rate, self.get_profit())
+        # print '[{}]CLOSE![{}] :open:{} close:{} profit:{}'.format(result, end_at, self.open_rate, self.close_rate, self.get_profit())
         return self.profit
 
     def tick_to_yen(self, tick):
