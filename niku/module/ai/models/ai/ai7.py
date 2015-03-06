@@ -19,4 +19,4 @@ class AI7EurUsd(AI6EurUsd):
         :param correct_value: float
         :rtype : int
         """
-        return int(sum(sorted(self.market.get_monthly_profit(), key=lambda x: x)[:5]) / 5) - correct_value
+        return int(sum(sorted(self.market.monthly_profit_group, key=lambda x: x)[:5]) / 5) - correct_value

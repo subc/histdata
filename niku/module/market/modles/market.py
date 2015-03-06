@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import defaultdict
 import random
+from django.utils.functional import cached_property
 from .position import Position
 
 
@@ -117,7 +118,8 @@ class Market(object):
             'profit_result': self.profit_result,
         }
 
-    def get_monthly_profit(self):
+    @cached_property
+    def monthly_profit_group(self):
         """
         月毎の利益を返却
         :rtype : list of int
