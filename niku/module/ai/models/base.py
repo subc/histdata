@@ -140,11 +140,11 @@ class AIInterFace(object):
             'NAME': self.name,
             'GENERATION': self.generation,
             'PROFIT': self.profit,
+            'SCORE': self.score(0),
             'PROFIT_MAX': self.profit_max,
             'PROFIT_MIN': self.profit_min,
             'AI_LOGIC': self._ai_to_dict(),
             'AI_ID': self.ai_id,
-            # 'MARKET': self.market.to_dict(),
             'CURRENCY_PAIR': self.currency_pair.value,
             'END_AT': text_type(self.end_at),
             'TRADE_COUNT': len(self.market.positions),
@@ -164,6 +164,8 @@ class AIInterFace(object):
     def _value_to_dict(self, value):
         if type(value) == OrderType:
             return value.value
+        if type(value) == datetime.timedelta:
+            return value.total_seconds()
         return value
 
     def normalization(self):
@@ -771,6 +773,8 @@ def get_tick_category(tick, base_tick):
     801 - 1250: RETURN 5
     -50 - 0: RETURN 0
     -200 - -51: RETURN -1
+    -450 - -201 : RETURN -2
+    -800 - -451 : RETURN -3
     :param tick: int
     :param base_tick: int
     :return:
@@ -798,6 +802,7 @@ def get_tick_category(tick, base_tick):
         else:
             result += 1
         prev_calc_rate = calc_rate
+    print tick, base_tick
     raise ValueError
 
 

@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import copy
 import random
+import datetime
 from module.genetic.models.parameter import OrderType
 
 
@@ -105,6 +106,10 @@ class GeneticMixin(object):
             else:
                 # 何もしない
                 return value_a, value_b
+
+        # datetime
+        if type(value_a) == type(value_b) == datetime.datetime:
+            return value_a, value_b
 
         # どちらかがNone
         if value_a is None or value_b is None:

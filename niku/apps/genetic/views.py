@@ -35,6 +35,10 @@ class AI(object):
         return int(self.params.get('GENERATION'))
 
     @property
+    def score(self):
+        return int(self.params.get('SCORE'))
+
+    @property
     def profit(self):
         return int(self.params.get('PROFIT'))
 

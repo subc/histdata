@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import defaultdict
 import random
+import datetime
 from django.utils.functional import cached_property
 from .position import Position
 
@@ -32,8 +33,13 @@ class Market(object):
         :param order: MarketOrder
         :param start_at: datetime
         """
+        if order.is_buy:
+            assert order.stop_limit_bid < open_bid < order.limit_bid
+        else:
+            assert order.limit_bid < open_bid < order.stop_limit_bid
+
         position = Position.open(currency_pair, start_at, open_bid, order.is_buy, limit_rate=order.limit_bid,
-                                 stop_limit_rate=order.stop_limit_bid)
+                                 stop_limit_rate=order.stop_limit_bid, limit_end_at=order.limit_end_at)
         # print 'OPEN![{}]:{}:{}:利確:{} 損切り:{}'.format(start_at, order.is_buy, open_bid, order.limit_bid, order.stop_limit_bid)
         self.open_positions.append(position)
 
@@ -45,11 +51,26 @@ class Market(object):
         if self.start_at is None:
             self.start_at = rate.start_at
         self.end_at = rate.start_at
-
         # ドローダウン調査(重い)
         if self.calc_draw_down:
             self.record_profit(rate)
         for position in self.open_positions:
+            # ポジションの有効期限切れ
+            if position.limit_end_at:
+                if rate.start_at > position.limit_end_at:
+                    _profit = self._close(rate.start_at, rate.open_bid, position)
+                    assert position.start_at < position.end_at
+                    if random.randint(1, 1000) == 1:
+                        print 'TIME IS OVER[BUY:{}][PROFIT:{}] from:{} to:{} start:{} end:{}'.format(
+                            position.is_buy,
+                            _profit,
+                            position.open_rate,
+                            position.close_rate,
+                            position.start_at,
+                            position.end_at
+                        )
+                    continue
+
             if position.is_buy:
                 # 損切り
                 if rate.low_bid <= position.stop_limit_rate:
@@ -74,6 +95,7 @@ class Market(object):
         self.close_profit += profit
         self.positions.append(position)
         self.open_positions.remove(position)
+        return profit
 
     def record_profit(self, rate):
         """

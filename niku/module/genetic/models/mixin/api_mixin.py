@@ -16,6 +16,7 @@ class ApiMixin(object):
         """
         url_base = 'http://{}/genetic/history/'
 
+        print ai_group[0].ai_dict
         payload = ujson.dumps({
             'ai_group': [ai.to_dict() for ai in ai_group],
         })

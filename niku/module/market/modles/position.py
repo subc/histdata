@@ -10,6 +10,7 @@ class Position(object):
     currency_pair = None
     start_at = None
     end_at = None
+    limit_end_at = None
     open_rate = None
     close_rate = None
     limit_rate = None
@@ -18,22 +19,26 @@ class Position(object):
     profit = None
     cost = 50
 
-    def __init__(self, currency_pair, start_at, open_rate, is_buy, limit_rate=None, stop_limit_rate=None):
+    def __init__(self, currency_pair, start_at, open_rate, is_buy, limit_rate=None, stop_limit_rate=None, limit_end_at=None):
         self.currency_pair = currency_pair
         self.start_at = start_at
         self.open_rate = open_rate
         self.is_buy = is_buy
         self.limit_rate = limit_rate
         self.stop_limit_rate = stop_limit_rate
+        self.limit_end_at = limit_end_at
 
     @classmethod
-    def open(cls, currency_pair, start_at, open_rate, is_buy, limit_rate=None, stop_limit_rate=None):
+    def open(cls, currency_pair, start_at, open_rate, is_buy, limit_rate=None, stop_limit_rate=None, limit_end_at=None):
         """
         ポジションを作る
         :param open_rate: float
         :param is_buy: bool
         """
-        return cls(currency_pair, start_at, open_rate, is_buy, limit_rate=limit_rate, stop_limit_rate=stop_limit_rate)
+        return cls(currency_pair, start_at, open_rate, is_buy,
+                   limit_rate=limit_rate,
+                   stop_limit_rate=stop_limit_rate,
+                   limit_end_at=limit_end_at)
 
     @property
     def is_open(self):

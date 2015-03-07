@@ -13,7 +13,7 @@ class Benchmark(object):
     """
     AIのベンチマークを実施する。
     """
-    PROCESS = 8
+    PROCESS = 3
     _pool = None
     ai_group = None
 
@@ -64,7 +64,8 @@ def benchmark(ai, calc_draw_down=False):
     # print "candles:{},{}".format(candles, len(candles))
     rate = candles[-1]
     ai.update_market(market, rate)
-    print('[ID:{}]SCORE:{} OPEN-SCORE:{} ポジション数:{} TRADE-COUNT:{}'.format(ai.generation,
+    print('[ID:{}]SCORE:{} PROFIT:{} OPEN-PROFIT:{} ポジション数:{} TRADE-COUNT:{}'.format(ai.generation,
+                                                                          ai.score(0),
                                                                           market.profit_summary(rate),
                                                                           market.current_profit(rate),
                                                                           len(market.open_positions),

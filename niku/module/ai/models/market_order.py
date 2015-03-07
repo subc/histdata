@@ -12,6 +12,7 @@ class MarketOrder(object):
     open_bid = None
     limit_bid = None
     stop_limit_bid = None
+    limit_end_at = None
 
     def __init__(self, open_bid, base_tick, order_ai):
         """
@@ -23,6 +24,10 @@ class MarketOrder(object):
         if order_ai.order_type == OrderType.WAIT:
             return
         self.open_bid = open_bid
+
+        # 時間制限
+        if order_ai.limit_end_at:
+            self.limit_end_at = order_ai.limit_end_at
 
         is_buy = True if order_ai.order_type == OrderType.BUY else False
         if is_buy:
@@ -45,8 +50,9 @@ class OrderAI(object):
     order_type = None
     limit = None
     stop_limit = None
+    limit_end_at = None
 
-    def __init__(self, order_type, limit, stop_limit):
+    def __init__(self, order_type, limit, stop_limit, limit_end_at=None):
         """
         :param order_type: OrderType
         :param limit: int
@@ -56,3 +62,4 @@ class OrderAI(object):
         self.order_type = order_type
         self.limit = limit
         self.stop_limit = stop_limit
+        self.limit_end_at = limit_end_at

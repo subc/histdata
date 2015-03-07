@@ -10,31 +10,36 @@ from module.rate.models.eur import EurUsdMA
 from module.ai.models import AI5EurUsd as AI
 from module.ai.models import AI6EurUsd as AI
 from module.ai import AI7EurUsd as AI
-
-# 最初の世代数
-AI_START_GENERATION = 1
-AI_START_NUM = 20
-AI_GROUP_SIZE = 20
-GENERATION_LIMIT = 300
+from module.ai import AI10EurUsd as AI
 
 
 class Command(ApiMixin, GeneticMixin, BaseCommand):
+    # 最初の世代数
+    AI_START_GENERATION = 1
+    AI_START_NUM = 20
+    AI_GROUP_SIZE = 20
+    GENERATION_LIMIT = 300
     generation = AI_START_GENERATION
+    IS_SINGLE = False
+
 
     def handle(self, *args, **options):
-        candles = get_candles()
+        candles = self.get_candles()
         while True:
-            self.generation = AI_START_GENERATION
+            self.generation = self.AI_START_GENERATION
             self.run(candles)
 
     def run(self, candles):
-        ai_group = get_ai_group(self.suffix, AI_START_NUM, self.generation)
+        ai_group = get_ai_group(self.ai_class, self.suffix, self.AI_START_NUM, self.generation)
         benchmark = Benchmark(candles)
 
         # 特定世代まで試験を実施
-        while self.generation <= GENERATION_LIMIT:
+        while self.generation <= self.GENERATION_LIMIT:
             # ベンチマーク実行
-            ai_group = benchmark.set_ai(ai_group).run_mp()
+            if self.IS_SINGLE:
+                ai_group = benchmark.set_ai(ai_group).run()
+            else:
+                ai_group = benchmark.set_ai(ai_group).run_mp()
             score = max([ai.score(0) for ai in ai_group])
             profit = max([ai.profit for ai in ai_group])
             self.history_write(ai_group)
@@ -44,7 +49,7 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
             self.ai_terminate(ai_group, profit)
 
             # 選択と交叉
-            ai_group = self.cross_over(AI_GROUP_SIZE, ai_group)
+            ai_group = self.cross_over(self.AI_GROUP_SIZE, ai_group)
 
             # normalization
             for ai in ai_group:
@@ -86,22 +91,21 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
     def ai_class(self):
         return AI
 
+    def get_candles(self):
+        """
+        :rtype : list of Rate
+        """
+        candles = CandleEurUsdH1Rate.get_test_data()
+        ma = EurUsdMA.get_test_data()
+        mad = {m.start_at: m for m in ma}
+        for candle in candles:
+            candle.set_ma(mad.get(candle.start_at))
+        return candles
 
-def get_ai_group(suffix, num, generation):
+
+def get_ai_group(ai_class, suffix, num, generation):
     """
     :rtype : list of AI
     """
-    base_ai = AI({}, suffix, generation)
+    base_ai = ai_class({}, suffix, generation)
     return base_ai.initial_create(num)
-
-
-def get_candles():
-    """
-    :rtype : list of Rate
-    """
-    candles = CandleEurUsdH1Rate.get_test_data()
-    ma = EurUsdMA.get_test_data()
-    mad = {m.start_at: m for m in ma}
-    for candle in candles:
-        candle.set_ma(mad.get(candle.start_at))
-    return candles

@@ -30,4 +30,5 @@ class Command(BaseCommand):
 
         # UPDATE
         count = GeneticHistory.objects.filter(elite=None).update(elite=0)
-        print "UPDATE HISTORY RECORD ELITE NULL TO 0:{}".format(count)
+        elite_count = GeneticHistory.objects.filter(elite=1).update(elite=-1)
+        print "UPDATE NORMA:{},ELITE:{}".format(count, elite_count)
