@@ -25,10 +25,8 @@ class Command(BaseCommand):
         self.run()
 
     def run(self):
+        # eliteフラグ立てる
+        num = GeneticHistory.flag_elite()
+        print 'COPY HISTORY:{}'.format(num)
         num = GeneticBackTestHistory.create_test_story()
         print "COPY ELITE COUNT:{}".format(num)
-
-        # UPDATE
-        count = GeneticHistory.objects.filter(elite=None).update(elite=0)
-        elite_count = GeneticHistory.objects.filter(elite=1).update(elite=-1)
-        print "UPDATE NORMA:{},ELITE:{}".format(count, elite_count)

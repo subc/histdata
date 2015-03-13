@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 import datetime
 from django.core.management import BaseCommand
 import requests
+from module.rate import CurrencyPair, CurrencyPairToTable
 from module.rate.models import CandleEurUsdM5Rate
 from module.rate.models.eur import Granularity
 from module.title.models.title import TitleSettings
@@ -34,13 +35,14 @@ class Command(BaseCommand):
 
     def run(self):
         # レート取得
-        # self.update_rate(Granularity.D, 700)
-        # self.update_rate(Granularity.H1, 100)
-        self.update_rate(Granularity.M5, 15)
-        self.update_rate(Granularity.M1, 2)
+        self.update_rate(CurrencyPair.EUR_USD, Granularity.D, 700)
+        self.update_rate(CurrencyPair.EUR_USD, Granularity.H1, 100)
+        self.update_rate(CurrencyPair.EUR_USD, Granularity.M5, 15)
+        self.update_rate(CurrencyPair.EUR_USD, Granularity.M1, 2)
 
-    def update_rate(self, granularity, span):
+    def update_rate(self, currency_pair, granularity, span):
         """
+        :param currency_pair: CurrencyPair
         :param granularity: Granularity
         """
         for _date in start_date_generator(span):
@@ -63,7 +65,7 @@ class Command(BaseCommand):
             candles = []
             for candle in data.get('candles'):
                 candles.append(OandaCandle(candle, granularity))
-            granularity.db_table_class.safe_bulk_create_by_oanda(candles)
+            CurrencyPairToTable.get_table(currency_pair, granularity).safe_bulk_create_by_oanda(candles)
 
 
 def requests_api(url, payload=None):

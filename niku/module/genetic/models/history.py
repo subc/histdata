@@ -19,7 +19,7 @@ class GeneticHistory(models.Model):
     profit_min = models.IntegerField(default=0, help_text='最大損失')
     ai = ObjectField(null=True, default=None, help_text='aiのデータ')
     ai_id = models.PositiveIntegerField(null=True, default=None, help_text='AIのID')
-    elite = models.IntegerField(null=True, default=None, help_text='優秀なAI')
+    elite = models.IntegerField(db_index=True, null=True, default=None, help_text='優秀なAI')
     currency_pair = models.PositiveIntegerField(default=0, help_text='通貨ペアID', db_index=True)
 
     class Meta(object):
@@ -65,3 +65,44 @@ class GeneticHistory(models.Model):
     @classmethod
     def by_elite(cls):
         return list(cls.objects.filter(elite__gte=1))
+
+    @classmethod
+    def flag_elite(cls):
+        ct = 0
+        for group in cls.get_history_by_n(100):
+            if len(group) < 90:
+                continue
+
+            print 'TARGET:{} / {}'.format(group[0].id, cls.objects.all().order_by("-id")[0].id)
+            sorted(group, key=lambda x: x.score, reverse=True)
+            # スコアTOPにエリートフラグ付与
+            group[0].set_elite()
+            group[1].set_elite()
+            ct += 2
+
+            # それ以外にはノーマルフラグ立てる
+            [history.set_normal() for history in group[2:]]
+        return ct
+
+    @classmethod
+    def get_history_by_n(cls, n):
+        """
+        historyをn個のサブリストにして返却
+        :param n: int
+        :rtype : list of list of GeneticHistory
+        """
+        targets = cls.objects.filter(elite=None).order_by('id')
+        return list(chunks(targets, n))
+
+    def set_elite(self):
+        self.elite = 1
+        self.save()
+
+    def set_normal(self):
+        self.elite = 0
+        self.save()
+
+
+def chunks(l, n):
+    for i in xrange(0, len(l), n):
+        yield l[i:i + n]

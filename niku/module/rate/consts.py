@@ -11,7 +11,6 @@ class Granularity(Enum):
     M1 = 60
     UNKNOWN = 10000000000
 
-    @property
     def db_table_class(self, currency_pair):
         """
         :param currency_pair: CurrencyPair

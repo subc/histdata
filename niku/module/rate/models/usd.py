@@ -5,6 +5,7 @@ import datetime
 from enum import Enum
 import pytz
 from .base import CurrencyCandleBase
+from module.rate import Granularity
 from .moving_average import MovingAverageBase
 
 
