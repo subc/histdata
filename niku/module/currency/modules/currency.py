@@ -2,6 +2,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from module.rate import CurrencyPair
+from module.rate.models import CandleUsdJpyH1Rate, CandleEurUsdH1Rate
+from module.rate.models.eur import EurUsdMA
+from module.rate.models.usd import UsdJpyMA
 
 
 class CurrencyMixinBase(object):
@@ -18,6 +21,16 @@ class CurrencyMixinBase(object):
 
 
 class EurUsdMixin(CurrencyMixinBase):
+    CANDLE_CLS = CandleEurUsdH1Rate
+    CANDLE_MA_CLS = EurUsdMA
     base_tick = 0.0001
     yen = 140  # 1tick幾らか
     currency_pair = CurrencyPair.EUR_USD
+
+
+class UsdJpyMixin(CurrencyMixinBase):
+    CANDLE_CLS = CandleUsdJpyH1Rate
+    CANDLE_MA_CLS = UsdJpyMA
+    base_tick = 0.01
+    yen = 120  # 1tick幾らか
+    currency_pair = CurrencyPair.USD_JPY

@@ -6,10 +6,11 @@ from enum import Enum
 import pytz
 from .base import CurrencyCandleBase
 from module.rate import Granularity
+from module.rate.models.test_data import TestDataMixin
 from .moving_average import MovingAverageBase
 
 
-class CandleUsdJpyBase(CurrencyCandleBase):
+class CandleUsdJpyBase(TestDataMixin, CurrencyCandleBase):
     tick = 0.0001
 
     class Meta(object):

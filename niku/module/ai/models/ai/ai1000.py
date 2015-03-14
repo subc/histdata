@@ -1,33 +1,37 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import datetime
+import copy
 import random
-from ..base import AI6EurUsd, get_range_rates, get_tick_category, convert_rate
-from ..base import MultiCandles
-from .ai7 import AI8EurUsd
+
+from ..base import AIInterFace, get_tick_category, convert_rate
+from ..mixin import DispatchMixin
+from module.currency import UsdJpyMixin
 from module.genetic.models.parameter import OrderType
 from module.rate import Granularity
+from module.rate.models import CandleUsdJpyH1Rate
+from module.rate.models.base import MultiCandles
+from module.rate.models.usd import UsdJpyMA
 
 
-class AI9EurUsd(AI8EurUsd):
-    """
-    DrawDownを基準にした動作を行う
-    """
-    ai_id = 9
+class AIUsdJpyBase(DispatchMixin, UsdJpyMixin, AIInterFace):
     MUTATION_MAX = 120
     MUTATION_MIN = 10
+    RATE_SPAN = Granularity.H1
 
     def score(self, correct_value):
         """
         性能値を返却
-        グループ中の下位5個の性能平均をスコアとする
+        期間を通しての利益で計算する
 
         correct_valueは補正値だけど、このAIは使わない
         :param correct_value: float
         :rtype : int
         """
-        return min(self.market.monthly_profit_group) - correct_value
+        return self.profit - correct_value
+
+    def set_start_data(self):
+        return self
 
     def get_order_ai(self, market, prev_rates, open_bid, start_at):
         """
@@ -46,7 +50,7 @@ class AI9EurUsd(AI8EurUsd):
         if len(rates) - 1 < self.depth:
             return None
 
-        rate_type = self.get_ratetype(open_bid, rates, start_at)
+        rate_type = self.get_key(open_bid, rates, start_at)
 
         # rateがNoneのとき注文しない
         if rate_type is None:
@@ -61,7 +65,37 @@ class AI9EurUsd(AI8EurUsd):
         from module.ai import OrderAI
         return OrderAI(order_type, limit, stop_limit)
 
-    def get_ratetype(self, open_bid, rates, start_at):
+    def normalization(self):
+        """
+        過剰最適化するAIの進化に制限を儲ける
+        利確, 損切り 800pip先とかを禁止
+        """
+        ai = copy.deepcopy(self.ai_dict)
+        for key in ai:
+            if type(ai[key]) == list:
+                for index in [1, 2]:
+                    ai[key][index] = self.adjust(ai[key][index])
+                continue
+            ai[key] = self.adjust(ai[key])
+        self.ai_dict = ai
+
+    def adjust(self, value):
+        if self.MUTATION_MAX < value:
+            return self.MUTATION_MAX
+        if self.MUTATION_MIN > value:
+            return self.MUTATION_MIN
+        return value
+
+    def get_key(self, open_bid, rates, start_at):
+        raise NotImplementedError
+
+
+class AI1001UsdJpy(AIUsdJpyBase):
+    ai_id = 1001
+    MUTATION_MAX = 120
+    MUTATION_MIN = 10
+
+    def get_key(self, open_bid, rates, start_at):
         rate = rates[-1]
         if rate is None or rate.ma is None or rate.ma.h24 is None:
             return None
@@ -91,19 +125,23 @@ class AI9EurUsd(AI8EurUsd):
         key_candle = 'CANDLE:{}'.format(prev_rate.get_candle_type(self.base_tick))
         return key_candle
 
-
-class AI10EurUsd(AI9EurUsd):
-    ai_id = 10
-    MUTATION_MAX = 120
-    MUTATION_MIN = 10
-
-    def score(self, correct_value):
+    def get_order_type(self, prev_rates, open_bid):
         """
-        性能値を返却
-        期間を通しての利益で計算する
-
-        correct_valueは補正値だけど、このAIは使わない
-        :param correct_value: float
-        :rtype : int
+        注文方向を決定
+        :param prev_rates: list of Rate
+        :param open_bid: float
+        :rtype : OrderType
         """
-        return self.profit - correct_value
+        if len(prev_rates) < 5:
+            return OrderType.WAIT
+
+        for rate in list(reversed(prev_rates[len(prev_rates) - 4: len(prev_rates)])):
+            if rate.ma and rate.ma.d25:
+                d25_diff_tick = int((open_bid - rate.ma.d25) / rate.tick)
+                # 上げ相場
+                if d25_diff_tick > self.up_down_base_tick:
+                    return OrderType.BUY
+                # 下げ相場
+                if d25_diff_tick <= self.up_down_base_tick * -1:
+                    return OrderType.SELL
+        return OrderType.WAIT

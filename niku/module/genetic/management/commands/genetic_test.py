@@ -8,6 +8,8 @@ from module.genetic.models.mixin import GeneticMixin, ApiMixin
 from module.rate.models import CandleEurUsdH1Rate
 from module.rate.models.eur import EurUsdMA
 from module.ai import AI9EurUsd as AI
+from module.ai import AI1001UsdJpy as AI
+
 from .genetic import Command as CmdBase
 
 
@@ -38,8 +40,8 @@ class Command(CmdBase):
         """
         :rtype : list of Rate
         """
-        candles = CandleEurUsdH1Rate.get_test_data4()
-        ma = EurUsdMA.get_test_data4()
+        candles = AI.CANDLE_CLS.get_test_data4()
+        ma = AI.CANDLE_MA_CLS.get_test_data4()
         mad = {m.start_at: m for m in ma}
         for candle in candles:
             candle.set_ma(mad.get(candle.start_at))

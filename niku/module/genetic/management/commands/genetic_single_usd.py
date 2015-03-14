@@ -3,14 +3,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management import BaseCommand
 import numpy
-from module.genetic.models import Benchmark
+from module.genetic.models.benchmark_single import BenchmarkSingle
 from module.genetic.models.mixin import GeneticMixin, ApiMixin
-from module.rate.models import CandleEurUsdH1Rate
-from module.rate.models.eur import EurUsdMA
-from module.ai.models import AI5EurUsd as AI
-from module.ai.models import AI6EurUsd as AI
-from module.ai import AI7EurUsd as AI
-from module.ai import AI10EurUsd as AI
+from module.ai import AI1001UsdJpy as AI
 
 
 class Command(ApiMixin, GeneticMixin, BaseCommand):
@@ -20,26 +15,22 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
     AI_GROUP_SIZE = 20
     GENERATION_LIMIT = 300
     generation = AI_START_GENERATION
-    IS_SINGLE = False
-
+    CANDLES = None
 
     def handle(self, *args, **options):
-        candles = self.get_candles()
+        self.set_candles()
         while True:
             self.generation = self.AI_START_GENERATION
-            self.run(candles)
+            self.run()
 
-    def run(self, candles):
+    def run(self):
         ai_group = get_ai_group(self.ai_class, self.suffix, self.AI_START_NUM, self.generation)
-        benchmark = Benchmark(candles)
+        benchmark = BenchmarkSingle(self.CANDLES)
 
         # 特定世代まで試験を実施
         while self.generation <= self.GENERATION_LIMIT:
             # ベンチマーク実行
-            if self.IS_SINGLE:
-                ai_group = benchmark.set_ai(ai_group).run()
-            else:
-                ai_group = benchmark.set_ai(ai_group).run_mp()
+            ai_group = benchmark.set_ai(ai_group).run()
             score = max([ai.score(0) for ai in ai_group])
             profit = max([ai.profit for ai in ai_group])
             self.history_write(ai_group)
@@ -85,13 +76,13 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
         名前の接頭語を返却
         :rtype : string
         """
-        return 'test-ai'
+        return 'S-'
 
     @property
     def ai_class(self):
         return AI
 
-    def get_candles(self):
+    def set_candles(self):
         """
         :rtype : list of Rate
         """
@@ -100,7 +91,7 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
         mad = {m.start_at: m for m in ma}
         for candle in candles:
             candle.set_ma(mad.get(candle.start_at))
-        return candles
+        self.CANDLES = candles
 
 
 def get_ai_group(ai_class, suffix, num, generation):

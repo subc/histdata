@@ -3,11 +3,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management import BaseCommand
 import numpy
-from module.genetic.models import Benchmark
 from module.genetic.models.benchmark_single import BenchmarkSingle
 from module.genetic.models.mixin import GeneticMixin, ApiMixin
-from module.rate.models import CandleEurUsdH1Rate
-from module.rate.models.eur import EurUsdMA
 from module.ai import AI10EurUsd as AI
 
 
@@ -79,7 +76,7 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
         名前の接頭語を返却
         :rtype : string
         """
-        return 'test-ai'
+        return 'S-'
 
     @property
     def ai_class(self):
@@ -89,8 +86,8 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
         """
         :rtype : list of Rate
         """
-        candles = CandleEurUsdH1Rate.get_test_data()
-        ma = EurUsdMA.get_test_data()
+        candles = AI.CANDLE_CLS.get_test_data()
+        ma = AI.CANDLE_MA_CLS.get_test_data()
         mad = {m.start_at: m for m in ma}
         for candle in candles:
             candle.set_ma(mad.get(candle.start_at))

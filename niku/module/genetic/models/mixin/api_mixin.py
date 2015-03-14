@@ -45,7 +45,7 @@ def requests_post_api(url_base, payload=None, log=True):
     TEST_HOST = '127.0.0.1:8000'
     url = url_base.format(TEST_HOST)
     payload = {'data': payload}
-    requests.adapters.DEFAULT_RETRIES = 100
+    requests.adapters.DEFAULT_RETRIES = 3
     response = requests.post(url, data=payload)
     print 'URL SUCCESS: {}'.format(url)
     return response

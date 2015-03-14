@@ -59,3 +59,17 @@ class CurrencyPairToTable(object):
             }
         }
         return CURRENCY_PAIR_TO_TABLE.get(currency_pair).get(granularity)
+
+    @classmethod
+    def get_ma_table(cls, currency_pair):
+        """
+        :param currency_pair: CurrencyPair
+        :rtype : MovingAverageBase
+        """
+        from .models.eur import EurUsdMA
+        from .models.usd import UsdJpyMA
+        CURRENCY_PAIR_TO_TABLE = {
+            CurrencyPair.EUR_USD: EurUsdMA,
+            CurrencyPair.USD_JPY: UsdJpyMA,
+        }
+        return CURRENCY_PAIR_TO_TABLE.get(currency_pair)

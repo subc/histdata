@@ -75,13 +75,11 @@ class GeneticHistory(models.Model):
         """
         ct = 0
         for group in cls.get_history_by_n(1000, currency_pair_id):
-            if len(group) < 800:
+            if len(group) < 900:
                 continue
 
             print 'TARGET:{} / {}'.format(group[0].id, cls.objects.all().order_by("-id")[0].id)
-            group = sorted(group, key=lambda x: x.score, reverse=True)
-            for g in group:
-                print g.score, group[0].score
+            # group = sorted(group, key=lambda x: x.score, reverse=True)
 
             # スコアTOPにエリートフラグ付与
             group[0].set_elite()

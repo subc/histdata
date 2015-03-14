@@ -39,7 +39,9 @@ class GeneticBackTestHistory(models.Model):
         未試験のデータを返却
         :return: list of GeneticBackTestHistory
         """
-        return list(cls.objects.filter(test_end_at=None))
+        r = list(cls.objects.filter(test_end_at=None))
+        r = sorted(r, key=lambda x: x.id, reverse=True)
+        return r
 
     @classmethod
     def get_by_genetic(cls, genetic_id, for_update=False):
@@ -197,6 +199,10 @@ class GeneticBackTestHistory(models.Model):
         return get_candle_cls(CurrencyPair(self.currency_pair), Granularity(self.span))
 
     @property
+    def candle_ma_cls(self):
+        return get_candle_ma_cls(CurrencyPair(self.currency_pair))
+
+    @property
     def ai(self):
         """
         :rtype : AI1EurUsd
@@ -213,3 +219,12 @@ def get_candle_cls(currency_pair, granularity):
     """
     from module.rate import CurrencyPairToTable
     return CurrencyPairToTable.get_table(currency_pair, granularity)
+
+
+def get_candle_ma_cls(currency_pair):
+    """
+    :param currency_pair:  CurrencyPair
+    :rtype : Rate
+    """
+    from module.rate import CurrencyPairToTable
+    return CurrencyPairToTable.get_ma_table(currency_pair)

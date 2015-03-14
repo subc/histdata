@@ -5,7 +5,7 @@ import copy
 import random
 import datetime
 from line_profiler import LineProfiler
-from .mixin import MAMixin
+# from .mixin import MAMixin
 from module.rate import CurrencyPair, Granularity
 from module.genetic.models.parameter import OrderType
 from .market_order import MarketOrder, OrderAI
@@ -177,10 +177,6 @@ class AIInterFace(object):
 
     def score(self, correct_value):
         return self.profit - correct_value
-
-    @property
-    def base_tick(self):
-        return self.ai_dict.get('base_tick')
 
     @property
     def profit(self):
@@ -525,7 +521,7 @@ class AI4EurUsd(AI3EurUsd):
     ]
 
 
-class AI5EurUsd(MAMixin, EurUsdMixin, AIInterFace):
+class AI5EurUsd(EurUsdMixin, AIInterFace):
     """
     MAを見て判断
     """
