@@ -68,16 +68,18 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
         cls.objects.create(**kwargs)
 
     @classmethod
-    def safe_bulk_create_by_oanda(cls, oanda_candles):
+    def safe_bulk_create_by_oanda(cls, oanda_candles, start_at=None):
         """
         Duplicate errorが発生しない安全なcreate
         :param oanda_candles: list of OandaCandle
         :rtype : bool
         """
+        oanda_start_at = min(c.c_time for c in oanda_candles)
         candle_dict = {str(candle.c_time): candle for candle in oanda_candles}
-        register_candles = [str(candle.start_at) for candle in list(cls.objects.filter())]
-        # print register_candles
-        # print candle_dict
+        if start_at:
+            register_candles = [str(candle.start_at) for candle in list(cls.by_start_at(oanda_start_at))]
+        else:
+            register_candles = [str(candle.start_at) for candle in list(cls.objects.filter())]
         for register_candle in register_candles:
             if register_candle in candle_dict:
                 del candle_dict[register_candle]

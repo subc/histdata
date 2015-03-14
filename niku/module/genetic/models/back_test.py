@@ -59,13 +59,16 @@ class GeneticBackTestHistory(models.Model):
         # 登録済みデータは排除する
         genetic_ids = cls.get_genetic_ids()
         data = []
+        ct = 0
         for elite in elite_group:
             if elite.id not in genetic_ids:
                 # 試験シナリオ生成
                 data += cls.get_story(elite)
+                ct += 1
 
-        # bulk!
-        cls.objects.bulk_create(data)
+            # bulk!
+            cls.objects.bulk_create(data)
+            data = []
         return len(data)
 
     @classmethod

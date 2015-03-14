@@ -17,14 +17,15 @@ class Command(BaseCommand):
 
     def run(self):
         self.update_ma(UsdJpyMA, CandleUsdJpyM5Rate, CandleUsdJpyDRate)
-        raise
         self.update_ma(EurUsdMA, CandleEurUsdM5Rate, CandleEurUsdDRate)
 
     def update_ma(self, cls_ma, cls_m5, cls_d1):
         write_history = cls_ma.get_all_start_at()
         candles_m5 = cls_m5.get_all()
         candles_d1 = cls_d1.get_all()
+        self.write(cls_ma, write_history, candles_m5, candles_d1)
 
+    def write(self, cls_ma, write_history, candles_m5, candles_d1):
         # 並び順番の試験
         prev = None
         for candle in candles_m5:
@@ -62,6 +63,10 @@ class Command(BaseCommand):
 
                 # リセット
                 bulk = []
+
+        if bulk:
+            cls_ma.bulk_create(bulk)
+
 
     def calc_ma(self, index, candles_m5, candles_d1):
         # ma計算

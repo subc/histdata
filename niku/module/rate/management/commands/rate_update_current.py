@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Rate Update
+直近のレートを更新する
 """
 from __future__ import absolute_import
 from __future__ import unicode_literals
@@ -34,12 +34,14 @@ class Command(BaseCommand):
         self.run()
 
     def run(self):
-        # レート取得
+        # 直近のレート取得
+        now = datetime.datetime.now()
+        seven_days_ago = now - datetime.timedelta(seconds=3600*24*7)
         for pair in CurrencyPair:
-            self.update_rate(pair, Granularity.D, 700)
-            self.update_rate(pair, Granularity.H1, 100)
-            self.update_rate(pair, Granularity.M5, 15)
-            self.update_rate(pair, Granularity.M1, 2, limit=datetime.datetime(2014, 1, 1, 0, 0, 0))
+            self.update_rate(pair, Granularity.D, 700, limit=seven_days_ago)
+            self.update_rate(pair, Granularity.H1, 100, limit=seven_days_ago)
+            self.update_rate(pair, Granularity.M5, 15, limit=seven_days_ago)
+            self.update_rate(pair, Granularity.M1, 2, limit=seven_days_ago)
 
     def update_rate(self, currency_pair, granularity, span, limit=None):
         """
@@ -66,7 +68,7 @@ class Command(BaseCommand):
             candles = []
             for candle in data.get('candles'):
                 candles.append(OandaCandle(candle, granularity))
-            CurrencyPairToTable.get_table(currency_pair, granularity).safe_bulk_create_by_oanda(candles, start_at=limit)
+            CurrencyPairToTable.get_table(currency_pair, granularity).safe_bulk_create_by_oanda(candles)
 
 
 def requests_api(url, payload=None):
@@ -87,7 +89,7 @@ def start_date_generator(span, limit=None):
     """
     現在から2005年までの日付を100日毎に返却する
     """
-    now = datetime.datetime.now(pytz.utc)
+    now = datetime.datetime.now()
     if limit is None:
         limit = datetime.datetime(2005, 1, 1, 0, 0, 0)
     span = datetime.timedelta(days=span)
