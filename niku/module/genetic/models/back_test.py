@@ -70,6 +70,24 @@ class GeneticBackTestHistory(models.Model):
 
     @classmethod
     def get_story(cls, x):
+        """
+        ** H1
+        2010/1/1
+        2012/1/1
+        2013/1/1
+        2014/1/1
+        2015/1/1
+
+        ** M5
+        2013/1/1
+        2014/1/1
+        2015/1/1
+
+        ** M1
+        2014/10/1
+        2015/1/1
+        """
+
         r = []
         t20100101 = datetime.datetime(2010, 1, 1, tzinfo=pytz.utc)
         t20120101 = datetime.datetime(2012, 1, 1, tzinfo=pytz.utc)

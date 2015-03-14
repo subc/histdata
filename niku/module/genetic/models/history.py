@@ -13,8 +13,8 @@ class GeneticHistory(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=50)
     generation = models.PositiveIntegerField(help_text='何世代目か')
-    score = models.IntegerField(default=0, help_text='AIの性能')
-    profit = models.IntegerField(default=0, help_text='利益')
+    score = models.IntegerField(default=0, help_text='AIの性能', db_index=True)
+    profit = models.IntegerField(default=0, help_text='利益', db_index=True)
     profit_max = models.IntegerField(default=0, help_text='最大利益')
     profit_min = models.IntegerField(default=0, help_text='最大損失')
     ai = ObjectField(null=True, default=None, help_text='aiのデータ')
@@ -68,8 +68,12 @@ class GeneticHistory(models.Model):
 
     @classmethod
     def flag_elite(cls):
+        """
+        500件の中からTOP1と2をエリートに設定する
+        :return:
+        """
         ct = 0
-        for group in cls.get_history_by_n(100):
+        for group in cls.get_history_by_n(500):
             if len(group) < 90:
                 continue
 

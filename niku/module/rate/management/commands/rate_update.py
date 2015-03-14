@@ -35,22 +35,26 @@ class Command(BaseCommand):
 
     def run(self):
         # レート取得
-        self.update_rate(CurrencyPair.EUR_USD, Granularity.D, 700)
-        self.update_rate(CurrencyPair.EUR_USD, Granularity.H1, 100)
-        self.update_rate(CurrencyPair.EUR_USD, Granularity.M5, 15)
-        self.update_rate(CurrencyPair.EUR_USD, Granularity.M1, 2)
+        for pair in CurrencyPair:
+            print 'pair is', pair
+            if pair == CurrencyPair.EUR_USD:
+                continue
+            self.update_rate(pair, Granularity.D, 700)
+            self.update_rate(pair, Granularity.H1, 100)
+            self.update_rate(pair, Granularity.M5, 15)
+            self.update_rate(pair, Granularity.M1, 2, limit=datetime.datetime(2014, 1, 1, 0, 0, 0))
 
-    def update_rate(self, currency_pair, granularity, span):
+    def update_rate(self, currency_pair, granularity, span, limit=None):
         """
         :param currency_pair: CurrencyPair
         :param granularity: Granularity
         """
-        for _date in start_date_generator(span):
+        for _date in start_date_generator(span, limit=limit):
             start = '%02d-%02d-%02d' % (int(_date.year), int(_date.month), int(_date.day))
             # レート取得
             base_domain = MODE.get('production')
             url_base = 'https://{}/v1/candles?'.format(base_domain)
-            url = url_base + 'instrument=EUR_USD&' + \
+            url = url_base + 'instrument={}&'.format(currency_pair.name) + \
                 'count=5000&' +\
                 'candleFormat=midpoint&' +\
                 'granularity={}&'.format(granularity.name) +\
@@ -82,14 +86,14 @@ def requests_api(url, payload=None):
     return response
 
 
-def start_date_generator(span):
+def start_date_generator(span, limit=None):
     """
-    現在から2003年までの日付を100日毎に返却する
+    現在から2005年までの日付を100日毎に返却する
     """
     now = datetime.datetime.now()
-    limit = datetime.datetime(2005, 1, 1, 0, 0, 0)
+    if limit is None:
+        limit = datetime.datetime(2005, 1, 1, 0, 0, 0)
     span = datetime.timedelta(days=span)
-    # now = now + span - datetime.timedelta(days=1)
     while now > limit:
         now = now - span
         yield now

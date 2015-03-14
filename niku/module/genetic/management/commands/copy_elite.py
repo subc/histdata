@@ -28,5 +28,6 @@ class Command(BaseCommand):
         # eliteフラグ立てる
         num = GeneticHistory.flag_elite()
         print 'COPY HISTORY:{}'.format(num)
+        # バックテストにエリートを流し込む
         num = GeneticBackTestHistory.create_test_story()
         print "COPY ELITE COUNT:{}".format(num)

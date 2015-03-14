@@ -43,14 +43,19 @@ class CurrencyPairToTable(object):
         :rtype : CurrencyCandleBase
         """
         from .models.eur import CandleEurUsdM1Rate, CandleEurUsdDRate, CandleEurUsdH1Rate, CandleEurUsdM5Rate
+        from .models.usd import CandleUsdJpyM1Rate, CandleUsdJpyDRate, CandleUsdJpyH1Rate, CandleUsdJpyM5Rate
         CURRENCY_PAIR_TO_TABLE = {
             CurrencyPair.EUR_USD: {
                 Granularity.D: CandleEurUsdDRate,
                 Granularity.H1: CandleEurUsdH1Rate,
                 Granularity.M5: CandleEurUsdM5Rate,
                 Granularity.M1: CandleEurUsdM1Rate,
-
             },
-            CurrencyPair.USD_JPY: {}
+            CurrencyPair.USD_JPY: {
+                Granularity.D: CandleUsdJpyDRate,
+                Granularity.H1: CandleUsdJpyH1Rate,
+                Granularity.M5: CandleUsdJpyM5Rate,
+                Granularity.M1: CandleUsdJpyM1Rate,
+            }
         }
         return CURRENCY_PAIR_TO_TABLE.get(currency_pair).get(granularity)

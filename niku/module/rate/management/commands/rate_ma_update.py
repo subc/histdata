@@ -7,12 +7,8 @@ from __future__ import unicode_literals
 import copy
 import datetime
 from django.core.management import BaseCommand
-from line_profiler import LineProfiler
-import numpy
-from module.rate.models.base import MultiCandles
-from module.rate.models.eur import Granularity, CandleEurUsdDRate, CandleEurUsdM5Rate, EurUsdMA
-from module.rate.models.moving_average import MovingAverageBase
-from utils.timeit import timeit
+from module.rate.models.eur import CandleEurUsdDRate, CandleEurUsdM5Rate, EurUsdMA
+from module.rate.models.usd import CandleUsdJpyM5Rate, CandleUsdJpyDRate, UsdJpyMA
 
 
 class Command(BaseCommand):
@@ -20,9 +16,14 @@ class Command(BaseCommand):
         self.run()
 
     def run(self):
-        write_history = EurUsdMA.get_all_start_at()
-        candles_m5 = CandleEurUsdM5Rate.get_all()
-        candles_d1 = CandleEurUsdDRate.get_all()
+        self.update_ma(UsdJpyMA, CandleUsdJpyM5Rate, CandleUsdJpyDRate)
+        raise
+        self.update_ma(EurUsdMA, CandleEurUsdM5Rate, CandleEurUsdDRate)
+
+    def update_ma(self, cls_ma, cls_m5, cls_d1):
+        write_history = cls_ma.get_all_start_at()
+        candles_m5 = cls_m5.get_all()
+        candles_d1 = cls_d1.get_all()
 
         # 並び順番の試験
         prev = None
@@ -57,13 +58,10 @@ class Command(BaseCommand):
             if len(bulk) > 3000:
                 # 書き込み
                 print "~~~~~~ bulk!! ~~~~~"
-                EurUsdMA.bulk_create(bulk)
+                cls_ma.bulk_create(bulk)
 
                 # リセット
                 bulk = []
-                pass
-
-        # 残り書き込み
 
     def calc_ma(self, index, candles_m5, candles_d1):
         # ma計算
