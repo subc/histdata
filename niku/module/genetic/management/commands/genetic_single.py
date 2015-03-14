@@ -2,7 +2,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management import BaseCommand
-import numpy
 from module.genetic.models.benchmark_single import BenchmarkSingle
 from module.genetic.models.mixin import GeneticMixin, ApiMixin
 from module.ai import AI10EurUsd as AI
@@ -16,12 +15,17 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
     GENERATION_LIMIT = 300
     generation = AI_START_GENERATION
     CANDLES = None
+    EXPIRE_COUNT = 10
 
     def handle(self, *args, **options):
+        count = 0
         self.set_candles()
         while True:
             self.generation = self.AI_START_GENERATION
             self.run()
+            count += 1
+            if count > self.EXPIRE_COUNT:
+                break
 
     def run(self):
         ai_group = get_ai_group(self.ai_class, self.suffix, self.AI_START_NUM, self.generation)
@@ -52,8 +56,8 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
         一定性能以下のAIグループは足切り絶滅
         """
         # 取引数による詰み回避
-        trade_count = numpy.average([len(ai.market.positions) for ai in ai_group])
-        if trade_count < 1000:
+        trade_count = sum([len(ai.market.positions) for ai in ai_group])
+        if trade_count < 1000 * self.AI_GROUP_SIZE:
             print "取引平均回数が1000を下回ったので自殺:count:{}".format(trade_count)
             self.generation += 100000
 

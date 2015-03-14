@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.core.cache import cache
 from utils.timeit import timeit
-import multiprocessing
 from module.market import Market
 
 

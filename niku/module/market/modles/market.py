@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import defaultdict
 import random
-import datetime
 from django.utils.functional import cached_property
 from .position import Position
 
