@@ -84,12 +84,12 @@ class GeneticBackTestHistory(models.Model):
         2015/1/1
 
         ** M5
-        2013/1/1
+        # 2013/1/1
         2014/1/1
         2015/1/1
 
         ** M1
-        2014/10/1
+        # 2014/10/1
         2015/1/1
         """
 
@@ -143,12 +143,12 @@ class GeneticBackTestHistory(models.Model):
                   test_start_at=t20150101,
                   ai_id=x.ai_id)]
         # M5 2013/1/1〜
-        r += [cls(name=x.name,
-                  genetic_id=x.id,
-                  currency_pair=x.currency_pair,
-                  span=Granularity.M5.value,
-                  test_start_at=t20130101,
-                  ai_id=x.ai_id)]
+        # r += [cls(name=x.name,
+        #           genetic_id=x.id,
+        #           currency_pair=x.currency_pair,
+        #           span=Granularity.M5.value,
+        #           test_start_at=t20130101,
+        #           ai_id=x.ai_id)]
         # M5 2014/1/1〜
         r += [cls(name=x.name,
                   genetic_id=x.id,
@@ -157,12 +157,12 @@ class GeneticBackTestHistory(models.Model):
                   test_start_at=t20140101,
                   ai_id=x.ai_id)]
         # M1 2014/10/1〜
-        r += [cls(name=x.name,
-                  genetic_id=x.id,
-                  currency_pair=x.currency_pair,
-                  span=Granularity.M1.value,
-                  test_start_at=t20141001,
-                  ai_id=x.ai_id)]
+        # r += [cls(name=x.name,
+        #           genetic_id=x.id,
+        #           currency_pair=x.currency_pair,
+        #           span=Granularity.M1.value,
+        #           test_start_at=t20141001,
+        #           ai_id=x.ai_id)]
         # M1 2015/1/1〜
         r += [cls(name=x.name,
                   genetic_id=x.id,
