@@ -13,7 +13,7 @@ class Benchmark(object):
     """
     AIのベンチマークを実施する。
     """
-    PROCESS = 5
+    PROCESS = 2
     _pool = None
     ai_group = None
 
