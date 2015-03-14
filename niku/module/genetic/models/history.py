@@ -79,15 +79,21 @@ class GeneticHistory(models.Model):
                 continue
 
             print 'TARGET:{} / {}'.format(group[0].id, cls.objects.all().order_by("-id")[0].id)
-            sorted(group, key=lambda x: x.score, reverse=True)
+            group = sorted(group, key=lambda x: x.score, reverse=True)
+            for g in group:
+                print g.score, group[0].score
+
             # スコアTOPにエリートフラグ付与
             group[0].set_elite()
             group[1].set_elite()
-            ct += 2
-            print group
+            group[2].set_elite()
+            group[3].set_elite()
+            group[4].set_elite()
+            ct += 5
 
             # それ以外にはノーマルフラグ立てる
             [history.set_normal() for history in group[2:]]
+
         return ct
 
     @classmethod
@@ -98,7 +104,7 @@ class GeneticHistory(models.Model):
         :param currency_pair_id: int
         :rtype : list of list of GeneticHistory
         """
-        targets = cls.objects.filter(elite=None, currency_pair_id=currency_pair_id).order_by('id')
+        targets = cls.objects.filter(elite=None, currency_pair=currency_pair_id).order_by('id')
         return list(chunks(targets, n))
 
     def set_elite(self):

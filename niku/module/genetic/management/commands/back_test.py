@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management import BaseCommand
 from module.genetic.models import Benchmark
+from module.genetic.models.benchmark_single import BenchmarkSingle
 from module.genetic.models.mixin import GeneticMixin, ApiMixin
 from module.rate.models import CandleEurUsdH1Rate
 from module.rate.models.eur import EurUsdMA
@@ -53,7 +54,7 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
             ai = history.ai
             candles = get_candles(history)
 
-            benchmark = Benchmark(candles)
+            benchmark = BenchmarkSingle(candles)
             ai = benchmark.set_ai([ai]).run(calc_draw_down=True)[0]
             ai.genetic_history_id = history.id
             self.history_back_test_write([ai])
