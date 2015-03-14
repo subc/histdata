@@ -100,6 +100,7 @@ def get_candles_d1(candles, count, start_at):
     # assert (count * 0.7 < len(r) <= count)
     if count * 0.7 < len(r) <= count:
         return r
+    print
     return []
 
 

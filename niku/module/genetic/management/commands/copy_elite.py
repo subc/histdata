@@ -7,17 +7,7 @@ from __future__ import unicode_literals
 from django.core.management import BaseCommand, CommandError
 import requests
 from module.genetic.models import GeneticHistory, GeneticBackTestHistory
-from module.rate.models import CandleEurUsdM5Rate
-from module.rate.models.eur import Granularity, CandleEurUsdH1Rate
-from module.title.models.title import TitleSettings
-from module.oanda.models.candle import OandaCandle
-from utils import get_password
-from utils.timeit import timeit
-from utils.oanda_api import OandaAPI, Streamer
-import ujson
-import pytz
-import requests
-import random
+from module.rate import CurrencyPair
 
 
 class Command(BaseCommand):
@@ -26,8 +16,9 @@ class Command(BaseCommand):
 
     def run(self):
         # eliteフラグ立てる
-        num = GeneticHistory.flag_elite()
-        print 'COPY HISTORY:{}'.format(num)
+        for currency_pair in CurrencyPair:
+            num = GeneticHistory.flag_elite(currency_pair.value)
+            print 'COPY HISTORY:{}'.format(num)
         # バックテストにエリートを流し込む
         num = GeneticBackTestHistory.create_test_story()
         print "COPY ELITE COUNT:{}".format(num)

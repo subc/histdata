@@ -67,14 +67,15 @@ class GeneticHistory(models.Model):
         return list(cls.objects.filter(elite__gte=1))
 
     @classmethod
-    def flag_elite(cls):
+    def flag_elite(cls, currency_pair_id):
         """
-        500件の中からTOP1と2をエリートに設定する
+        1000件の中からTOP1と2をエリートに設定する
+        :param currency_pair_id: int
         :return:
         """
         ct = 0
-        for group in cls.get_history_by_n(500):
-            if len(group) < 90:
+        for group in cls.get_history_by_n(1000, currency_pair_id):
+            if len(group) < 800:
                 continue
 
             print 'TARGET:{} / {}'.format(group[0].id, cls.objects.all().order_by("-id")[0].id)
@@ -83,19 +84,21 @@ class GeneticHistory(models.Model):
             group[0].set_elite()
             group[1].set_elite()
             ct += 2
+            print group
 
             # それ以外にはノーマルフラグ立てる
             [history.set_normal() for history in group[2:]]
         return ct
 
     @classmethod
-    def get_history_by_n(cls, n):
+    def get_history_by_n(cls, n, currency_pair_id):
         """
         historyをn個のサブリストにして返却
         :param n: int
+        :param currency_pair_id: int
         :rtype : list of list of GeneticHistory
         """
-        targets = cls.objects.filter(elite=None).order_by('id')
+        targets = cls.objects.filter(elite=None, currency_pair_id=currency_pair_id).order_by('id')
         return list(chunks(targets, n))
 
     def set_elite(self):
