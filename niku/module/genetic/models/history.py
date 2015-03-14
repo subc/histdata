@@ -92,7 +92,7 @@ class GeneticHistory(models.Model):
             ct += 5
 
             # それ以外にはノーマルフラグ立てる
-            [history.set_normal() for history in group[2:]]
+            [history.set_normal() for history in group[5:]]
 
         return ct
 
