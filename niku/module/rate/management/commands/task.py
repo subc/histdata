@@ -70,7 +70,7 @@ class Command(BaseCommand):
         write_history = [x.start_at for x in UsdJpyMA.by_start_at(thirty_days_ago)]
         candles_m5 = CandleUsdJpyM5Rate.by_start_at(seven_days_ago)
         candles_d1 = CandleUsdJpyDRate.by_start_at(seven_days_ago)
-        cmd.write(EurUsdMA, write_history, candles_m5, candles_d1)
+        cmd.write(UsdJpyMA, write_history, candles_m5, candles_d1)
 
     def copy_elite(self):
         CopyEliteCmd().run()
