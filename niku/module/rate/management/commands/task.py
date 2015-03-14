@@ -28,10 +28,10 @@ class Command(BaseCommand):
 
     def run(self):
         # 01. レートの更新
-        self.rate_update()
+        # self.rate_update()
 
         # 02. MAの更新
-        self.ma_update()
+        # self.ma_update()
 
         # 03. copy elite
         self.copy_elite()
