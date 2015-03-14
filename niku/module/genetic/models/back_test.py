@@ -44,6 +44,21 @@ class GeneticBackTestHistory(models.Model):
         return r
 
     @classmethod
+    def get_active_for_back_test(cls):
+        """
+        未試験のデータを返却
+        :return: list of GeneticBackTestHistory
+        """
+        r = list(cls.objects.filter(test_end_at=None))
+        if not r:
+            return []
+        target_history = r[0]
+        r = list(cls.objects.filter(test_end_at=None,
+                                    span=target_history.span,
+                                    test_start_at=target_history.test_start_at))
+        return r
+
+    @classmethod
     def get_by_genetic(cls, genetic_id, for_update=False):
         if for_update:
             return cls.objects.select_for_update(genetic_id=genetic_id)

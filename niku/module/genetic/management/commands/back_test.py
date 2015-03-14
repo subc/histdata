@@ -50,7 +50,7 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
         self.run()
 
     def run(self):
-        for history in GeneticBackTestHistory.get_active():
+        for history in GeneticBackTestHistory.get_active_for_back_test():
             # AI LOAD
             ai = history.ai
             candles = self.get_candles(history)
