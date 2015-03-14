@@ -33,14 +33,11 @@ class Command(BaseCommand):
         # 02. MAの更新
         # self.ma_update()
 
-        # 03. copy elite
-        self.copy_elite()
-
         # 04. back_test
         self.back_test()
 
-        # 1時間停止
-        time.sleep(3600)
+        # 03. copy elite
+        self.copy_elite()
 
     def rate_update(self):
         # 01. レートの更新
