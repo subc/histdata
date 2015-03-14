@@ -44,6 +44,7 @@ GENERATION_LIMIT = 300
 
 class Command(ApiMixin, GeneticMixin, BaseCommand):
     generation = AI_START_GENERATION
+    CANDLE_CACHE = {}
 
     def handle(self, *args, **options):
         self.run()
@@ -52,22 +53,30 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
         for history in GeneticBackTestHistory.get_active():
             # AI LOAD
             ai = history.ai
-            candles = get_candles(history)
+            candles = self.get_candles(history)
 
             benchmark = BenchmarkSingle(candles)
             ai = benchmark.set_ai([ai]).run(calc_draw_down=True)[0]
             ai.genetic_history_id = history.id
             self.history_back_test_write([ai])
 
+    def get_candles(self, history):
+        """
+        :param history: GeneticBackTestHistory
+        :rtype : list of Rate
+        """
+        r = self.CANDLE_CACHE.get(self.get_key(history), None)
+        if r:
+            print 'HIT CACHE'
+            return r
 
-def get_candles(history):
-    """
-    :param history: GeneticBackTestHistory
-    :rtype : list of Rate
-    """
-    candles = history.candle_cls.by_start_at(history.test_start_at)
-    ma = EurUsdMA.by_start_at(history.test_start_at)
-    mad = {m.start_at: m for m in ma}
-    for candle in candles:
-        candle.set_ma(mad.get(candle.start_at))
-    return candles
+        candles = history.candle_cls.by_start_at(history.test_start_at)
+        ma = EurUsdMA.by_start_at(history.test_start_at)
+        mad = {m.start_at: m for m in ma}
+        for candle in candles:
+            candle.set_ma(mad.get(candle.start_at))
+        self.CANDLE_CACHE[self.get_key(history)] = candles
+        return candles
+
+    def get_key(self, history):
+        return ':'.join([str(history.span), str(history.test_start_at)])
