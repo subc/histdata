@@ -19,6 +19,7 @@ from .rate_update import Command as RateUpdateCmd
 from .rate_ma_update import Command as RateMaUpdateCmd
 from module.genetic.management.commands.copy_elite import Command as CopyEliteCmd
 from module.genetic.management.commands.back_test import Command as BackTestCmd
+import time
 
 
 class Command(BaseCommand):
@@ -38,10 +39,13 @@ class Command(BaseCommand):
         # 04. back_test
         self.back_test()
 
+        # 1時間停止
+        time.sleep(3600)
+
     def rate_update(self):
         # 01. レートの更新
         now = datetime.datetime.now(pytz.utc)
-        two_days_ago = now - datetime.timedelta(seconds=3600*24*30)
+        two_days_ago = now - datetime.timedelta(seconds=3600*24*7)
         cmd = RateUpdateCmd()
         for pair in CurrencyPair:
             cmd.update_rate(pair, Granularity.D, 700, limit=two_days_ago)
@@ -53,8 +57,8 @@ class Command(BaseCommand):
         # 02. MAの更新
         cmd = RateMaUpdateCmd()
         now = datetime.datetime.now(pytz.utc)
-        thirty_days_ago = now - datetime.timedelta(seconds=3600*24*365)
-        seven_days_ago = now - datetime.timedelta(seconds=3600*24*30)
+        thirty_days_ago = now - datetime.timedelta(seconds=3600*24*30)
+        seven_days_ago = now - datetime.timedelta(seconds=3600*24*7)
 
         # EUR_USD
         write_history = [x.start_at for x in EurUsdMA.by_start_at(thirty_days_ago)]
