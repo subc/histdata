@@ -10,8 +10,10 @@ from .genetic_single import Command as CMD
 
 
 class Command(CMD):
-    pass
-
+    @property
+    def ai_class(self):
+        return AI
+    
 
 def get_ai_group(ai_class, suffix, num, generation):
     """
