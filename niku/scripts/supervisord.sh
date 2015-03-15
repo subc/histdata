@@ -1,3 +1,3 @@
 # easy_install supervisor
-# cp ~/histdata/niku/etc/supervisord.d /etc/
-cp -rfv ~/fx/histdata/niku/etc/supervisord.d /etc/
+#supervisord -c /etc/supervisord.conf
+cp -rfv ~/fx/histdata/niku/etc/supervisord.d/supervisord.conf /etc/
