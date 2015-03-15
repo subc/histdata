@@ -22,6 +22,8 @@ class Granularity(Enum):
 class CurrencyPair(Enum):
     EUR_USD = 1
     USD_JPY = 2
+    GBP_USD = 3
+    AUD_USD = 4
 
     def tick_to_yen(self, tick):
         """
