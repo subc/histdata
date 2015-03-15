@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
+from django.db.models import Count
 import pytz
 from .history import GeneticHistory
 from django.db import models, OperationalError
@@ -49,13 +50,17 @@ class GeneticBackTestHistory(models.Model):
         未試験のデータを返却
         :return: list of GeneticBackTestHistory
         """
-        r = list(cls.objects.filter(test_end_at=None))
+        qs = cls.objects.filter()
+        qs = qs.values('test_start_at', 'span').annotate(Count('test_start_at')).annotate(Count('span')).order_by('-span__count')
+        r = list(qs)
         if not r:
             return []
         target_history = r[0]
+        span = target_history.get('span', None)
+        test_start_at = target_history.get('test_start_at', None)
         r = list(cls.objects.filter(test_end_at=None,
-                                    span=target_history.span,
-                                    test_start_at=target_history.test_start_at))
+                                    span=span,
+                                    test_start_at=test_start_at))
         return r
 
     @classmethod
