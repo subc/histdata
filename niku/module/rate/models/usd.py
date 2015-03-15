@@ -10,8 +10,13 @@ from module.rate.models.test_data import TestDataMixin
 from .moving_average import MovingAverageBase
 
 
+class UsdJpyMA(MovingAverageBase):
+    pass
+
+
 class CandleUsdJpyBase(TestDataMixin, CurrencyCandleBase):
     tick = 0.0001
+    MA_CLS = UsdJpyMA
 
     class Meta(object):
         app_label = 'rate'
@@ -41,7 +46,3 @@ class CandleUsdJpyH1Rate(CandleUsdJpyBase):
 
 class CandleUsdJpyDRate(CandleUsdJpyBase):
     _granularity = Granularity.D
-
-
-class UsdJpyMA(MovingAverageBase):
-    pass

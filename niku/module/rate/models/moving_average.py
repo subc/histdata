@@ -36,6 +36,17 @@ class MovingAverageBase(TestDataMixin, models.Model):
         unique_together = ('start_at',)
 
     @classmethod
+    def get_by_start_at(cls, start_at):
+        """
+        :param start_at: datetime
+        :rtype : list of MovingAverageBase
+        """
+        try:
+            return cls.objects.get(start_at=start_at)
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
     def get_all(cls):
         """
         :return: list of MovingAverageBase
@@ -45,7 +56,7 @@ class MovingAverageBase(TestDataMixin, models.Model):
     @classmethod
     def by_start_at(cls, start_at):
         """
-        :param limit: int
+        :param start_at: datetime
         :rtype : list of MovingAverageBase
         """
         return list(cls.objects.filter(start_at__gte=start_at).order_by('start_at'))

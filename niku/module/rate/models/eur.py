@@ -10,8 +10,13 @@ from .moving_average import MovingAverageBase
 from ..consts import Granularity
 
 
+class EurUsdMA(MovingAverageBase):
+    pass
+
+
 class CandleEurUsdBase(TestDataMixin, CurrencyCandleBase):
     tick = 0.0001
+    MA_CLS = EurUsdMA
 
     class Meta(object):
         app_label = 'rate'
@@ -37,7 +42,3 @@ class CandleEurUsdH1Rate(CandleEurUsdBase):
 
 class CandleEurUsdDRate(CandleEurUsdBase):
     _granularity = Granularity.D
-
-
-class EurUsdMA(MovingAverageBase):
-    pass

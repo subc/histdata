@@ -91,10 +91,6 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
         :rtype : list of Rate
         """
         candles = AI.CANDLE_CLS.get_test_data()
-        ma = AI.CANDLE_MA_CLS.get_test_data()
-        mad = {m.start_at: m for m in ma}
-        for candle in candles:
-            candle.set_ma(mad.get(candle.start_at))
         self.CANDLES = candles
 
 
