@@ -39,8 +39,8 @@ class Command(BaseCommand):
         # 04. back_test
         self.back_test()
 
-        # 10分止まる
-        time.sleep(60 * 10)
+        # 10秒止まる
+        time.sleep(10)
 
     def rate_update(self):
         # 01. レートの更新
