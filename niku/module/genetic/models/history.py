@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.db import models
 from utils import ObjectField
+from utils.timeit import timeit
 
 
 class GeneticHistory(models.Model):
@@ -24,6 +25,11 @@ class GeneticHistory(models.Model):
 
     class Meta(object):
         app_label = 'genetic'
+        unique_together = (
+            # eliteとcurrency_pairで検索するのでINDEXつくっておく
+            ('id', 'elite', 'currency_pair'),
+            ('id', 'ai_id', 'elite', 'currency_pair'),
+        )
 
     @classmethod
     def get(cls, pk):
@@ -34,11 +40,6 @@ class GeneticHistory(models.Model):
         # bulkで作ろうとしたら、2006エラーでるので１個づつ作る
         for ai in ai_group:
             cls.create_from_ai(ai)
-        #
-        # objects = [cls.create_from_ai(ai) for ai in ai_group]
-        # for object in objects:
-        #     object.save()
-        # cls.objects.bulk_create(objects)
 
     @classmethod
     def create_from_ai(cls, ai):
@@ -73,28 +74,33 @@ class GeneticHistory(models.Model):
         :param currency_pair_id: int
         :return:
         """
-        ct = 0
-        for group in cls.get_history_by_n(1000, currency_pair_id):
-            if len(group) < 900:
-                continue
-
-            print 'TARGET:{} / {}'.format(group[0].id, cls.objects.all().order_by("-id")[0].id)
-            # group = sorted(group, key=lambda x: x.score, reverse=True)
-
-            # スコアTOPにエリートフラグ付与
-            group[0].set_elite()
-            group[1].set_elite()
-            group[2].set_elite()
-            group[3].set_elite()
-            group[4].set_elite()
-            ct += 5
-
-            # それ以外にはノーマルフラグ立てる
-            [history.set_normal() for history in group[5:]]
-
-        return ct
+        for x in xrange(3):
+            print 'categorize'
+            cls.categorize(cls.get_history_by_n(1000, currency_pair_id))
 
     @classmethod
+    def categorize(cls, group):
+        """
+        :param group: list of cls
+        """
+        if len(group) < 900:
+            return
+
+        group = sorted(group, key=lambda x: x.score, reverse=True)
+
+        # スコアTOPにエリートフラグ付与
+        group[0].set_elite()
+        group[1].set_elite()
+        group[2].set_elite()
+        group[3].set_elite()
+        group[4].set_elite()
+
+        # それ以外にはノーマルフラグ立てる
+        [history.set_normal() for history in group[5:]]
+        return 5
+
+    @classmethod
+    @timeit
     def get_history_by_n(cls, n, currency_pair_id):
         """
         historyをn個のサブリストにして返却
@@ -102,8 +108,7 @@ class GeneticHistory(models.Model):
         :param currency_pair_id: int
         :rtype : list of list of GeneticHistory
         """
-        targets = cls.objects.filter(elite=None, currency_pair=currency_pair_id).order_by('id')
-        return list(chunks(targets, n))
+        return list(cls.objects.filter(elite=None, currency_pair=currency_pair_id)[:n])
 
     def set_elite(self):
         self.elite = 1
