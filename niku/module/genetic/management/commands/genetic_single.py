@@ -90,7 +90,7 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
         """
         :rtype : list of Rate
         """
-        candles = AI.CANDLE_CLS.get_test_data()
+        candles = self.ai_class.CANDLE_CLS.get_test_data()
         self.CANDLES = candles
 
 
