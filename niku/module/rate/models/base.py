@@ -19,9 +19,7 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
     start_at = models.DateTimeField(db_index=True, help_text='開始時間')
     interval = models.PositiveIntegerField(default=0)
     _granularity = None
-
     CACHE_BETWEEN = {}
-    CACHE_MA = None
 
     class Meta(object):
         app_label = 'rate'
@@ -142,17 +140,13 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
     def end_at(self):
         return self.start_at + datetime.timedelta(seconds=self.interval)
 
-    @property
+    @cached_property
     def ma(self):
         """
         MAを返却
         :rtype :MovingAverageBase
         """
-        if self.CACHE_MA:
-            return self.CACHE_MA
-        r = self.MA_CLS.get_by_start_at(self.start_at)
-        self.CACHE_MA = r
-        return r
+        return self.MA_CLS.get_by_start_at(self.start_at)
 
 
 class MultiCandles(CandleTypeMixin):
