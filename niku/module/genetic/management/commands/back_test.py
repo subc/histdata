@@ -71,10 +71,6 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
             return r
 
         candles = history.candle_cls.by_start_at(history.test_start_at)
-        ma = history.candle_ma_cls.by_start_at(history.test_start_at)
-        mad = {m.start_at: m for m in ma}
-        for candle in candles:
-            candle.set_ma(mad.get(candle.start_at))
         self.CANDLE_CACHE[self.get_key(history)] = candles
         return candles
 
