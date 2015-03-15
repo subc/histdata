@@ -96,7 +96,7 @@ def get_candles(count, index, candles_m5, candles_d1):
 def get_candles_d1(candles, count, start_at):
     _end_at = start_at - datetime.timedelta(days=1)
     _start_at = start_at - datetime.timedelta(days=1 + count)
-    r = CandleEurUsdDRate.fuzzy_filter_between(_start_at, _end_at)
+    r = candles[0].fuzzy_filter_between(_start_at, _end_at)
     # assert (count * 0.7 < len(r) <= count)
     if count * 0.7 < len(r) <= count:
         return r
