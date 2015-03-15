@@ -50,7 +50,7 @@ class GeneticBackTestHistory(models.Model):
         未試験のデータを返却
         :return: list of GeneticBackTestHistory
         """
-        qs = cls.objects.filter()
+        qs = cls.objects.filter(test_end_at__isnull=True)
         qs = qs.values('test_start_at', 'span').annotate(Count('test_start_at')).annotate(Count('span')).order_by('-span__count')
         r = list(qs)
         if not r:
