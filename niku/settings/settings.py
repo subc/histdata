@@ -119,6 +119,7 @@ INSTALLED_APPS += (
     'module.rate',
     'module.genetic',
     'module.ai',
+    'module.board',
 )
 
 # テンプレート
