@@ -50,10 +50,9 @@ class AI8EurUsd(AI7EurUsd):
         if 'up_down_base_tick' not in self.ai_dict:
             self.ai_dict['up_down_base_tick'] = 70
 
-    def get_order_ai(self, market, prev_rates, open_bid, start_at):
+    def get_order_ai(self, prev_rates, open_bid, start_at):
         """
         条件に沿って注文する
-        :param market: Market
         :param prev_rates: list of Rate
         :param open_bid: float
         :param start_at: datetime

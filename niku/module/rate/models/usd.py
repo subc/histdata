@@ -23,17 +23,9 @@ class CandleUsdJpyBase(TestDataMixin, CurrencyCandleBase):
         abstract = True
         unique_together = ('start_at',)
 
-    @classmethod
-    def get_test_data(cls):
-        return list(cls.objects.filter(start_at__gte=datetime.datetime(2010, 1, 1, tzinfo=pytz.utc)).order_by('start_at'))
-
 
 class CandleUsdJpyM1Rate(CandleUsdJpyBase):
     _granularity = Granularity.M1
-
-    @classmethod
-    def get_test_data(cls):
-        return list(cls.objects.filter(start_at__gte=datetime.datetime(2014, 10, 1, tzinfo=pytz.utc)).order_by('start_at'))
 
 
 class CandleUsdJpyM5Rate(CandleUsdJpyBase):

@@ -10,6 +10,7 @@ class MovingAverageBase(TestDataMixin, models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     start_at = models.DateTimeField(db_index=True, help_text='開始時間')
+    open_bid = models.FloatField(null=True, default=None)
     h1 = models.FloatField(null=True, default=None)
     h4 = models.FloatField(null=True, default=None)
     h24 = models.FloatField(null=True, default=None)
@@ -18,6 +19,16 @@ class MovingAverageBase(TestDataMixin, models.Model):
     d25 = models.FloatField(null=True, default=None)
     d75 = models.FloatField(null=True, default=None)
     d200 = models.FloatField(null=True, default=None)
+    # 水平線d25
+    high_horizontal_d25 = models.FloatField(null=True, default=None)
+    high_horizontal_d25_last_at = models.PositiveIntegerField(null=True, default=None, help_text='最安値から何日経過したか')
+    low_horizontal_d25 = models.FloatField(null=True, default=None)
+    low_horizontal_d25_last_at = models.PositiveIntegerField(null=True, default=None, help_text='最安値から何日経過したか')
+    # 水平線d5
+    high_horizontal_d5 = models.FloatField(null=True, default=None)
+    high_horizontal_d5_last_at = models.PositiveIntegerField(null=True, default=None, help_text='最安値から何日経過したか')
+    low_horizontal_d5 = models.FloatField(null=True, default=None)
+    low_horizontal_d5_last_at = models.PositiveIntegerField(null=True, default=None, help_text='最安値から何日経過したか')
 
     KEYS = [
         'h1',

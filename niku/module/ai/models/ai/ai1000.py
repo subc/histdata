@@ -33,10 +33,9 @@ class AIUsdJpyBase(DispatchMixin, UsdJpyMixin, AIInterFace):
     def set_start_data(self):
         return self
 
-    def get_order_ai(self, market, prev_rates, open_bid, start_at):
+    def get_order_ai(self, prev_rates, open_bid, start_at):
         """
         条件に沿って注文する
-        :param market: Market
         :param prev_rates: list of Rate
         :param open_bid: float
         :param start_at: datetime

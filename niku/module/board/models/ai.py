@@ -19,6 +19,23 @@ class AIBoard(models.Model):
     class Meta(object):
         app_label = 'board'
 
+    @classmethod
+    def get_enable(cls):
+        """
+        :rtype : list of AIBoard
+        """
+        return list(cls.objects.filter(enable=1))
+
+    def get_ai_instance(self):
+        """
+        :rtype : AI1EurUsd
+        """
+        from module.ai import get_ai_class_by
+        return get_ai_class_by(self.ai_id).get_ai(self.ai_param,
+                                                  self.name,
+                                                  1,
+                                                  self.ai_id)
+
 
 class AICursor(models.Model):
     """

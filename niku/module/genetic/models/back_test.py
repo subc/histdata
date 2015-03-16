@@ -228,7 +228,10 @@ class GeneticBackTestHistory(models.Model):
         :rtype : AI1EurUsd
         """
         from module.ai import get_ai_class_by
-        return get_ai_class_by(self.ai_id).get_ai(self.history)
+        return get_ai_class_by(self.ai_id).get_ai(self.history.ai,
+                                                  self.history.name,
+                                                  self.history.generation,
+                                                  self.history.id)
 
 
 def get_candle_cls(currency_pair, granularity):

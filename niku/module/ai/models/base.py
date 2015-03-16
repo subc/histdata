@@ -33,20 +33,20 @@ class AIInterFace(object):
         self._dispatch()
 
     @classmethod
-    def get_ai(cls, history):
+    def get_ai(cls, ai_param, name, generation, ai_pk):
         """
         AIのdictからAIを生成して返却
-        :param : AI
+        :param : ai_param
         """
         ai = {}
-        for key in history.ai:
-            if type(history.ai[key]) == list:
-                l = history.ai[key]
+        for key in ai_param:
+            if type(ai_param[key]) == list:
+                l = ai_param[key]
                 ai[key] = [OrderType(l[0]), l[1], l[2]]
                 continue
-            ai[str(key)] = history.ai[key]
-        ai = cls(ai, history.name, history.generation)
-        ai.pk = history.id
+            ai[str(key)] = ai_param[key]
+        ai = cls(ai, name, generation)
+        ai.pk = ai_pk
         return ai
 
     def _dispatch(self):
@@ -82,7 +82,7 @@ class AIInterFace(object):
         # if self.buy_time:
         #     print "OK BUY AS TIME:{}, {}".format(start_at, self.buy_time + self.buy_limit_time)
 
-        order_ai = self.get_order_ai(market, prev_rates, open_bid, start_at)
+        order_ai = self.get_order_ai(prev_rates, open_bid, start_at)
         if not order_ai:
             return market
 
@@ -91,9 +91,8 @@ class AIInterFace(object):
             market.order(self.currency_pair, open_bid, MarketOrder(open_bid, self.base_tick, order_ai), start_at)
         return market
 
-    def get_order_ai(self, market, prev_rates, open_bid, start_at):
+    def get_order_ai(self, prev_rates, open_bid, start_at):
         """
-        :param market: Market
         :param prev_rates: list of Rate
         :param open_bid: float
         :param start_at: datetime
@@ -252,39 +251,20 @@ class AI1EurUsd(EurUsdMixin, AIInterFace):
         self.normalization()
         return self
 
-    def get_order_ai(self, market, prev_rates, open_bid, start_at):
+    def get_order_ai(self, prev_rates, open_bid, start_at):
         """
         条件に沿って注文する
-        :param market: Market
-        :param rates: list of Rate
+        :param prev_rates: list of Rate
         :rtype market: Market
         """
-        if len(rates) < 3:
+        if len(prev_rates) < 3:
             return None
-        prev_rate = rates[-2]
+        prev_rate = prev_rates[-2]
 
         # 前回のレートから型を探す
         candle_type_id = prev_rate.get_candle_type(self.base_tick)
         order_type, limit, stop_limit = self.ai_dict.get(candle_type_id)
         return OrderAI(order_type, limit, stop_limit)
-
-    @classmethod
-    def get_ai(cls, history):
-        """
-        AIのdictからAIを生成して返却
-        :param : AI
-        """
-        ai = {}
-        for key in history.ai:
-            if key == 'base_tick':
-                ai[key] = history.ai[key]
-                continue
-            if type(history.ai[key]) == list:
-                l = history.ai[key]
-                ai[key] = [OrderType(l[0]), l[1], l[2]]
-                continue
-            raise ValueError
-        return cls(ai, history.name, history.generation)
 
 
 class AI2EurUsd(AI1EurUsd):
@@ -310,23 +290,6 @@ class AI2EurUsd(AI1EurUsd):
     def _dispatch(self):
         if 'depth' not in self.ai_dict:
             self.ai_dict['depth'] = 10
-
-    @classmethod
-    def get_ai(cls, history):
-        """
-        AIのdictからAIを生成して返却
-        :param : AI
-        """
-        ai = {}
-        for key in history.ai:
-            if type(history.ai[key]) == list:
-                l = history.ai[key]
-                ai[key] = [OrderType(l[0]), l[1], l[2]]
-                continue
-            ai[str(key)] = history.ai[key]
-        ai = cls(ai, history.name, history.generation)
-        ai.pk = history.id
-        return ai
 
     def set_start_data(self):
         """
@@ -378,10 +341,9 @@ class AI2EurUsd(AI1EurUsd):
                     ai[key][index] = self.LIMIT_LOWER_TICK
         self.ai_dict = ai
 
-    def get_order_ai(self, market, prev_rates, open_bid, start_at):
+    def get_order_ai(self, prev_rates, open_bid, start_at):
         """
         条件に沿って注文する
-        :param market: Market
         :param prev_rates: list of Rate
         :param open_bid: int
         :rtype market: Market
@@ -455,10 +417,9 @@ class AI3EurUsd(AI2EurUsd):
     def normalization(self):
         pass
 
-    def get_order_ai(self, market, prev_rates, open_bid, start_at):
+    def get_order_ai(self, prev_rates, open_bid, start_at):
         """
         条件に沿って注文する
-        :param market: Market
         :param prev_rates: list of Rate
         :param open_bid: float
         :param start_at: datetime
@@ -573,10 +534,9 @@ class AI5EurUsd(EurUsdMixin, AIInterFace):
     def set_start_data(self):
         return self
 
-    def get_order_ai(self, market, prev_rates, open_bid, start_at):
+    def get_order_ai(self, prev_rates, open_bid, start_at):
         """
         条件に沿って注文する
-        :param market: Market
         :param prev_rates: list of Rate
         :param open_bid: float
         :param start_at: datetime

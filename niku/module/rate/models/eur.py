@@ -27,10 +27,6 @@ class CandleEurUsdBase(TestDataMixin, CurrencyCandleBase):
 class CandleEurUsdM1Rate(CandleEurUsdBase):
     _granularity = Granularity.M1
 
-    @classmethod
-    def get_test_data(cls):
-        return list(cls.objects.filter(start_at__gte=datetime.datetime(2014, 10, 1, tzinfo=pytz.utc)).order_by('start_at'))
-
 
 class CandleEurUsdM5Rate(CandleEurUsdBase):
     _granularity = Granularity.M5

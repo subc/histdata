@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import urllib
 from .base import OandaAPIBase, OandaAPIModelBase
 from module.rate import CurrencyPair
 
@@ -8,6 +9,8 @@ from module.rate import CurrencyPair
 class PriceAPI(OandaAPIBase):
     """
     注文を取る
+
+    %2C は　カンマ
 
     curl -H "Authorization: Bearer ********" -X GET "https://api-fxtrade.oanda.com/v1/prices?instruments=EUR_USD%2CUSD_JPY%2CEUR_CAD"
 
@@ -37,12 +40,21 @@ class PriceAPI(OandaAPIBase):
         ]
     }
     """
-    @classmethod
-    def get_all(cls):
-        instruments = '%2'.join([x.name for x in CurrencyPair])
-        print instruments
+    url_base = '{}v1/prices?'
 
-    pass
+    def get_all(self):
+        instruments = ','.join([x.name for x in CurrencyPair])
+        instruments = urllib.quote(instruments, '')
+        url = self.url_base.format(self.mode.url_base)
+        url += 'instruments={}'.format(instruments)
+        data = self.requests_api(url)
+        r = []
+        for price in data.get('prices'):
+            r.append(PriceAPIModel(price))
+        return r
+
+    def check_json(self, data):
+        assert 'prices' in data
 
 
 class PriceAPIModel(OandaAPIModelBase):
@@ -51,3 +63,6 @@ class PriceAPIModel(OandaAPIModelBase):
     bid = None
     ask = None
     status = None
+
+    def __init__(self, price):
+        print price
