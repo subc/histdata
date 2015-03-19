@@ -13,6 +13,7 @@ class AIBoard(models.Model):
     ai_id = models.PositiveIntegerField()
     ai_param = ObjectField(null=True, default=None, help_text='aiのデータ')
     currency_pair = models.PositiveIntegerField()
+    account = models.PositiveIntegerField(null=True, default=None, help_text='OANDAのアカウントID')
     enable = models.PositiveIntegerField(db_index=True)
     memo = models.CharField(max_length=100)
 
@@ -35,6 +36,26 @@ class AIBoard(models.Model):
                                                   self.name,
                                                   1,
                                                   self.ai_id)
+
+    def get_oanda_api_mode(self):
+        """
+        :rtype : OandaAPIMode
+        """
+        from module.oanda.constants import OandaAPIMode
+        if self.real:
+            return OandaAPIMode.PRODUCTION
+        return OandaAPIMode.DUMMY
+
+    def can_order(self):
+        """
+        ポジション数による購入制限と時間による購入制限
+        注文可能ならTrue
+        :rtype: bool
+        """
+        # todo
+
+
+        return True
 
 
 class AICursor(models.Model):

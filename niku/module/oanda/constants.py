@@ -9,6 +9,7 @@ class OandaAPIMode(Enum):
     PRODUCTION = 1
     DEVELOP = 2
     SANDBOX = 3
+    DUMMY = 4
 
     @property
     def url_base(self):

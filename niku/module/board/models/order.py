@@ -61,22 +61,32 @@ class Order(models.Model):
         lowerBound = open_rate - 5 * price.currency_pair.get_base_tick()
 
         # create
-        cls.objects.create(real=real,
-                           ai_board_id=ai_board_id,
-                           _currency_pair=currency_pair,
-                           buy=buy,
-                           spread=spread,
-                           open_rate=open_rate,
-                           limit_rate=limit_rate,
-                           stop_limit_rate=stop_limit_rate,
-                           prev_rate_at=prev_rate_at,
-                           lowerBound=lowerBound,
-                           upperBound=upperBound)
+        return cls.objects.create(real=real,
+                                  ai_board_id=ai_board_id,
+                                  _currency_pair=currency_pair,
+                                  buy=buy,
+                                  spread=spread,
+                                  open_rate=open_rate,
+                                  limit_rate=limit_rate,
+                                  stop_limit_rate=stop_limit_rate,
+                                  prev_rate_at=prev_rate_at,
+                                  lowerBound=lowerBound,
+                                  upperBound=upperBound)
 
-        @property
-        def currency_pair(self):
-            return CurrencyPair(self._currency_pair)
+    @classmethod
+    def open_
 
-        @property
-        def side(self):
-            return 'buy' if buy else 'sell'
+    @property
+    def currency_pair(self):
+        return CurrencyPair(self._currency_pair)
+
+    @property
+    def side(self):
+        return 'buy' if self.buy else 'sell'
+
+    def set_order(self, orders_response):
+        """
+        確定した注文を記録
+        """
+        # todo
+        pass

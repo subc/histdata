@@ -6,7 +6,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management import BaseCommand
 from module.board.models import AIBoard, Order
+from module.genetic.models.parameter import OrderType
 from module.oanda.constants import OandaAPIMode
+from module.oanda.models.api_orders import OrdersAPI
 from module.oanda.models.api_price import PriceAPI
 from module.rate import CurrencyPairToTable, Granularity
 
@@ -42,8 +44,8 @@ class Command(BaseCommand):
             return False
 
         # ポジション数による購入制限と時間による購入制限
-        # if ai_board.can_order():
-        #     return False
+        if not ai_board.can_order():
+            return False
 
         # レートが正常ではない
         prev_rates = CurrencyPairToTable.get_table(ai.currency_pair, Granularity.H1).get_new_record_by_count(10000)
@@ -56,14 +58,16 @@ class Command(BaseCommand):
 
         if order_ai is None:
             return False
+        if order_ai.order_type == OrderType.WAIT:
+            return False
+
         order_ai.print_member()
 
         # 仮注文発砲
-        Order.pre_order(ai_board, order_ai, price, prev_rate.start_at)
+        order = Order.pre_order(ai_board, order_ai, price, prev_rate.start_at)
 
         # API注文
-
+        api_response = OrdersAPI(ai_board.get_oanda_api_mode(), ai_board.account).post(order)
 
         # 注文成立したあと
-
-
+        order.set_order(api_response)
