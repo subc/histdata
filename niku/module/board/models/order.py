@@ -19,12 +19,15 @@ class Order(models.Model):
     buy = models.PositiveIntegerField()
     spread = models.FloatField(help_text='発注決定時のスプレッド（発注時の値は取得できない）')
     open_rate = models.FloatField(default=None, null=True, help_text='想定注文レート')
+    lowerBound = models.FloatField(default=None, null=True, help_text='成行注文時の最大下限レート')
+    upperBound = models.FloatField(default=None, null=True, help_text='成行注文時の最大上限レート')
     real_open_rate = models.FloatField(default=None, null=True, help_text='約定時の注文レート')
     limit_rate = models.FloatField()
     stop_limit_rate = models.FloatField()
     real_limit_rate = models.FloatField(default=None, null=True, help_text='約定時の注文レート')
     real = models.PositiveIntegerField(default=0, db_index=True)
     profit = models.PositiveIntegerField(default=None, null=True)
+    units = models.PositiveIntegerField(default=None, null=True, help_text='注文量')
 
     class Meta(object):
         app_label = 'board'
@@ -54,6 +57,9 @@ class Order(models.Model):
             limit_rate = open_rate - float(order.limit * price.currency_pair.get_base_tick())
             stop_limit_rate = open_rate + float(order.stop_limit * price.currency_pair.get_base_tick())
 
+        upperBound = open_rate + 5 * price.currency_pair.get_base_tick()
+        lowerBound = open_rate - 5 * price.currency_pair.get_base_tick()
+
         # create
         cls.objects.create(real=real,
                            ai_board_id=ai_board_id,
@@ -63,7 +69,9 @@ class Order(models.Model):
                            open_rate=open_rate,
                            limit_rate=limit_rate,
                            stop_limit_rate=stop_limit_rate,
-                           prev_rate_at=prev_rate_at)
+                           prev_rate_at=prev_rate_at,
+                           lowerBound=lowerBound,
+                           upperBound=upperBound)
 
         @property
         def currency_pair(self):
@@ -72,7 +80,3 @@ class Order(models.Model):
         @property
         def side(self):
             return 'buy' if buy else 'sell'
-
-        # @property
-        # def lowerBound(self):
-        #     return self.open_rate +

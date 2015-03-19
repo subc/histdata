@@ -53,8 +53,8 @@ class OrdersAPI(OandaAccountAPIBase):
             'type': 'market',
             'takeProfit': order.limit_rate,
             'stopLoss': order.stop_limit_rate,
-            'lowerBound': '',
-            'upperBound': '',
+            'lowerBound': order.lowerBound,
+            'upperBound': order.upperBound,
         })
         data = self.requests_api(url, payload=payload)
         # dataをパースする
