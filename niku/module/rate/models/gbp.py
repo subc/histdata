@@ -7,12 +7,12 @@ from module.rate.models.test_data import TestDataMixin
 from .moving_average import MovingAverageBase
 
 
-class UsdJpyMA(MovingAverageBase):
-    currency_pair = CurrencyPair.USD_JPY
+class GbpUsdMA(MovingAverageBase):
+    currency_pair = CurrencyPair.GBP_USD
 
 
-class CandleUsdJpyBase(TestDataMixin, CurrencyCandleBase):
-    MA_CLS = UsdJpyMA
+class CandleGbpUsdBase(TestDataMixin, CurrencyCandleBase):
+    MA_CLS = GbpUsdMA
 
     class Meta(object):
         app_label = 'rate'
@@ -20,21 +20,21 @@ class CandleUsdJpyBase(TestDataMixin, CurrencyCandleBase):
         unique_together = ('start_at',)
 
 
-class CandleUsdJpyM1Rate(CandleUsdJpyBase):
+class CandleGbpUsdM1Rate(CandleGbpUsdBase):
     _granularity = Granularity.M1
-    currency_pair = CurrencyPair.USD_JPY
+    currency_pair = CurrencyPair.GBP_USD
 
 
-class CandleUsdJpyM5Rate(CandleUsdJpyBase):
+class CandleGbpUsdM5Rate(CandleGbpUsdBase):
     _granularity = Granularity.M5
-    currency_pair = CurrencyPair.USD_JPY
+    currency_pair = CurrencyPair.GBP_USD
 
 
-class CandleUsdJpyH1Rate(CandleUsdJpyBase):
+class CandleGbpUsdH1Rate(CandleGbpUsdBase):
     _granularity = Granularity.H1
-    currency_pair = CurrencyPair.USD_JPY
+    currency_pair = CurrencyPair.GBP_USD
 
 
-class CandleUsdJpyDRate(CandleUsdJpyBase):
+class CandleGbpUsdDRate(CandleGbpUsdBase):
     _granularity = Granularity.D
-    currency_pair = CurrencyPair.USD_JPY
+    currency_pair = CurrencyPair.GBP_USD
