@@ -5,13 +5,13 @@ import datetime
 from enum import Enum
 import pytz
 from .base import CurrencyCandleBase
-from module.rate import Granularity
+from module.rate import Granularity, CurrencyPair
 from module.rate.models.test_data import TestDataMixin
 from .moving_average import MovingAverageBase
 
 
 class UsdJpyMA(MovingAverageBase):
-    pass
+    currency_pair = CurrencyPair.USD_JPY
 
 
 class CandleUsdJpyBase(TestDataMixin, CurrencyCandleBase):

@@ -7,11 +7,11 @@ import pytz
 from .base import CurrencyCandleBase
 from .test_data import TestDataMixin
 from .moving_average import MovingAverageBase
-from ..consts import Granularity
+from ..consts import Granularity, CurrencyPair
 
 
 class EurUsdMA(MovingAverageBase):
-    pass
+    currency_pair = CurrencyPair.EUR_USD
 
 
 class CandleEurUsdBase(TestDataMixin, CurrencyCandleBase):

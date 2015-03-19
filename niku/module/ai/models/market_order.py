@@ -63,3 +63,6 @@ class OrderAI(object):
         self.limit = limit
         self.stop_limit = stop_limit
         self.limit_end_at = limit_end_at
+
+    def print_member(self):
+        print 'ORDER:{}:{}:{}:{}'.format(self.order_type, self.limit, self.stop_limit, self.limit_end_at)

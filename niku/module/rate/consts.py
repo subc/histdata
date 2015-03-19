@@ -35,6 +35,18 @@ class CurrencyPair(Enum):
             return int(tick * 100 * 100)
         raise ValueError
 
+    def get_base_tick(self):
+        """
+        :rtype: float
+        """
+        d = {
+            CurrencyPair.EUR_USD: 0.0001,
+            CurrencyPair.USD_JPY: 0.01,
+            CurrencyPair.GBP_USD: 0.0001,
+            CurrencyPair.AUD_USD: 0.0001,
+        }
+        return d.get(self)
+
 
 class CurrencyPairToTable(object):
     @classmethod

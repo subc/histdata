@@ -41,6 +41,16 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
         return list(cls.objects.filter().order_by('start_at'))
 
     @classmethod
+    def get_new_record_by_count(cls, count):
+        """
+        :param count: int
+        :return: list of CurrencyCandleBase
+        """
+        l = list(cls.objects.filter().order_by('-start_at')[:count])
+        l.reverse()
+        return l
+
+    @classmethod
     def fuzzy_filter_between(cls, start_at, end_at):
         """
         曖昧な結果を返すbetween
@@ -111,11 +121,13 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
                    interval=oanda_candle.granularity.value)
 
     @classmethod
-    def by_start_at(cls, start_at):
+    def by_start_at(cls, start_at, count=None):
         """
         :param start_at: datetime
         :rtype : list of CurrencyCandleBase
         """
+        if count:
+            return list(cls.objects.filter(start_at__gte=start_at).order_by('start_at')[:count])
         return list(cls.objects.filter(start_at__gte=start_at).order_by('start_at'))
 
     @classmethod

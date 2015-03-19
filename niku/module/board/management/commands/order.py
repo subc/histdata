@@ -8,6 +8,7 @@ from django.core.management import BaseCommand
 from module.board.models import AIBoard, Order
 from module.oanda.constants import OandaAPIMode
 from module.oanda.models.api_price import PriceAPI
+from module.rate import CurrencyPairToTable, Granularity
 
 
 class Command(BaseCommand):
@@ -35,27 +36,34 @@ class Command(BaseCommand):
         price = price_group.get(ai.currency_pair, None)
 
         # 価格は正常？
-        if price is None or not price.is_active():
+        if price is None:
+            return False
+        if not price.is_active():
             return False
 
         # ポジション数による購入制限と時間による購入制限
-        if ai_board.can_order():
-            return False
+        # if ai_board.can_order():
+        #     return False
 
         # レートが正常ではない
-        prev_rates = hoge
+        prev_rates = CurrencyPairToTable.get_table(ai.currency_pair, Granularity.H1).get_new_record_by_count(10000)
         if not prev_rates:
             return False
+        prev_rate = prev_rates[-1]
 
         # 購入判断
-        order_ai = ai.get_order_ai(prev_rates, price.bid, price.c_time)
+        order_ai = ai.get_order_ai(prev_rates, price.bid, price.time)
 
         if order_ai is None:
             return False
+        order_ai.print_member()
 
         # 仮注文発砲
-        Order.pre_order(order_ai)
+        Order.pre_order(ai_board, order_ai, price, prev_rate.start_at)
 
         # API注文
 
+
         # 注文成立したあと
+
+

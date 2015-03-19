@@ -9,7 +9,7 @@ from django.core.management import BaseCommand
 import requests
 from module.rate import CurrencyPair, CurrencyPairToTable
 from module.rate.models import CandleEurUsdM5Rate
-from module.rate.models.eur import Granularity
+from module.rate.models.eur import Granularity, CandleEurUsdM1Rate
 from module.title.models.title import TitleSettings
 from module.oanda.models.candle import OandaCandle
 from utils import get_password
@@ -35,13 +35,15 @@ class Command(BaseCommand):
 
     def run(self):
         # 直近のレート取得
-        now = datetime.datetime.now()
+        now = datetime.datetime.now(pytz.utc)
         seven_days_ago = now - datetime.timedelta(seconds=3600*24*7)
-        for pair in CurrencyPair:
+        for pair in [CurrencyPair.EUR_USD, CurrencyPair.USD_JPY]:
+            print 'START :{}'.format(pair)
             self.update_rate(pair, Granularity.D, 700, limit=seven_days_ago)
             self.update_rate(pair, Granularity.H1, 100, limit=seven_days_ago)
             self.update_rate(pair, Granularity.M5, 15, limit=seven_days_ago)
             self.update_rate(pair, Granularity.M1, 2, limit=seven_days_ago)
+            self.update_ma(pair)
 
     def update_rate(self, currency_pair, granularity, span, limit=None):
         """
@@ -68,7 +70,15 @@ class Command(BaseCommand):
             candles = []
             for candle in data.get('candles'):
                 candles.append(OandaCandle(candle, granularity))
-            CurrencyPairToTable.get_table(currency_pair, granularity).safe_bulk_create_by_oanda(candles)
+            CurrencyPairToTable.get_table(currency_pair, granularity).safe_bulk_create_by_oanda(candles, start_at=limit)
+
+    def update_ma(self, pair):
+        """
+        MA更新
+        """
+        seven_days_ago = datetime.datetime.now(pytz.utc) - datetime.timedelta(days=7)
+        ma_cls = CurrencyPairToTable.get_ma_table(pair)
+        ma_cls.sync(seven_days_ago, pair)
 
 
 def requests_api(url, payload=None):
@@ -89,7 +99,7 @@ def start_date_generator(span, limit=None):
     """
     現在から2005年までの日付を100日毎に返却する
     """
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(pytz.utc)
     if limit is None:
         limit = datetime.datetime(2005, 1, 1, 0, 0, 0)
     span = datetime.timedelta(days=span)
