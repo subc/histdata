@@ -35,11 +35,11 @@ class Command(BaseCommand):
 
     def run(self):
         # レート取得
-        for pair in CurrencyPair:
+        for pair in [CurrencyPair.AUD_USD, CurrencyPair.GBP_USD]:
             self.update_rate(pair, Granularity.D, 700)
             self.update_rate(pair, Granularity.H1, 100)
             self.update_rate(pair, Granularity.M5, 15)
-            self.update_rate(pair, Granularity.M1, 2, limit=datetime.datetime(2014, 1, 1, 0, 0, 0))
+            self.update_rate(pair, Granularity.M1, 2, limit=datetime.datetime(2014, 1, 1, 0, 0, 0, tzinfo=pytz.utc))
 
     def update_rate(self, currency_pair, granularity, span, limit=None):
         """
@@ -89,7 +89,7 @@ def start_date_generator(span, limit=None):
     """
     now = datetime.datetime.now(pytz.utc)
     if limit is None:
-        limit = datetime.datetime(2005, 1, 1, 0, 0, 0)
+        limit = datetime.datetime(2005, 1, 1, 0, 0, 0, tzinfo=pytz.utc)
     span = datetime.timedelta(days=span)
     while now > limit:
         now = now - span

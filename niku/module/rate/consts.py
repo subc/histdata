@@ -56,8 +56,11 @@ class CurrencyPairToTable(object):
         :param granularity: Granularity
         :rtype : CurrencyCandleBase
         """
-        from .models.eur import CandleEurUsdM1Rate, CandleEurUsdDRate, CandleEurUsdH1Rate, CandleEurUsdM5Rate
-        from .models.usd import CandleUsdJpyM1Rate, CandleUsdJpyDRate, CandleUsdJpyH1Rate, CandleUsdJpyM5Rate
+        from .models import CandleEurUsdM1Rate, CandleEurUsdDRate, CandleEurUsdH1Rate, CandleEurUsdM5Rate
+        from .models import CandleUsdJpyM1Rate, CandleUsdJpyDRate, CandleUsdJpyH1Rate, CandleUsdJpyM5Rate
+        from .models import CandleAudUsdDRate, CandleAudUsdH1Rate, CandleAudUsdM1Rate, CandleAudUsdM5Rate
+        from .models import CandleGbpUsdDRate, CandleGbpUsdH1Rate, CandleGbpUsdM1Rate, CandleGbpUsdM5Rate
+
         CURRENCY_PAIR_TO_TABLE = {
             CurrencyPair.EUR_USD: {
                 Granularity.D: CandleEurUsdDRate,
@@ -70,6 +73,18 @@ class CurrencyPairToTable(object):
                 Granularity.H1: CandleUsdJpyH1Rate,
                 Granularity.M5: CandleUsdJpyM5Rate,
                 Granularity.M1: CandleUsdJpyM1Rate,
+            },
+            CurrencyPair.AUD_USD: {
+                Granularity.D: CandleAudUsdDRate,
+                Granularity.H1: CandleAudUsdH1Rate,
+                Granularity.M5: CandleAudUsdM1Rate,
+                Granularity.M1: CandleAudUsdM5Rate,
+            },
+            CurrencyPair.GBP_USD: {
+                Granularity.D: CandleGbpUsdDRate,
+                Granularity.H1: CandleGbpUsdH1Rate,
+                Granularity.M5: CandleGbpUsdM1Rate,
+                Granularity.M1: CandleGbpUsdM5Rate,
             }
         }
         return CURRENCY_PAIR_TO_TABLE.get(currency_pair).get(granularity)
