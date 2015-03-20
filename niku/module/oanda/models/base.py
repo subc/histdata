@@ -68,23 +68,17 @@ class OandaAccountAPIBase(object):
 
         if not response.status_code == 200:
             print response.text
-        assert response.status_code == 200, response.status_code
-        print 'API_TEST: {}'.format(url)
-        data = ujson.loads(response.text)
         try:
+            assert response.status_code == 200, response.status_code
+            print 'API_TEST: {}'.format(url)
+            data = ujson.loads(response.text)
             self.check_json(data)
         except AssertionError:
-            self.hook_error(data)
-            return data
+            raise TypeError, response.text
         return data
 
     def check_json(self, data):
         raise NotImplementedError
-
-    def hook_error(self, data):
-        # todo ログに記録
-        print 'エラー発生', data
-        return
 
 
 class OandaAPIModelBase(object):

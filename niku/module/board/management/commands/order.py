@@ -67,7 +67,10 @@ class Command(BaseCommand):
         order = Order.pre_order(ai_board, order_ai, price, prev_rate.start_at)
 
         # API注文
-        api_response = OrdersAPI(ai_board.get_oanda_api_mode(), ai_board.account).post(order)
+        try:
+            api_response = OrdersAPI(ai_board.get_oanda_api_mode(), ai_board.account).post(order)
 
-        # 注文成立したあと
-        order.set_order(api_response)
+            # 注文成立情報の記録
+            order.set_order(api_response)
+        except Exception as e:
+            order.set_order_error(e)

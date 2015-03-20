@@ -30,6 +30,7 @@ class Order(models.Model):
     real = models.PositiveIntegerField(default=0, db_index=True)
     profit = models.PositiveIntegerField(default=None, null=True)
     units = models.PositiveIntegerField(default=None, null=True, help_text='注文量')
+    error = models.TextField(default=None, null=True)
 
     class Meta(object):
         app_label = 'board'
@@ -92,4 +93,11 @@ class Order(models.Model):
         self.real_open_rate = orders_response.price
         self.oanda_ticket_id = orders_response.tradeOpened.oanda_ticket_id
         self.save()
-        pass
+
+    def set_order_error(self, e):
+        """
+        発注エラー
+        """
+        self.end_at = datetime.datetime.now(pytz.utc)
+        self.error = str(e)
+        self.save()
