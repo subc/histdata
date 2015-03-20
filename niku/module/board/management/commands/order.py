@@ -40,15 +40,15 @@ class Command(BaseCommand):
         if not price.is_active():
             return False
 
-        # ポジション数による購入制限と時間による購入制限
-        if not ai_board.can_order():
-            return False
-
         # レートが正常ではない
         prev_rates = CurrencyPairToTable.get_table(ai.currency_pair, Granularity.H1).get_new_record_by_count(10000)
         if not prev_rates:
             return False
         prev_rate = prev_rates[-1]
+
+        # ポジション数による購入制限と時間による購入制限
+        if not ai_board.can_order(prev_rate):
+            return False
 
         # 購入判断
         order_ai = ai.get_order_ai(prev_rates, price.bid, price.time)

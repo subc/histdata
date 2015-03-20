@@ -58,10 +58,11 @@ class AIBoard(models.Model):
             return OandaAPIMode.PRODUCTION
         return OandaAPIMode.DUMMY
 
-    def can_order(self):
+    def can_order(self, prev_rate):
         """
         ポジション数による購入制限と時間による購入制限
         注文可能ならTrue
+        :param prev_rate: Rate
         :rtype: bool
         """
         order = Order.get_new_order(self.id)
@@ -70,8 +71,14 @@ class AIBoard(models.Model):
         if order is None:
             return True
 
+        # 前回レートと同じレートを参照しているなら発注不可
+        if prev_rate:
+            if order.prev_rate_at == prev_rate.start_at:
+                return False
+
+        # 時間制限
         now = datetime.datetime.now(pytz.utc)
-        one_hours_ago = now - datetime.timedelta(seconds=3600)
+        one_hours_ago = now - datetime.timedelta(seconds=3000)
         return one_hours_ago > order.created_at
 
 
