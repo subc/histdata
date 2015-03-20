@@ -16,6 +16,7 @@ class AIBoard(models.Model):
     account = models.PositiveIntegerField(null=True, default=None, help_text='OANDAのアカウントID')
     enable = models.PositiveIntegerField(db_index=True)
     memo = models.CharField(max_length=100)
+    units = models.PositiveIntegerField(default=None, null=True, help_text='注文量')
 
     class Meta(object):
         app_label = 'board'

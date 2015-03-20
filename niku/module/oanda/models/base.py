@@ -66,6 +66,8 @@ class OandaAccountAPIBase(object):
         else:
             response = requests.get(url, headers=self.mode.headers)
 
+        if not response.status_code == 200:
+            print response.text
         assert response.status_code == 200, response.status_code
         print 'API_TEST: {}'.format(url)
         data = ujson.loads(response.text)

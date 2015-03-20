@@ -13,11 +13,16 @@ class UsdJpyMA(MovingAverageBase):
 
 class CandleUsdJpyBase(TestDataMixin, CurrencyCandleBase):
     MA_CLS = UsdJpyMA
+    currency_pair = CurrencyPair.USD_JPY
 
     class Meta(object):
         app_label = 'rate'
         abstract = True
         unique_together = ('start_at',)
+
+    @property
+    def tick(self):
+        return self.currency_pair.get_base_tick()
 
 
 class CandleUsdJpyM1Rate(CandleUsdJpyBase):

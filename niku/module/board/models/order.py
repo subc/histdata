@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import datetime
 from django.db import models
 from django.utils.functional import cached_property
+import pytz
 from module.genetic.models.parameter import OrderType
 from module.rate import CurrencyPair
 
@@ -57,8 +59,8 @@ class Order(models.Model):
             limit_rate = open_rate - float(order.limit * price.currency_pair.get_base_tick())
             stop_limit_rate = open_rate + float(order.stop_limit * price.currency_pair.get_base_tick())
 
-        upperBound = open_rate + 5 * price.currency_pair.get_base_tick()
-        lowerBound = open_rate - 5 * price.currency_pair.get_base_tick()
+        upperBound = open_rate + 3 * price.currency_pair.get_base_tick()
+        lowerBound = open_rate - 3 * price.currency_pair.get_base_tick()
 
         # create
         return cls.objects.create(real=real,
@@ -71,10 +73,8 @@ class Order(models.Model):
                                   stop_limit_rate=stop_limit_rate,
                                   prev_rate_at=prev_rate_at,
                                   lowerBound=lowerBound,
-                                  upperBound=upperBound)
-
-    @classmethod
-    def open_
+                                  upperBound=upperBound,
+                                  units=ai_board.units)
 
     @property
     def currency_pair(self):
@@ -88,5 +88,8 @@ class Order(models.Model):
         """
         確定した注文を記録
         """
-        # todo
+        self.order_at = orders_response.time
+        self.real_open_rate = orders_response.price
+        self.oanda_ticket_id = orders_response.tradeOpened.oanda_ticket_id
+        self.save()
         pass

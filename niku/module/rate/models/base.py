@@ -214,3 +214,7 @@ class MultiCandles(CandleTypeMixin):
     @property
     def tick(self):
         return self.currency_pair.get_base_tick()
+
+    @property
+    def currency_pair(self):
+        return self.rates[-1].currency_pair

@@ -28,7 +28,7 @@ class OandaAPIMode(Enum):
         _base = {
             'Accept-Encoding': 'identity, deflate, compress, gzip',
             'Accept': '*/*', 'User-Agent': 'python-requests/1.2.0',
-            'Content-type': 'application/json; charset=utf-8',
+            'Content-type': 'application/x-www-form-urlencoded',
         }
         print 'self is..', self, self == OandaAPIMode.PRODUCTION
 
