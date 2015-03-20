@@ -21,6 +21,14 @@ class AIBoard(models.Model):
     class Meta(object):
         app_label = 'board'
 
+
+    @classmethod
+    def get_all(cls):
+        """
+        :rtype : list of AIBoard
+        """
+        return list(cls.objects.filter())
+
     @classmethod
     def get_enable(cls):
         """

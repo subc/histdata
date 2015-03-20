@@ -60,6 +60,7 @@ class Order(models.Model):
             limit_rate = open_rate - float(order.limit * price.currency_pair.get_base_tick())
             stop_limit_rate = open_rate + float(order.stop_limit * price.currency_pair.get_base_tick())
 
+        # 上下3pipを対象にする
         upperBound = open_rate + 3 * price.currency_pair.get_base_tick()
         lowerBound = open_rate - 3 * price.currency_pair.get_base_tick()
 
