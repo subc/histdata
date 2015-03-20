@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import datetime
 from django.db import models
+import pytz
+from .order import Order
 from utils import ObjectField
 
 
@@ -61,10 +64,15 @@ class AIBoard(models.Model):
         注文可能ならTrue
         :rtype: bool
         """
-        # todo
+        order = Order.get_new_order(self.id)
 
+        # 初注文
+        if order is None:
+            return True
 
-        return True
+        now = datetime.datetime.now(pytz.utc)
+        one_hours_ago = now - datetime.timedelta(seconds=3600)
+        return one_hours_ago > order.created_at
 
 
 class AICursor(models.Model):

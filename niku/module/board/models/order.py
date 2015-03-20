@@ -78,6 +78,18 @@ class Order(models.Model):
                                   upperBound=upperBound,
                                   units=ai_board.units)
 
+    @classmethod
+    def get_new_order(cls, ai_board_id):
+        """
+        最新のポジションを返却
+        :param ai_board_id:int
+        :rtype : Order
+        """
+        r = list(cls.objects.filter(ai_board_id=ai_board_id).order_by('-created_at'))
+        if r:
+            return r[0]
+        return None
+
     @property
     def currency_pair(self):
         return CurrencyPair(self._currency_pair)
