@@ -35,7 +35,7 @@ class Command(BaseCommand):
 
     def run(self):
         # レート取得
-        for pair in [CurrencyPair.AUD_USD, CurrencyPair.GBP_USD]:
+        for pair in CurrencyPair:
             self.update_rate(pair, Granularity.D, 700)
             self.update_rate(pair, Granularity.H1, 100)
             self.update_rate(pair, Granularity.M5, 15)

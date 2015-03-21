@@ -97,8 +97,12 @@ class CurrencyPairToTable(object):
         """
         from .models.eur import EurUsdMA
         from .models.usd import UsdJpyMA
+        from .models.aud import AudUsdMA
+        from .models.gbp import GbpUsdMA
         CURRENCY_PAIR_TO_TABLE = {
             CurrencyPair.EUR_USD: EurUsdMA,
             CurrencyPair.USD_JPY: UsdJpyMA,
+            CurrencyPair.AUD_USD: AudUsdMA,
+            CurrencyPair.GBP_USD: GbpUsdMA,
         }
         return CURRENCY_PAIR_TO_TABLE.get(currency_pair)

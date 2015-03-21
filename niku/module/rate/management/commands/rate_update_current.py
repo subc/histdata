@@ -37,7 +37,7 @@ class Command(BaseCommand):
         # 直近のレート取得
         now = datetime.datetime.now(pytz.utc)
         seven_days_ago = now - datetime.timedelta(seconds=3600*24*7)
-        for pair in [CurrencyPair.EUR_USD, CurrencyPair.USD_JPY, CurrencyPair.AUD_USD, CurrencyPair.GBP_USD]:
+        for pair in CurrencyPair:
             print 'START :{}'.format(pair)
             self.update_rate(pair, Granularity.D, 700, limit=seven_days_ago)
             self.update_rate(pair, Granularity.H1, 100, limit=seven_days_ago)
