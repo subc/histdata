@@ -77,14 +77,14 @@ class CurrencyPairToTable(object):
             CurrencyPair.AUD_USD: {
                 Granularity.D: CandleAudUsdDRate,
                 Granularity.H1: CandleAudUsdH1Rate,
-                Granularity.M5: CandleAudUsdM1Rate,
-                Granularity.M1: CandleAudUsdM5Rate,
+                Granularity.M5: CandleAudUsdM5Rate,
+                Granularity.M1: CandleAudUsdM1Rate,
             },
             CurrencyPair.GBP_USD: {
                 Granularity.D: CandleGbpUsdDRate,
                 Granularity.H1: CandleGbpUsdH1Rate,
-                Granularity.M5: CandleGbpUsdM1Rate,
-                Granularity.M1: CandleGbpUsdM5Rate,
+                Granularity.M5: CandleGbpUsdM5Rate,
+                Granularity.M1: CandleGbpUsdM1Rate,
             }
         }
         return CURRENCY_PAIR_TO_TABLE.get(currency_pair).get(granularity)

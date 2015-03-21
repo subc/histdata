@@ -56,8 +56,8 @@ class CurrencyCandleBase(CandleTypeMixin, models.Model):
         曖昧な結果を返すbetween
         :return: list of CurrencyCandleBase
         """
-        key = "{}/{}/{}-{}/{}/{}".format(start_at.year, start_at.month, start_at.day,
-                                         end_at.year, end_at.month, end_at.day)
+        key = "{}:{}/{}/{}-{}/{}/{}".format(cls.__name__, start_at.year, start_at.month, start_at.day,
+                                            end_at.year, end_at.month, end_at.day)
         cache = cls.CACHE_BETWEEN.get(key, None)
         if cache:
             return cache
