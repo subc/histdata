@@ -64,10 +64,10 @@ class GeneticBackTestHistory(models.Model):
         return r
 
     @classmethod
-    def get_by_genetic(cls, genetic_id, for_update=False):
+    def by_genetic(cls, genetic_id, for_update=False):
         if for_update:
-            return cls.objects.select_for_update(genetic_id=genetic_id)
-        return cls.objects.get(genetic_id=genetic_id)
+            return list(cls.objects.filter(genetic_id=genetic_id).select_for_update())
+        return list(cls.objects.filter(genetic_id=genetic_id))
 
     @classmethod
     def create_test_story(cls):
