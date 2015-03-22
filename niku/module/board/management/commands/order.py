@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management import BaseCommand
+import time
 from module.board.models import AIBoard, Order
 from module.genetic.models.parameter import OrderType
 from module.oanda.constants import OandaAPIMode
@@ -23,6 +24,9 @@ class Command(BaseCommand):
         ai_board_group = AIBoard.get_enable()
         for ai_board in ai_board_group:
             self.order(ai_board, price_group)
+
+        # 30秒停止
+        time.sleep(30)
 
     def order(self, ai_board, price_group):
         """

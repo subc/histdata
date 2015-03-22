@@ -65,6 +65,7 @@ NAME_PREFIX = 'fx'
 DB_USER = 'root'
 DB_PASS = ''
 DB_HOST = '127.0.0.1'
+DB_HOST_RATE = '192.168.0.20'
 DB_PORT = 3306
 CONN_MAX_AGE = 10
 
@@ -75,6 +76,15 @@ DATABASES = {
         'USER': DB_USER,
         'PASSWORD': DB_PASS,
         'HOST': DB_HOST,
+        'PORT': DB_PORT,
+        'CONN_MAX_AGE': CONN_MAX_AGE,
+    },
+    'rate': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': '{}'.format(NAME_PREFIX),
+        'USER': DB_USER,
+        'PASSWORD': DB_PASS,
+        'HOST': DB_HOST_RATE,
         'PORT': DB_PORT,
         'CONN_MAX_AGE': CONN_MAX_AGE,
     },

@@ -5,6 +5,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management import BaseCommand
+import time
 from module.board.models import AIBoard, Order
 from module.oanda.constants import OandaAPIMode
 from module.oanda.models.api_transactions import TransactionsAPI
@@ -24,6 +25,9 @@ class Command(BaseCommand):
         for account in account_group:
             self.access(account)
 
+        # 120秒停止
+        time.sleep(120)
+
     def access(self, account):
         oanda_transactions = TransactionsAPI(OandaAPIMode.PRODUCTION, account).get_all()
 
@@ -32,9 +36,6 @@ class Command(BaseCommand):
 
         # イベント毎に更新を行う
         for transaction in oanda_transactions:
-            # 利益の変化を記録
-            AccountProfit.record(transaction)
-
             # 整合性チェック
             Order.confirm(transaction)
 

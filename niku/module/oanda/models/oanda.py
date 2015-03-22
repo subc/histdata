@@ -13,6 +13,8 @@ class OandaTransaction(models.Model):
     order_type = models.CharField(max_length=50, db_index=True)
     account_id = models.PositiveIntegerField(db_index=True)
     oanda_trade_id = models.PositiveIntegerField(default=None, null=True, help_text='nullのときもある')
+    accountBalance = models.FloatField(default=None, null=True, help_text='現在時点の口座資金')
+    pl = models.FloatField(default=None, null=True, help_text='ポジション決済時の実現損益')
     _data = ObjectField(null=True, default=None, help_text='API応答の生データ')
 
     class Meta(object):
@@ -34,7 +36,9 @@ class OandaTransaction(models.Model):
                             account_id=account_id,
                             oanda_trade_id=t.tradeId,
                             order_type=t.order_type,
-                            _data=t._data))
+                            _data=t._data,
+                            accountBalance=t.accountBalance,
+                            pl=t.profit))
         if bulk:
             cls.objects.bulk_create(bulk)
 

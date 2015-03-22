@@ -83,6 +83,7 @@ class TransactionsAPI(OandaAccountAPIBase):
         r = []
         for transaction in transactions:
             r.append(TransactionsAPIModel(transaction))
+        r = sorted(r, key=lambda x: x.oanda_transaction_id)
         return r
 
     def check_json(self, data):
