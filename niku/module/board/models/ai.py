@@ -42,6 +42,18 @@ class AIBoard(models.Model):
         return [obj.account for obj in list(qs)]
 
     @classmethod
+    def create(cls, history, memo, account=6181277):
+        cls.objects.using('rate').create(real=1,
+                                         name=history.name,
+                                         ai_id=history.ai_id,
+                                         ai_param=history.ai,
+                                         currency_pair=history.currency_pair,
+                                         account=account,
+                                         enable=1,
+                                         units=10,
+                                         memo=memo)
+
+    @classmethod
     def get_enable(cls):
         """
         :rtype : list of AIBoard
