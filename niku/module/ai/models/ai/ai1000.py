@@ -44,9 +44,11 @@ class AIUsdJpyBase(DispatchMixin, UsdJpyMixin, AIInterFace):
         rates = convert_rate(prev_rates, self.RATE_SPAN)
 
         if not rates:
+            print 'RATE is NONE'
             return None
 
         if len(rates) - 1 < self.depth:
+            print 'RATE is not depth', len(rates), self.depth
             return None
 
         rate_type = self.get_key(open_bid, rates, start_at)
