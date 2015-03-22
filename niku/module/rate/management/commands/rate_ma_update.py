@@ -22,8 +22,6 @@ class Command(BaseCommand):
             self.update_ma(pair)
 
     def update_ma(self, pair):
-        long_long_ago = datetime.datetime.now(pytz.utc) - datetime.timedelta(days=365 * 100)
-        print 'START IS {}'.format(long_long_ago)
         ma_cls = CurrencyPairToTable.get_ma_table(pair)
         m5_cls = CurrencyPairToTable.get_table(pair, Granularity.M5)
         m5_all = m5_cls.get_all()
@@ -34,11 +32,13 @@ class Command(BaseCommand):
         bulk = []
         ct = 0
         for candle in m5_all:
-            bulk.append(ma_cls.create_from_candle(candle, pair))
+            bulk.append(ma_cls.create_from_candle(candle, pair))  # ma計算
             ct += 1
             if len(bulk) > 3000:
                 print '{}/{}'.format(ct, len(m5_all))
-                m5_cls.objects.bulk_create(bulk)
+                m5_cls.objects.bulk_create(bulk)  # bulk!
+                del bulk  # メモリ解放
+                bulk = []
 
         if bulk:
             m5_cls.objects.bulk_create(bulk)
