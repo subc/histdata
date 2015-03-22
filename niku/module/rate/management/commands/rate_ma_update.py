@@ -36,7 +36,7 @@ class Command(BaseCommand):
             ct += 1
             if len(bulk) > 3000:
                 print '{}/{}'.format(ct, len(m5_all))
-                m5_cls.objects.bulk_create(bulk)  # bulk!
+                ma_cls.objects.bulk_create(bulk)  # bulk!
                 del bulk  # メモリ解放
                 bulk = []
 
