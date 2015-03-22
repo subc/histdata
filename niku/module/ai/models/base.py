@@ -696,13 +696,9 @@ def convert_rate(rates, g):
     r = []
     limit = 200
     range_max = limit if count * limit < len(rates) else int(len(rates) / count)
-    print 'range_max is..', range_max
     for index in xrange(0, range_max):
         target_rates = list(reversed(rates[len(rates) - count - index * count:len(rates) - index * count]))
         r.append(MultiCandles(target_rates, g))
-        if random.randint(1, 100) == 1:
-            print len(rates) - count - index * count, len(rates) - index * count
-
     return list(reversed(r))
 
 
