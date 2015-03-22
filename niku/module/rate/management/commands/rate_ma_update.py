@@ -8,6 +8,7 @@ import copy
 import datetime
 from django.core.management import BaseCommand
 import pytz
+import gc
 from module.rate import CurrencyPair, CurrencyPairToTable, Granularity
 from module.rate.models.eur import CandleEurUsdDRate, CandleEurUsdM5Rate, EurUsdMA
 from module.rate.models.usd import CandleUsdJpyM5Rate, CandleUsdJpyDRate, UsdJpyMA
@@ -42,3 +43,6 @@ class Command(BaseCommand):
 
         if bulk:
             m5_cls.objects.bulk_create(bulk)
+
+        # メモリ解放
+        gc.collect()
