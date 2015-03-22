@@ -25,7 +25,7 @@ class Command(BaseCommand):
     def update_ma(self, pair):
         ma_cls = CurrencyPairToTable.get_ma_table(pair)
         m5_cls = CurrencyPairToTable.get_table(pair, Granularity.M5)
-        m5_all = m5_cls.by_start_at(datetime.datetime(year=2009, month=12, day=20, tzinfo=pytz.utc))
+        m5_all = m5_cls.by_start_at(datetime.datetime(year=2015, month=3, day=9, tzinfo=pytz.utc))
 
         # maテーブルをトランケート
         ma_cls.objects.all().delete()
@@ -42,7 +42,7 @@ class Command(BaseCommand):
                 bulk = []
 
         if bulk:
-            m5_cls.objects.bulk_create(bulk)
+            ma_cls.objects.bulk_create(bulk)
 
         # メモリ解放
         gc.collect()

@@ -13,6 +13,7 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     order_at = models.DateTimeField(default=None, null=True)
+    confirm_at = models.DateTimeField(default=None, null=True, help_text='oanda transaction apiで注文生成が確認できた')
     end_at = models.DateTimeField(default=None, null=True, db_index=True)
     prev_rate_at = models.DateTimeField(default=None, null=True, db_index=True, help_text='直前のキャンドルの時間')
     oanda_ticket_id = models.PositiveIntegerField(default=None, null=True)
@@ -28,7 +29,7 @@ class Order(models.Model):
     stop_limit_rate = models.FloatField()
     real_limit_rate = models.FloatField(default=None, null=True, help_text='約定時の注文レート')
     real = models.PositiveIntegerField(default=0, db_index=True)
-    profit = models.PositiveIntegerField(default=None, null=True)
+    profit = models.FloatField(default=None, null=True)
     units = models.PositiveIntegerField(default=None, null=True, help_text='注文量')
     error = models.TextField(default=None, null=True)
 
@@ -90,6 +91,66 @@ class Order(models.Model):
             return r[0]
         return None
 
+    @classmethod
+    def get_by_oanda_ticket_id(cls, oanda_ticket_id):
+        """
+        :param oanda_ticket_id: int
+        ;rtype: cls
+        """
+        try:
+            return cls.objects.get(oanda_ticket_id=oanda_ticket_id)
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
+    def confirm(cls, oanda_transaction):
+        """
+        正常に発注できている
+        :param oanda_transaction: TransactionsAPIModel
+        """
+        # 注文タイプチェック
+        if not oanda_transaction.market_order_create:
+            return None
+
+        # get
+        order = cls.get_by_oanda_ticket_id(oanda_transaction.tradeId)
+        if order is None:
+            return None
+
+        # 既に更新済み
+        if order.is_confirm():
+            return None
+
+        # update
+        order.confirm_at = oanda_transaction.time
+        order.save()
+        return order
+
+    @classmethod
+    def close(cls, oanda_transaction):
+        """
+        利益確定の記録
+        :param oanda_transaction: TransactionsAPIModel
+        """
+        # 注文タイプチェック
+        if not oanda_transaction.market_order_stop_limit:
+            return None
+
+        # get
+        order = cls.get_by_oanda_ticket_id(oanda_transaction.tradeId)
+        if order is None:
+            return None
+
+        # 既に更新済み
+        if order.is_close():
+            return None
+
+        # update
+        order.end_at = oanda_transaction.time
+        order.profit = oanda_transaction.profit
+        order.save()
+        return order
+
     @property
     def currency_pair(self):
         return CurrencyPair(self._currency_pair)
@@ -114,3 +175,17 @@ class Order(models.Model):
         self.end_at = datetime.datetime.now(pytz.utc)
         self.error = str(e)
         self.save()
+
+    def is_close(self):
+        """
+        クローズされていたらTrue
+        :rtype :bool
+        """
+        return not self.profit is None
+
+    def is_confirm(self):
+        """
+        confirm済みならTrue
+        :rtype :bool
+        """
+        return bool(self.confirm_at)

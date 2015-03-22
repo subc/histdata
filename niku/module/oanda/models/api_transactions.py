@@ -83,7 +83,7 @@ class TransactionsAPI(OandaAccountAPIBase):
         r = []
         for transaction in transactions:
             r.append(TransactionsAPIModel(transaction))
-        print r
+        return r
 
     def check_json(self, data):
         if 'transactions' not in data:
@@ -91,18 +91,39 @@ class TransactionsAPI(OandaAccountAPIBase):
 
 
 class TransactionsAPIModel(OandaAPIModelBase):
-    oanda_ticket_id = None
+    oanda_transaction_id = None
     accountId = None
     order_type = None
     time = None
     tradeId = None  # 注文系トランザクションにだけ付く
+    accountBalance = None  # アカウントの残高
     _data = None
 
     def __init__(self, data):
-        self.oanda_ticket_id = data.get('id')
+        self.oanda_transaction_id = data.get('id', None)
         self.accountId = data.get('accountId')
-        self.order_type = data.get('order_type')
+        self.order_type = data.get('type')
         self.time = parse_time(data.get('time'))
-        if 'tradeId' in data:
-            self.tradeId = data.get('tradeId')
+        self.tradeId = data.get('tradeId', None)
+        self.accountBalance = data.get('accountBalance', None)
         self._data = data
+
+    @property
+    def market_order_create(self):
+        """
+        :rtype :bool
+        """
+        return self.order_type == 'MARKET_ORDER_CREATE'
+
+    @property
+    def market_order_stop_limit(self):
+        """
+        :rtype :bool
+        """
+        return self.order_type in ['TAKE_PROFIT_FILLED', 'STOP_LOSS_FILLED']
+
+    @property
+    def profit(self):
+        if not self.market_order_stop_limit:
+            return None
+        return float(self._data.get('pl'))

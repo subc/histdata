@@ -120,6 +120,7 @@ INSTALLED_APPS += (
     'module.genetic',
     'module.ai',
     'module.board',
+    'module.oanda',
 )
 
 # テンプレート

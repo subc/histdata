@@ -6,12 +6,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management import BaseCommand
 from module.board.models import AIBoard, Order
-from module.genetic.models.parameter import OrderType
 from module.oanda.constants import OandaAPIMode
-from module.oanda.models.api_orders import OrdersAPI
-from module.oanda.models.api_price import PriceAPI
-from module.rate import CurrencyPairToTable, Granularity
 from module.oanda.models.api_transactions import TransactionsAPI
+from module.oanda.models.oanda import OandaTransaction
 
 
 class Command(BaseCommand):
@@ -28,18 +25,18 @@ class Command(BaseCommand):
             self.access(account)
 
     def access(self, account):
-        print TransactionsAPI(OandaAPIMode.PRODUCTION, account).get_all()
-
+        oanda_transactions = TransactionsAPI(OandaAPIMode.PRODUCTION, account).get_all()
 
         # historyにTransactionを全て記録
-
+        OandaTransaction.bulk_write(account, oanda_transactions)
 
         # イベント毎に更新を行う
+        for transaction in oanda_transactions:
+            # 利益の変化を記録
+            AccountProfit.record(transaction)
 
-        # MARKET_ORDER_CREATE
-        # 整合性チェック
+            # 整合性チェック
+            Order.confirm(transaction)
 
-        # STOP_LOSS_FILLED
-        # TAKE_PROFIT_FILLED
-        # 利益として記録
-
+            # ポジションクローズの記録
+            Order.close(transaction)
