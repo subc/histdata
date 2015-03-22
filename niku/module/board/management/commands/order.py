@@ -38,6 +38,7 @@ class Command(BaseCommand):
         if price is None:
             return False
         if not price.is_active():
+            print 'price not active'
             return False
 
         # レートが正常ではない

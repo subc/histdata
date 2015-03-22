@@ -24,13 +24,22 @@ class AIBoard(models.Model):
     class Meta(object):
         app_label = 'board'
 
-
     @classmethod
     def get_all(cls):
         """
         :rtype : list of AIBoard
         """
         return list(cls.objects.filter())
+
+    @classmethod
+    def get_accounts(cls):
+        """
+        アカウント一覧を返却
+        :rtype : list of AIBoard
+        """
+        qs = cls.objects.filter()
+        qs.query.group_by = ['account']
+        return [obj.account for obj in list(qs)]
 
     @classmethod
     def get_enable(cls):
