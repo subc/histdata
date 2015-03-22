@@ -19,7 +19,7 @@ class Command(BaseCommand):
         self.run()
 
     def run(self):
-        for pair in CurrencyPair:
+        for pair in [CurrencyPair.USD_JPY, CurrencyPair.EUR_USD, CurrencyPair.GBP_USD, CurrencyPair.AUD_USD]:
             self.update_ma(pair)
 
     def update_ma(self, pair):
