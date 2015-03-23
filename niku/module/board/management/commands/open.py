@@ -38,10 +38,10 @@ class Command(BaseCommand):
                 order_group.append(order)
 
         # 発注
-        self.order(order_group)
+        self.order(order_group, price_group)
 
         # 30秒停止
-        # time.sleep(30)
+        time.sleep(30)
 
     def pre_order(self, ai_board, price_group):
         """
@@ -87,10 +87,11 @@ class Command(BaseCommand):
         order = Order.pre_open(ai_board, order_ai, price, prev_rate.start_at)
         return order
 
-    def order(self, order_group):
+    def order(self, order_group, price_group):
         """
         プレオーダーをサマリーとって実際に発注する
         :param order_group: list of Order
+        :param price_group: dict of PriceAPIModel
         :return:
         """
         # サマリー取る
@@ -114,9 +115,7 @@ class Command(BaseCommand):
 
         # DB更新
         for order in order_group:
-            if order.currency_pair in api_response_dict:
-                api_response = api_response_dict[order.currency_pair]
-                order.open(api_response)
+            order.open(price_group.get(order.currency_pair))
 
     def get_prev_rates(self, currency_pair, granularity):
         key = self._get_key(currency_pair, granularity)

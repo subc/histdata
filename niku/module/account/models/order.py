@@ -126,12 +126,13 @@ class Order(models.Model):
     def side(self):
         return 'buy' if self.buy else 'sell'
 
-    def open(self, orders_response):
+    def open(self, price):
         """
         確定した注文を記録
+        :param price: OrderApiModels
         """
-        self.order_at = orders_response.time
-        _o = orders_response.price
+        self.order_at = price.time
+        _o = price.bid if self.buy else price.ask
         self.real_open_rate = _o
         if self.buy:
             self.real_limit_rate = _o + self.limit_tick * self.currency_pair.get_base_tick()

@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management import BaseCommand
+import time
 from module.account.models import Order
 from module.oanda.constants import OandaAPIMode
 from module.oanda.models.api_orders import OrdersAPI
@@ -17,6 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.run()
+        time.sleep(5)
 
     def run(self):
         print 'close'
