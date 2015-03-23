@@ -100,6 +100,7 @@ class AIBoard(models.Model):
         # 時間制限
         now = datetime.datetime.now(pytz.utc)
         one_hours_ago = now - datetime.timedelta(seconds=3000)
+        print one_hours_ago, order.created_at, one_hours_ago > order.created_at
         return one_hours_ago > order.created_at
 
 
