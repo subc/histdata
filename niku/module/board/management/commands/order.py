@@ -43,6 +43,8 @@ class Command(BaseCommand):
         :param price_group: dict of PriceAPIModel
         :rtype : bool
         """
+        print '~~~~~~~~~~~~~~~~~~~~~~~~~~'
+        print 'START AI BOARD:{} UNITS:{}'.format(ai_board.id, ai_board.units)
         ai = ai_board.get_ai_instance()
         price = price_group.get(ai.currency_pair, None)
 
