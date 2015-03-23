@@ -61,6 +61,7 @@ class OrdersAPI(OandaAccountAPIBase):
             'upperBound': order.upperBound,
         }
         data = self.requests_api(url, payload=payload)
+        print data
         return OrderApiModels(data)
 
     def check_json(self, data):

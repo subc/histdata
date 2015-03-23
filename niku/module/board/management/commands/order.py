@@ -82,7 +82,7 @@ class Command(BaseCommand):
 
         # 注文成立情報の記録
         order.set_order(api_response)
-        
+
         # try:
         #     api_response = OrdersAPI(ai_board.get_oanda_api_mode(), ai_board.account).post(order)
         #
