@@ -33,7 +33,7 @@ class AIUsdJpyBase(DispatchMixin, UsdJpyMixin, AIInterFace):
     def set_start_data(self):
         return self
 
-    def get_order_ai(self, prev_rates, open_bid, start_at):
+    def get_order_ai(self, prev_rates, open_bid, start_at, is_production=False):
         """
         条件に沿って注文する
         :param prev_rates: list of Rate
@@ -58,6 +58,9 @@ class AIUsdJpyBase(DispatchMixin, UsdJpyMixin, AIInterFace):
         if rate_type in self.ai_dict:
             order_type, limit, stop_limit = self.ai_dict.get(rate_type)
         else:
+            if is_production:
+                print 'RANDOM WALK!!!', rate_type
+                return None
             # AIがない場合はデフォルトデータをロード
             self.ai_dict[rate_type] = [OrderType.get_random(), random.randint(20, 100), random.randint(20, 100)]
             order_type, limit, stop_limit = self.ai_dict.get(rate_type)

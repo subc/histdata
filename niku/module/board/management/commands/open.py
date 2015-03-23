@@ -74,7 +74,7 @@ class Command(BaseCommand):
             return None
 
         # 購入判断
-        order_ai = ai.get_order_ai(prev_rates, price.bid, price.time)
+        order_ai = ai.get_order_ai(prev_rates, price.bid, price.time, is_production=True)
 
         if order_ai is None:
             return None
