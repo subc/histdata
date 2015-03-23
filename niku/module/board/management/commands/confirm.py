@@ -26,7 +26,7 @@ class Command(BaseCommand):
             self.access(account)
 
         # 120秒停止
-        # time.sleep(120)
+        time.sleep(120)
 
     def access(self, account):
         oanda_transactions = TransactionsAPI(OandaAPIMode.PRODUCTION, account).get_all()
