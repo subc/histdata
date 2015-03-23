@@ -55,7 +55,7 @@ class Command(ApiMixin, GeneticMixin, BaseCommand):
             ai = history.ai
             candles = self.get_candles(history)
 
-            benchmark = BenchmarkSingle(candles)
+            benchmark = BenchmarkSingle(candles, is_production=True)
             ai = benchmark.set_ai([ai]).run(calc_draw_down=True)[0]
             ai.genetic_history_id = history.id
             self.history_back_test_write([ai])

@@ -11,9 +11,11 @@ class BenchmarkSingle(object):
     """
     ai_group = None
     CANDLES = None
+    is_production = None
 
-    def __init__(self, candles):
+    def __init__(self, candles, is_production=False):
         self.CANDLES = candles
+        self.is_production = is_production
 
     def set_ai(self, ai_group):
         self.ai_group = ai_group
@@ -54,7 +56,7 @@ class BenchmarkSingle(object):
         prev_rates = []
         for rate in candles:
             # 購入判断(prev rateに未来データを投入しないこと！！)
-            market = ai.order(market, prev_rates, rate.open_bid, rate.start_at)
+            market = ai.order(market, prev_rates, rate.open_bid, rate.start_at, is_production=self.is_production)
 
             # 決済
             market.payment(rate)

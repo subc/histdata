@@ -59,7 +59,7 @@ class AIInterFace(object):
         from module.genetic.models import GeneticHistory
         GeneticHistory.record_history(self)
 
-    def order(self, market, prev_rates, open_bid, start_at):
+    def order(self, market, prev_rates, open_bid, start_at, is_production=False):
         """
         条件に沿って注文する
         :param market: Market
@@ -82,7 +82,7 @@ class AIInterFace(object):
         # if self.buy_time:
         #     print "OK BUY AS TIME:{}, {}".format(start_at, self.buy_time + self.buy_limit_time)
 
-        order_ai = self.get_order_ai(prev_rates, open_bid, start_at)
+        order_ai = self.get_order_ai(prev_rates, open_bid, start_at, is_production=is_production)
         if not order_ai:
             return market
 
@@ -91,7 +91,7 @@ class AIInterFace(object):
             market.order(self.currency_pair, open_bid, MarketOrder(open_bid, self.base_tick, order_ai), start_at)
         return market
 
-    def get_order_ai(self, prev_rates, open_bid, start_at):
+    def get_order_ai(self, prev_rates, open_bid, start_at, is_production=False):
         """
         :param prev_rates: list of Rate
         :param open_bid: float
