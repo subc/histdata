@@ -62,6 +62,7 @@ class OandaAccountAPIBase(object):
 
     def requests_api(self, url, payload=None):
         if payload:
+            print 'PAYLOAD IS {}'.format(payload)
             response = requests.post(url, headers=self.mode.headers, data=payload)
         else:
             response = requests.get(url, headers=self.mode.headers)
