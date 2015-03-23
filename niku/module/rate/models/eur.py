@@ -17,6 +17,7 @@ class EurUsdMA(MovingAverageBase):
 class CandleEurUsdBase(TestDataMixin, CurrencyCandleBase):
     tick = 0.0001
     MA_CLS = EurUsdMA
+    currency_pair = CurrencyPair.EUR_USD
 
     class Meta(object):
         app_label = 'rate'
@@ -26,15 +27,19 @@ class CandleEurUsdBase(TestDataMixin, CurrencyCandleBase):
 
 class CandleEurUsdM1Rate(CandleEurUsdBase):
     _granularity = Granularity.M1
+    currency_pair = CurrencyPair.EUR_USD
 
 
 class CandleEurUsdM5Rate(CandleEurUsdBase):
     _granularity = Granularity.M5
+    currency_pair = CurrencyPair.EUR_USD
 
 
 class CandleEurUsdH1Rate(CandleEurUsdBase):
     _granularity = Granularity.H1
+    currency_pair = CurrencyPair.EUR_USD
 
 
 class CandleEurUsdDRate(CandleEurUsdBase):
     _granularity = Granularity.D
+    currency_pair = CurrencyPair.EUR_USD
