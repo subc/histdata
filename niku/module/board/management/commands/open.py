@@ -70,7 +70,7 @@ class Command(BaseCommand):
 
         # ポジション数による購入制限と時間による購入制限
         if not ai_board.can_order(prev_rate):
-            print '時間かポジション数による購入制限'
+            print 'TIME OR POSITION LIMIT'
             return None
 
         # 購入判断
@@ -107,9 +107,9 @@ class Command(BaseCommand):
         api_response_dict = {}
         for key in order_dict:
             if order_dict[key] == 0:
-                print '{}:発注なし'.format(key)
+                print '{}:NO ORDER'.format(key)
                 continue
-            print '{}:発注'.format(key)
+            print '{}:ORDER!'.format(key)
             units = order_dict[key]
             api_response_dict[key] = OrdersAPI(OandaAPIMode.PRODUCTION, 6181277).post(key, units)
 
