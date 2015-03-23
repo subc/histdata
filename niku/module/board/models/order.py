@@ -112,6 +112,9 @@ class Order(models.Model):
         if not oanda_transaction.market_order_create:
             return None
 
+        if oanda_transaction.tradeId is None:
+            return None
+
         # get
         order = cls.get_by_oanda_ticket_id(oanda_transaction.tradeId)
         if order is None:

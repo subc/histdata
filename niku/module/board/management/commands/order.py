@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management import BaseCommand
 import time
+import sys
 from module.board.models import AIBoard, Order
 from module.genetic.models.parameter import OrderType
 from module.oanda.constants import OandaAPIMode
@@ -53,6 +54,7 @@ class Command(BaseCommand):
 
         # ポジション数による購入制限と時間による購入制限
         if not ai_board.can_order(prev_rate):
+            print '時間かポジション数による購入制限'
             return False
 
         # 購入判断
@@ -75,4 +77,5 @@ class Command(BaseCommand):
             # 注文成立情報の記録
             order.set_order(api_response)
         except Exception as e:
+            print sys.exc_info()
             order.set_order_error(e)

@@ -125,7 +125,6 @@ class PriceAPIModel(OandaAPIModelBase):
         if self.is_maintenance:
             return False
 
-        print 'diff tick:{}'.format(self.cost_tick)
         # レートが正常 4tickまで許容する
         if self.cost_tick > 4:
             return False

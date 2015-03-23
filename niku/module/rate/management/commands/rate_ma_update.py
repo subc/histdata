@@ -28,7 +28,7 @@ class Command(BaseCommand):
         m5_all = m5_cls.by_start_at(datetime.datetime(year=2009, month=12, day=20, tzinfo=pytz.utc))
 
         # maテーブルをトランケート
-        ma_cls.objects.all().delete()
+        # ma_cls.objects.all().delete()
 
         bulk = []
         ct = 0
