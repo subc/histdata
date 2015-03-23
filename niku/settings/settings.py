@@ -131,6 +131,7 @@ INSTALLED_APPS += (
     'module.ai',
     'module.board',
     'module.oanda',
+    'module.account',
 )
 
 # テンプレート

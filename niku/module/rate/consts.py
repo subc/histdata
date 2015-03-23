@@ -25,9 +25,23 @@ class CurrencyPair(Enum):
     GBP_USD = 3
     AUD_USD = 4
 
+    def units_to_yen(self, tick, units):
+        """
+        1ティックを利益に変換
+        :param tick: int
+        :param units: int
+        :rtype : float
+        """
+        if self == CurrencyPair.EUR_USD:
+            return tick * units * 1.2 / 100
+        elif self == CurrencyPair.USD_JPY:
+            return tick * units * 1 / 100
+        raise ValueError
+
     def tick_to_yen(self, tick):
         """
         1通貨単位分の利益を円換算する
+        AI専用
         """
         if self == CurrencyPair.EUR_USD:
             return int(tick * 10000 * 140)

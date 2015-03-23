@@ -41,24 +41,21 @@ class OrdersAPI(OandaAccountAPIBase):
     """
     url_base = '{}v1/accounts/{}/orders'
 
-    def post(self, order):
+    def post(self, currency_pair, units):
         """
-        :param order: Order
+        :param currency_pair: CurrencyPair
+        :param units: int
         :rtype : OrderApiModels
         """
         if self.mode == OandaAPIMode.DUMMY:
-            return OrderApiModels.get_dummy(order)
+            return []
 
         url = self.url_base.format(self.mode.url_base, self.account)
         payload = {
-            'instrument': order.currency_pair.name,
-            'units': order.units,
-            'side': order.side,
+            'instrument': currency_pair.name,
+            'units': units if units > 0 else units * -1,
+            'side': 'buy' if units > 0 else 'sell',
             'type': 'market',
-            'takeProfit': order.limit_rate,
-            'stopLoss': order.stop_limit_rate,
-            'lowerBound': order.lowerBound,
-            'upperBound': order.upperBound,
         }
         data = self.requests_api(url, payload=payload)
         print data
@@ -74,85 +71,18 @@ class OrderApiModels(OandaAPIModelBase):
     instrument = None
     time = None
     price = None
-    tradeOpened = None
 
     def __init__(self, data):
         self.instrument = str(data.get('instrument'))
         _time = data.get('time')
         self.time = parse_time(_time) if type(_time) == str else _time
         self.price = float(data.get('price'))
-        _tradeOpened = data.get('tradeOpened')
-        self.tradeOpened = TradeOpened(_tradeOpened) if type(_tradeOpened) == dict else _tradeOpened
         self._check(data)
 
-    @classmethod
-    def get_dummy(cls, order):
-        """
-        :param order: Order
-        :rtype : OrderApiModels
-        """
-        data = {
-            'instrument': order.currency_pair.name,
-            'time': order.created_at,
-            'price': order.open_rate,
-            'tradeOpened': TradeOpened.get_dummy(order)
-        }
-        return cls(data)
-
-    def _check(self, price):
-        if 'tradeOpened' not in price:
+    def _check(self, data):
+        if 'price' not in data:
             raise ValueError
-        if 'price' not in price:
+        if 'time' not in data:
             raise ValueError
-        if 'time' not in price:
-            raise ValueError
-        if 'instrument' not in price:
-            raise ValueError
-
-
-class TradeOpened(OandaAPIModelBase):
-    oanda_ticket_id = None
-    units = None
-    side = None
-    takeProfit = None
-    stopLoss = None
-    trailingStop = None
-
-    def __init__(self, data):
-        self.oanda_ticket_id = int(data.get('id'))
-        self.units = int(data.get('units'))
-        self.side = str(data.get('side'))
-        self.takeProfit = float(data.get('takeProfit'))
-        self.stopLoss = float(data.get('stopLoss'))
-        self.trailingStop = float(data.get('trailingStop'))
-        self._check(data)
-
-    @classmethod
-    def get_dummy(cls, order):
-        """
-        :param order: Order
-        :rtype : OrderApiModels
-        """
-        data = {
-            'id': 0,
-            'units': order.units,
-            'side': order.side,
-            'takeProfit': order.limit_rate,
-            'stopLoss': order.stop_limit_rate,
-            'trailingStop': 0,
-        }
-        return cls(data)
-
-    def _check(self, price):
-        if 'id' not in price:
-            raise ValueError
-        if 'units' not in price:
-            raise ValueError
-        if 'side' not in price:
-            raise ValueError
-        if 'takeProfit' not in price:
-            raise ValueError
-        if 'stopLoss' not in price:
-            raise ValueError
-        if 'trailingStop' not in price:
+        if 'instrument' not in data:
             raise ValueError

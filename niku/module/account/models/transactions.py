@@ -18,7 +18,7 @@ class OandaTransaction(models.Model):
     _data = ObjectField(null=True, default=None, help_text='API応答の生データ')
 
     class Meta(object):
-        app_label = 'oanda'
+        app_label = 'account'
 
     @classmethod
     def bulk_write(cls, account_id, oanda_transactions):

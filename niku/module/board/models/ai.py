@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import datetime
 from django.db import models
 import pytz
-from .order import Order
+from module.account.models import Order
 from utils import ObjectField
 
 
@@ -102,15 +102,3 @@ class AIBoard(models.Model):
         one_hours_ago = now - datetime.timedelta(seconds=3000)
         print one_hours_ago, order.created_at, one_hours_ago > order.created_at
         return one_hours_ago > order.created_at
-
-
-class AICursor(models.Model):
-    """
-    AIがどの時間帯に注文を発したか
-    """
-    ai_board_id = models.PositiveIntegerField(db_index=True)
-    time = models.DateTimeField(default=None, null=True)
-    last_order_at = models.DateTimeField(default=None, null=True)
-
-    class Meta(object):
-        app_label = 'board'

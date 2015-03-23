@@ -10,34 +10,36 @@ from module.rate import CurrencyPair
 
 
 class Order(models.Model):
+    # 日付
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     order_at = models.DateTimeField(default=None, null=True)
-    confirm_at = models.DateTimeField(default=None, null=True, help_text='oanda transaction apiで注文生成が確認できた')
     end_at = models.DateTimeField(default=None, null=True, db_index=True)
     prev_rate_at = models.DateTimeField(default=None, null=True, db_index=True, help_text='直前のキャンドルの時間')
-    oanda_ticket_id = models.PositiveIntegerField(default=None, null=True)
+    # 基本情報
     ai_board_id = models.PositiveIntegerField()
     _currency_pair = models.PositiveIntegerField(default=None, null=True)
-    buy = models.PositiveIntegerField()
-    spread = models.FloatField(help_text='発注決定時のスプレッド（発注時の値は取得できない）')
+    # 注文
     open_rate = models.FloatField(default=None, null=True, help_text='想定注文レート')
-    lowerBound = models.FloatField(default=None, null=True, help_text='成行注文時の最大下限レート')
-    upperBound = models.FloatField(default=None, null=True, help_text='成行注文時の最大上限レート')
+    buy = models.PositiveIntegerField()
+    limit_tick = models.PositiveIntegerField()
+    stop_limit_tick = models.PositiveIntegerField()
+    spread = models.FloatField(help_text='発注決定時のスプレッド（発注時の値は取得できない）')
+    # 本番更新
     real_open_rate = models.FloatField(default=None, null=True, help_text='約定時の注文レート')
-    limit_rate = models.FloatField()
-    stop_limit_rate = models.FloatField()
-    real_limit_rate = models.FloatField(default=None, null=True, help_text='約定時の注文レート')
+    real_limit_rate = models.FloatField(default=None, null=True)
+    real_stop_limit_rate = models.FloatField(default=None, null=True)
     real = models.PositiveIntegerField(default=0, db_index=True)
+    real_close_spread = models.FloatField(default=None, null=True, help_text='クローズ時のスプレッド')
     profit = models.FloatField(default=None, null=True)
     units = models.PositiveIntegerField(default=None, null=True, help_text='注文量')
     error = models.TextField(default=None, null=True)
 
     class Meta(object):
-        app_label = 'board'
+        app_label = 'account'
 
     @classmethod
-    def pre_order(cls, ai_board, order, price, prev_rate_at):
+    def pre_open(cls, ai_board, order, price, prev_rate_at):
         """
         仮注文発砲
         :param ai_board: AIBoard
@@ -53,31 +55,29 @@ class Order(models.Model):
         if buy:
             # buy
             open_rate = price.bid
-            limit_rate = open_rate + float(order.limit * price.currency_pair.get_base_tick())
-            stop_limit_rate = open_rate - float(order.stop_limit * price.currency_pair.get_base_tick())
         else:
             # sell
             open_rate = price.ask
-            limit_rate = open_rate - float(order.limit * price.currency_pair.get_base_tick())
-            stop_limit_rate = open_rate + float(order.stop_limit * price.currency_pair.get_base_tick())
-
-        # 上下3pipを対象にする
-        upperBound = open_rate + 3 * price.currency_pair.get_base_tick()
-        lowerBound = open_rate - 3 * price.currency_pair.get_base_tick()
 
         # create
         return cls.objects.create(real=real,
                                   ai_board_id=ai_board_id,
                                   _currency_pair=currency_pair,
                                   buy=buy,
+                                  limit_tick=order.limit,
+                                  stop_limit_tick=order.stop_limit,
                                   spread=spread,
                                   open_rate=open_rate,
-                                  limit_rate=limit_rate,
-                                  stop_limit_rate=stop_limit_rate,
                                   prev_rate_at=prev_rate_at,
-                                  lowerBound=lowerBound,
-                                  upperBound=upperBound,
                                   units=ai_board.units)
+
+    @classmethod
+    def get_open(cls):
+        """
+        オープンしている注文を返却
+        :rtype :list of order
+        """
+        return list(cls.objects.filter(end_at__isnull=True).order_by('-created_at'))
 
     @classmethod
     def get_new_order(cls, ai_board_id):
@@ -90,17 +90,6 @@ class Order(models.Model):
         if r:
             return r[0]
         return None
-
-    @classmethod
-    def get_by_oanda_ticket_id(cls, oanda_ticket_id):
-        """
-        :param oanda_ticket_id: int
-        ;rtype: cls
-        """
-        try:
-            return cls.objects.get(oanda_ticket_id=oanda_ticket_id)
-        except cls.DoesNotExist:
-            return None
 
     @classmethod
     def confirm(cls, oanda_transaction):
@@ -129,31 +118,6 @@ class Order(models.Model):
         order.save()
         return order
 
-    @classmethod
-    def close(cls, oanda_transaction):
-        """
-        利益確定の記録
-        :param oanda_transaction: TransactionsAPIModel
-        """
-        # 注文タイプチェック
-        if not oanda_transaction.market_order_stop_limit:
-            return None
-
-        # get
-        order = cls.get_by_oanda_ticket_id(oanda_transaction.tradeId)
-        if order is None:
-            return None
-
-        # 既に更新済み
-        if order.is_close():
-            return None
-
-        # update
-        order.end_at = oanda_transaction.time
-        order.profit = oanda_transaction.profit
-        order.save()
-        return order
-
     @property
     def currency_pair(self):
         return CurrencyPair(self._currency_pair)
@@ -162,14 +126,52 @@ class Order(models.Model):
     def side(self):
         return 'buy' if self.buy else 'sell'
 
-    def set_order(self, orders_response):
+    def open(self, orders_response):
         """
         確定した注文を記録
         """
         self.order_at = orders_response.time
-        self.real_open_rate = orders_response.price
-        self.oanda_ticket_id = orders_response.tradeOpened.oanda_ticket_id
+        _o = orders_response.price
+        self.real_open_rate = _o
+        if self.buy:
+            self.real_limit_rate = _o + self.limit_tick * self.currency_pair.get_base_tick()
+            self.real_stop_limit_rate = _o - self.stop_limit_tick * self.currency_pair.get_base_tick()
+        else:
+            self.real_limit_rate = _o - self.limit_tick * self.currency_pair.get_base_tick()
+            self.real_stop_limit_rate = _o + self.stop_limit_tick * self.currency_pair.get_base_tick()
         self.save()
+
+    def close(self, price):
+        """
+        利益確定の記録
+        :param price: OrderApiModels
+        """
+        # 既に更新済み
+        if self.is_close():
+            return None
+
+        # update
+        self.end_at = price.time
+        self.profit = self.get_profit(price)
+        self.real_close_spread = price.cost_tick
+        self.save()
+        return self
+
+    def get_profit(self, price):
+        """
+        利益を計算する
+        :param price: OrderApiModels
+        :rtype : float
+        """
+        if not self.can_close(price):
+            raise ValueError
+        _price = price.bid if self.buy else price.ask
+        if self.buy:
+            return self.currency_pair.units_to_yen(
+                (_price - self.real_open_rate) / self.currency_pair.get_base_tick(), self.units)
+        else:
+            return self.currency_pair.units_to_yen(
+                (self.real_open_rate - _price) / self.currency_pair.get_base_tick(), self.units)
 
     def set_order_error(self, e):
         """
@@ -192,3 +194,25 @@ class Order(models.Model):
         :rtype :bool
         """
         return bool(self.confirm_at)
+
+    def can_close(self, price):
+        """
+        クローズできるならTrue
+        :param price: PriceAPIModel
+        :rtype : bool
+        """
+        if self.currency_pair != price.currency_pair:
+            raise ValueError
+        _price = price.bid if self.buy else price.ask
+
+        if self.buy:
+            if _price >= self.real_limit_rate:
+                return True
+            if _price <= self.real_stop_limit_rate:
+                return True
+        else:
+            if _price <= self.real_limit_rate:
+                return True
+            if _price >= self.real_stop_limit_rate:
+                return True
+        return False
