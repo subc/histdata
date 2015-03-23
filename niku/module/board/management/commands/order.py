@@ -21,10 +21,17 @@ class Command(BaseCommand):
         # price取る
         price_group = PriceAPI(OandaAPIMode.PRODUCTION).get_all()
 
+        ct = 0
+
         # AIインスタンス生成
         ai_board_group = AIBoard.get_enable()
         for ai_board in ai_board_group:
+            if ct % 5 == 0:
+                # price取る
+                price_group = PriceAPI(OandaAPIMode.PRODUCTION).get_all()
+
             self.order(ai_board, price_group)
+            ct += 1
 
         # 30秒停止
         time.sleep(30)
@@ -71,11 +78,16 @@ class Command(BaseCommand):
         order = Order.pre_order(ai_board, order_ai, price, prev_rate.start_at)
 
         # API注文
-        try:
-            api_response = OrdersAPI(ai_board.get_oanda_api_mode(), ai_board.account).post(order)
+        api_response = OrdersAPI(ai_board.get_oanda_api_mode(), ai_board.account).post(order)
 
-            # 注文成立情報の記録
-            order.set_order(api_response)
-        except Exception as e:
-            print sys.exc_info()
-            order.set_order_error(e)
+        # 注文成立情報の記録
+        order.set_order(api_response)
+        
+        # try:
+        #     api_response = OrdersAPI(ai_board.get_oanda_api_mode(), ai_board.account).post(order)
+        #
+        #     # 注文成立情報の記録
+        #     order.set_order(api_response)
+        # except Exception as e:
+        #     print sys.exc_info()
+        #     order.set_order_error(e)
