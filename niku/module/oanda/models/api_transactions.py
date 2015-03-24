@@ -128,3 +128,18 @@ class TransactionsAPIModel(OandaAPIModelBase):
         if not self.market_order_stop_limit:
             return None
         return float(self._data.get('pl'))
+
+    @property
+    def memo(self):
+        if 'instrument' not in self._data:
+            return ''
+
+        if 'units' not in self._data:
+            return ''
+
+        if 'side' not in self._data:
+            return ''
+        instrument = str(self._data.get('instrument'))
+        units = str(self._data.get('units'))
+        side = str(self._data.get('side'))
+        return ':'.join([instrument, side, units])
