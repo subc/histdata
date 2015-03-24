@@ -34,10 +34,12 @@ class Command(BaseCommand):
         for order in orders:
             if order.can_close(price_group[order.currency_pair]):
                 if order.buy:
+                    # 反転売買する
                     print order.currency_pair, order.units
                     order_dict[order.currency_pair] -= order.units
                     print order_dict[order.currency_pair]
                 else:
+                    # 反転売買する
                     print order.currency_pair, order.units
                     order_dict[order.currency_pair] += order.units
                     print order_dict[order.currency_pair]
