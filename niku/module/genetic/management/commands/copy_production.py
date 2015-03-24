@@ -40,6 +40,9 @@ class Command(BaseCommand):
 
         # copy実行
         AIBoard.create(history, 'ID:{}'.format(history_id))
+
+        # フラグ立てる
+        GeneticBackTestHistory.set_elite(history_id)
         print 'COPY FINISH!!'
 
     def print_history(self, history):

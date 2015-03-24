@@ -210,6 +210,17 @@ class GeneticBackTestHistory(models.Model):
         o.trade_count = ai.trade_count
         o.save()
 
+    @classmethod
+    def set_elite(cls, genetic_id):
+        """
+        genetic_history_idでフィルタしてエリートフラグ立てる
+        :param genetic_history_id: int
+        """
+        objects = list(cls.objects.filter(genetic_id=genetic_id))
+        for obj in objects:
+            obj.elite = 1
+            obj.save()
+
     @property
     def history(self):
         return GeneticHistory.get(self.genetic_id)
