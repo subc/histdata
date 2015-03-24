@@ -109,3 +109,59 @@ class AI10EurUsd(AI9EurUsd):
         :rtype : int
         """
         return self.profit - correct_value
+
+
+class AI11EurUsd(AI9EurUsd):
+    ai_id = 11
+    MUTATION_MAX = 80
+    MUTATION_MIN = 12
+
+    def score(self, correct_value):
+        """
+        性能値を返却
+        期間を通しての利益で計算する
+
+        correct_valueは補正値だけど、このAIは使わない
+        :param correct_value: float
+        :rtype : int
+        """
+        return self.profit - correct_value
+
+    def get_ratetype(self, open_bid, rates, start_at):
+        rate = rates[-1]
+        if rate is None or rate.ma is None:
+            return None
+
+        # 最高値からの乖離で取得
+        key_hori_high_low_diff = rate.ma.key_category
+
+        # 水平でキー取得
+        key_hori_diff = self.get_horizontal_diff_key(rate.ma, open_bid, rate.currency_pair)
+
+        # MA
+        # d75 = self.get_ma_key(rate, 'd75', open_bid, 200)
+
+        # 流れの方向をキーにする
+        # key_trend = 'TRE:{}'.format(self.get_order_type(rates, open_bid).value)
+
+        # キャンドル
+        key_candle = self.get_key_candle(rates)
+
+        return ':'.join(x for x in [key_hori_high_low_diff, key_hori_diff, key_candle] if x)
+
+    def get_horizontal_diff_key(self, ma, open_bid, pair):
+        """
+        現在レートと過去の最高値と安値の乖離
+        :param ma: MovingAverageBase
+        :param open_bid: float
+        :param pair: CurrencyPair
+        :return:
+        """
+        # d25水平で現在レートとの差を取得
+        # high_d25 = get_tick_category((ma.high_horizontal_d25 - open_bid) / pair.get_base_tick(), 50)
+        # low_d25 = get_tick_category((ma.low_horizontal_d25 - open_bid) / pair.get_base_tick(), 50)
+
+        # d5水平で現在レートとの差を取得
+        high_d5 = get_tick_category((ma.high_horizontal_d5 - open_bid) / pair.get_base_tick(), 50)
+        low_d5 = get_tick_category((ma.low_horizontal_d5 - open_bid) / pair.get_base_tick(), 50)
+        return 'HORI-DIFF:D5:{}:{}'.format(high_d5, low_d5)

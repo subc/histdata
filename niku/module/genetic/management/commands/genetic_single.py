@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.core.management import BaseCommand
 from module.genetic.models.benchmark_single import BenchmarkSingle
 from module.genetic.models.mixin import GeneticMixin, ApiMixin
-from module.ai import AI10EurUsd as AI
+from module.ai import AI11EurUsd as AI
 
 
 class Command(ApiMixin, GeneticMixin, BaseCommand):

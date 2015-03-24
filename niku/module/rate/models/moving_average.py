@@ -214,6 +214,53 @@ class MovingAverageBase(TestDataMixin, models.Model):
             self.low_horizontal_d25 = low
             self.low_horizontal_d25_last_at = low_diff.days
 
+    @property
+    def d25_high_category(self):
+        """
+        最高値更新から、どれくらい経過したか
+        """
+        if self.high_horizontal_d25_last_at <= 13:
+            return 'NEAR'
+        else:
+            return 'FAR'
+
+    @property
+    def d25_low_category(self):
+        """
+        最高値更新から、どれくらい経過したか
+        """
+        if self.low_horizontal_d25_last_at <= 13:
+            return 'NEAR'
+        else:
+            return 'FAR'
+
+    @property
+    def d5_high_category(self):
+        """
+        最高値更新から、どれくらい経過したか
+        """
+        if self.high_horizontal_d5_last_at <= 3:
+            return 'NEAR'
+        else:
+            return 'FAR'
+
+    @property
+    def d5_low_category(self):
+        """
+        最高値更新から、どれくらい経過したか
+        """
+        if self.low_horizontal_d5_last_at <= 3:
+            return 'NEAR'
+        else:
+            return 'FAR'
+
+    @property
+    def key_category(self):
+        return 'KEY-DAYS:D25:{}:{}:D5:{}:{}'.format(self.d25_high_category,
+                                                    self.d25_low_category,
+                                                    self.d5_high_category,
+                                                    self.d5_low_category)
+
 
 def get_avg(candles):
     return sum([x.close_bid for x in candles]) / float(len(candles))

@@ -15,6 +15,7 @@ def get_ai_class_by(ai_id):
         7: AI7EurUsd,
         9: AI9EurUsd,
         10: AI10EurUsd,
+        11: AI11EurUsd,
         1001: AI1001UsdJpy,
     }
     ai_class = d.get(ai_id, None)
