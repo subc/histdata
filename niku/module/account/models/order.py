@@ -119,6 +119,16 @@ class Order(models.Model):
         order.save()
         return order
 
+    @classmethod
+    def get_position_count(cls, ai_board_id):
+        """
+        ポジション数
+        :param ai_board_id:
+        :rtype : int
+        """
+        return cls.objects.filter(ai_board_id=ai_board_id,
+                                  end_at__isnull=True).count()
+
     @property
     def currency_pair(self):
         return CurrencyPair(self._currency_pair)

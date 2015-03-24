@@ -97,6 +97,11 @@ class AIBoard(models.Model):
             if order.prev_rate_at == prev_rate.start_at:
                 return False
 
+        # ポジション数制限
+        position_num = Order.get_position_count(self.id)
+        if position_num > 10:
+            return False
+
         # 時間制限
         now = datetime.datetime.now(pytz.utc)
         one_hours_ago = now - datetime.timedelta(seconds=3000)
