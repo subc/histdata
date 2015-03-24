@@ -38,6 +38,7 @@ class Command(BaseCommand):
             order1 = self.order(ai_board, price_group)
             order2 = self.order(ai_board, price_group)
             self.test(order1, order2)
+        print 'AI BOARD:{} OK!!'.format(ai_board.id)
 
     def order(self, ai_board, price_group):
         ai = ai_board.get_ai_instance()
