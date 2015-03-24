@@ -27,6 +27,7 @@ class Order(models.Model):
     spread = models.FloatField(help_text='発注決定時のスプレッド（発注時の値は取得できない）')
     # 本番更新
     real_open_rate = models.FloatField(default=None, null=True, help_text='約定時の注文レート')
+    real_close_rate = models.FloatField(default=None, null=True, help_text='クローズ注文約定時のレート')
     real_limit_rate = models.FloatField(default=None, null=True)
     real_stop_limit_rate = models.FloatField(default=None, null=True)
     real = models.PositiveIntegerField(default=0, db_index=True)
@@ -155,6 +156,7 @@ class Order(models.Model):
         self.end_at = price.time
         self.profit = self.get_profit(price)
         self.real_close_spread = price.cost_tick
+        self.real_close_rate = price.ask if self.buy else price.bid  # 注文クローズなので反対売買する
         self.save()
         return self
 
