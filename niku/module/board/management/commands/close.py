@@ -35,11 +35,11 @@ class Command(BaseCommand):
             if order.can_close(price_group[order.currency_pair]):
                 if order.buy:
                     print order.currency_pair, order.units
-                    order_dict[order.currency_pair] += order.units
+                    order_dict[order.currency_pair] -= order.units
                     print order_dict[order.currency_pair]
                 else:
                     print order.currency_pair, order.units
-                    order_dict[order.currency_pair] -= order.units
+                    order_dict[order.currency_pair] += order.units
                     print order_dict[order.currency_pair]
         print order_dict
 
