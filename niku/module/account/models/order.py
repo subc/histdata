@@ -19,6 +19,7 @@ class Order(models.Model):
     # 基本情報
     ai_board_id = models.PositiveIntegerField()
     _currency_pair = models.PositiveIntegerField(default=None, null=True)
+    ai_version = models.PositiveIntegerField(default=None, null=True, help_text='AIの取引世代')
     # 注文
     open_rate = models.FloatField(default=None, null=True, help_text='想定注文レート')
     buy = models.PositiveIntegerField()
@@ -33,6 +34,7 @@ class Order(models.Model):
     real = models.PositiveIntegerField(default=0, db_index=True)
     real_close_spread = models.FloatField(default=None, null=True, help_text='クローズ時のスプレッド')
     profit = models.FloatField(default=None, null=True)
+    profit_tick = models.FloatField(default=None, null=True, help_text='最終実現損益tick')
     units = models.PositiveIntegerField(default=None, null=True, help_text='注文量')
     error = models.TextField(default=None, null=True)
 
@@ -63,6 +65,7 @@ class Order(models.Model):
         # create
         return cls.objects.create(real=real,
                                   ai_board_id=ai_board_id,
+                                  ai_version=ai_board.version,
                                   _currency_pair=currency_pair,
                                   buy=buy,
                                   limit_tick=order.limit,
@@ -167,6 +170,7 @@ class Order(models.Model):
         self.profit = self.get_profit(price)
         self.real_close_spread = price.cost_tick
         self.real_close_rate = price.ask if self.buy else price.bid  # 注文クローズなので反対売買する
+        self.profit_tick = self.get_profit_tick()
         self.save()
         return self
 
@@ -185,6 +189,20 @@ class Order(models.Model):
         else:
             return self.currency_pair.units_to_yen(
                 (self.real_open_rate - _price) / self.currency_pair.get_base_tick(), self.units)
+
+    def get_profit_tick(self):
+        """
+        利益tickを計算する
+        :rtype : float
+        """
+        if not self.real_close_rate:
+            raise ValueError
+        if not self.real_open_rate:
+            raise ValueError
+        if self.buy:
+            return self.real_open_rate - self.real_close_rate
+        else:
+            return self.real_close_rate - self.real_open_rate
 
     def set_order_error(self, e):
         """
