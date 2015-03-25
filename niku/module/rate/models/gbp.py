@@ -12,7 +12,9 @@ class GbpUsdMA(MovingAverageBase):
 
 
 class CandleGbpUsdBase(TestDataMixin, CurrencyCandleBase):
+    tick = 0.0001
     MA_CLS = GbpUsdMA
+    currency_pair = CurrencyPair.GBP_USD
 
     class Meta(object):
         app_label = 'rate'

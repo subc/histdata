@@ -36,6 +36,10 @@ class CurrencyPair(Enum):
             return float(tick * units * 1.2) / 100
         elif self == CurrencyPair.USD_JPY:
             return float(tick * units * 1) / 100
+        if self == CurrencyPair.GBP_USD:
+            return float(tick * units * 1.8) / 100
+        if self == CurrencyPair.AUD_USD:
+            return float(tick * units * 0.93) / 100
         raise ValueError
 
     def tick_to_yen(self, tick):
@@ -47,6 +51,10 @@ class CurrencyPair(Enum):
             return int(tick * 10000 * 140)
         elif self == CurrencyPair.USD_JPY:
             return int(tick * 100 * 100)
+        elif self == CurrencyPair.GBP_USD:
+            return int(tick * 10000 * 180)
+        elif self == CurrencyPair.AUD_USD:
+            return int(tick * 10000 * 93)
         raise ValueError
 
     def get_base_tick(self):

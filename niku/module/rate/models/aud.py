@@ -12,7 +12,9 @@ class AudUsdMA(MovingAverageBase):
 
 
 class CandleAudUsdBase(TestDataMixin, CurrencyCandleBase):
+    tick = 0.0001
     MA_CLS = AudUsdMA
+    currency_pair = CurrencyPair.AUD_USD
 
     class Meta(object):
         app_label = 'rate'

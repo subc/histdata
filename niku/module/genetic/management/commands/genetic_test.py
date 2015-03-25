@@ -9,6 +9,7 @@ from module.rate.models import CandleEurUsdH1Rate
 from module.rate.models.eur import EurUsdMA
 from module.ai import AI9EurUsd as AI
 from module.ai import AI1001UsdJpy as AI
+from module.ai import AI2001Gbp as AI
 
 from .genetic import Command as CmdBase
 
@@ -36,13 +37,9 @@ class Command(CmdBase):
     def ai_class(self):
         return AI
 
-    def get_candles(self):
+    def set_candles(self):
         """
         :rtype : list of Rate
         """
-        candles = AI.CANDLE_CLS.get_test_data4()
-        ma = AI.CANDLE_MA_CLS.get_test_data4()
-        mad = {m.start_at: m for m in ma}
-        for candle in candles:
-            candle.set_ma(mad.get(candle.start_at))
-        return candles
+        candles = self.ai_class.CANDLE_CLS.get_test_data4()
+        self.CANDLES = candles
