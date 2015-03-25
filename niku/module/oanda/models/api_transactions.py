@@ -139,7 +139,12 @@ class TransactionsAPIModel(OandaAPIModelBase):
 
         if 'side' not in self._data:
             return ''
+
+        if 'price' not in self._data:
+            return ''
+
         instrument = str(self._data.get('instrument'))
         units = str(self._data.get('units'))
         side = str(self._data.get('side'))
-        return ':'.join([instrument, side, units])
+        price = str(self._data.get('price'))
+        return ':'.join([instrument, side, units, price])
