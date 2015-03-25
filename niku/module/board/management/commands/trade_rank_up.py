@@ -29,5 +29,5 @@ class Command(BaseCommand):
         # 取引停止
         for history in history_group:
             if not history.is_rank_up:
-                if history.check_tarade_stop():
+                if history.can_trade_stop():
                     history.trade_stop()
