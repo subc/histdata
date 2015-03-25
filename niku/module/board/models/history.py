@@ -57,7 +57,7 @@ class AIBoardHistory(models.Model):
                                   ai_board_id=board.id,
                                   version=board.version,
                                   trade_count=trade_count,
-                                  before_units=board.version,
+                                  before_units=board.units,
                                   after_units=after_units,
                                   is_rank_up=is_rank_up,
                                   profit_summary=profit_summary,
