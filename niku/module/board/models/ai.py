@@ -52,6 +52,7 @@ class AIBoard(models.Model):
                                          account=account,
                                          enable=1,
                                          units=10,
+                                         version=1,
                                          memo=memo)
 
     @classmethod
