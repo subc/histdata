@@ -30,7 +30,7 @@ class AIBoard(models.Model):
         """
         :rtype : list of AIBoard
         """
-        return list(cls.objects.filter())
+        return list(cls.objects.filter(enable=1))
 
     @classmethod
     def get_accounts(cls):
@@ -54,13 +54,6 @@ class AIBoard(models.Model):
                                          units=10,
                                          version=1,
                                          memo=memo)
-
-    @classmethod
-    def get_enable(cls):
-        """
-        :rtype : list of AIBoard
-        """
-        return list(cls.objects.filter(enable=1))
 
     def get_ai_instance(self):
         """
@@ -109,3 +102,15 @@ class AIBoard(models.Model):
         one_hours_ago = now - datetime.timedelta(seconds=3000)
         print one_hours_ago, order.created_at, one_hours_ago > order.created_at
         return one_hours_ago > order.created_at
+
+    def update_units(self, history):
+        """
+        取引量を変更
+        :param history: AIBoardHistory
+        """
+        self.units = history.after_units
+        self.version_up()
+        self.save()
+
+    def version_up(self):
+        self.version += 1

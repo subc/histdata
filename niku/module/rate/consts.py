@@ -33,9 +33,9 @@ class CurrencyPair(Enum):
         :rtype : float
         """
         if self == CurrencyPair.EUR_USD:
-            return tick * units * 1.2 / 100
+            return float(tick * units * 1.2) / 100
         elif self == CurrencyPair.USD_JPY:
-            return tick * units * 1 / 100
+            return float(tick * units * 1) / 100
         raise ValueError
 
     def tick_to_yen(self, tick):

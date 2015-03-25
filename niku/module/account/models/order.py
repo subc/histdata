@@ -132,6 +132,16 @@ class Order(models.Model):
         return cls.objects.filter(ai_board_id=ai_board_id,
                                   end_at__isnull=True).count()
 
+    @classmethod
+    def get_by_board(cls, board):
+        """
+        :param board: AIBoard
+        :rtype : list of Order
+        """
+        return list(cls.objects.filter(ai_board_id=board.id,
+                                       ai_version=board.version,
+                                       end_at__isnull=True))
+
     @property
     def currency_pair(self):
         return CurrencyPair(self._currency_pair)
