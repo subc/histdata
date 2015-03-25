@@ -29,7 +29,7 @@ class Command(BaseCommand):
 
         # AIインスタンス生成
         order_group = []
-        ai_board_group = AIBoard.get_enable()
+        ai_board_group = AIBoard.get_all()
 
         # 仮発注
         for ai_board in ai_board_group:
