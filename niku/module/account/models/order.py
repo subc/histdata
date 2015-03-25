@@ -200,9 +200,9 @@ class Order(models.Model):
         if not self.real_open_rate:
             raise ValueError
         if self.buy:
-            return self.real_close_rate - self.real_open_rate
+            return (self.real_close_rate - self.real_open_rate) / self.currency_pair.get_base_tick()
         else:
-            return self.real_open_rate - self.real_close_rate
+            return (self.real_open_rate - self.real_close_rate) / self.currency_pair.get_base_tick()
 
     def set_order_error(self, e):
         """
