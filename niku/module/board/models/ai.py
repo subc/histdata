@@ -26,6 +26,10 @@ class AIBoard(models.Model):
         app_label = 'board'
 
     @classmethod
+    def get(cls, pk):
+        return cls.objects.get(id=pk)
+
+    @classmethod
     def get_all(cls):
         """
         :rtype : list of AIBoard
@@ -114,3 +118,10 @@ class AIBoard(models.Model):
 
     def version_up(self):
         self.version += 1
+
+    def trade_stop(self):
+        """
+        取引停止を記録
+        """
+        self.enable = 0
+        self.save()

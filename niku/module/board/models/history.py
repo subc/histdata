@@ -5,6 +5,7 @@ import datetime
 from django.db import models
 import pytz
 from module.account.models import Order
+from .ai import AIBoard
 
 
 class AIBoardHistory(models.Model):
@@ -130,6 +131,10 @@ class AIBoardHistory(models.Model):
                 return min([5000, units * 10])
             else:
                 return max([10, units / 10])
+
+    @property
+    def board(self):
+        return AIBoard.get(self.ai_board_id)
 
     def get_new_history(self, count):
         """

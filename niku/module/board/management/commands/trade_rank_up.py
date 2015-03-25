@@ -31,3 +31,4 @@ class Command(BaseCommand):
             if not history.is_rank_up:
                 if history.can_trade_stop():
                     history.trade_stop()
+                    history.board.trade_stop()
