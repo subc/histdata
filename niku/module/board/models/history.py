@@ -76,7 +76,7 @@ class AIBoardHistory(models.Model):
         :rtype : bool, bool
         """
         # 5回以上取引していて合計-36以下
-        if trade_count >= 5 and profit_tick_summary <= 36:
+        if trade_count >= 5 and profit_tick_summary <= -36:
             return True, False
 
         # 11回以上取引、平均10以上
