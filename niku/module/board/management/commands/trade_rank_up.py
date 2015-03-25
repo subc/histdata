@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management import BaseCommand
+import time
 from module.board.models import AIBoard, AIBoardHistory
 
 
@@ -12,6 +13,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.run()
+        time.sleep(120)
 
     def run(self):
         # 取引量変化

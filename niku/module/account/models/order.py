@@ -133,14 +133,14 @@ class Order(models.Model):
                                   end_at__isnull=True).count()
 
     @classmethod
-    def get_by_board(cls, board):
+    def get_close_order_by_board(cls, board):
         """
         :param board: AIBoard
         :rtype : list of Order
         """
         return list(cls.objects.filter(ai_board_id=board.id,
                                        ai_version=board.version,
-                                       end_at__isnull=True))
+                                       end_at__isnull=False))
 
     @property
     def currency_pair(self):

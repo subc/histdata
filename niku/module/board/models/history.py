@@ -37,7 +37,7 @@ class AIBoardHistory(models.Model):
         :param board: AIBoard
         :rtype : AIBoardHistory
         """
-        orders = Order.get_by_board(board)
+        orders = Order.get_close_order_by_board(board)
         trade_count = len(orders)
         if trade_count == 0:
             return None
