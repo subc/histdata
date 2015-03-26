@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import datetime
 from django.core.management import BaseCommand
 import time
+import pytz
 from module.account.models import Order
 from module.oanda.constants import OandaAPIMode
 from module.oanda.models.api_orders import OrdersAPI
@@ -21,10 +23,9 @@ class Command(BaseCommand):
         time.sleep(5)
 
     def run(self):
-        print 'close'
+        print 'close:{}'.format(str(datetime.datetime.now(tz=pytz.utc)))
 
         orders = Order.get_open()
-        print orders
 
         # price取る
         price_group = PriceAPI(OandaAPIMode.PRODUCTION).get_all()

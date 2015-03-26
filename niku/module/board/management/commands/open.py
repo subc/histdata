@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import datetime
 from django.core.management import BaseCommand
 import time
 import sys
+import pytz
 from module.account.models import Order
 from module.board.models import AIBoard
 from module.genetic.models.parameter import OrderType
@@ -23,7 +25,7 @@ class Command(BaseCommand):
         self.run()
 
     def run(self):
-        print 'order'
+        print 'open:{}'.format(str(datetime.datetime.now(tz=pytz.utc)))
         # price取る
         price_group = PriceAPI(OandaAPIMode.PRODUCTION).get_all()
 
