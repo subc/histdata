@@ -17,7 +17,6 @@ class Position(object):
     stop_limit_rate = None
     is_buy = None
     profit = None
-    cost = 50
 
     def __init__(self, currency_pair, start_at, open_rate, is_buy, limit_rate=None, stop_limit_rate=None, limit_end_at=None):
         self.currency_pair = currency_pair
@@ -96,3 +95,7 @@ class Position(object):
 
     def tick_to_yen(self, tick):
         return self.currency_pair.tick_to_yen(tick)
+
+    @property
+    def cost(self):
+        return self.currency_pair.get_cost()

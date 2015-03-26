@@ -69,6 +69,19 @@ class CurrencyPair(Enum):
         }
         return d.get(self)
 
+    def get_cost(self):
+        """
+        通過ペア毎のコストを返却
+        :rtype : int
+        """
+        CURRENCY_PAIR_TO_TABLE = {
+            CurrencyPair.EUR_USD: 200,
+            CurrencyPair.USD_JPY: 200,
+            CurrencyPair.GBP_USD: 500,
+            CurrencyPair.AUD_USD: 200,
+        }
+        return CURRENCY_PAIR_TO_TABLE.get(self)
+
 
 class CurrencyPairToTable(object):
     @classmethod
