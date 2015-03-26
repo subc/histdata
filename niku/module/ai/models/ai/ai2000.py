@@ -155,6 +155,6 @@ class AI2001Gbp(GbpUsdMixin, AI1001Base):
 
 class AI3001Aud(AudUsdMixin, AI1001Base):
     ai_id = 3001
-    MUTATION_MAX = 100
+    MUTATION_MAX = 120
     MUTATION_MIN = 10
     pass
