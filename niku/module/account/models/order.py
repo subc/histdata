@@ -81,7 +81,8 @@ class Order(models.Model):
         オープンしている注文を返却
         :rtype :list of order
         """
-        return list(cls.objects.filter(end_at__isnull=True).order_by('-created_at'))
+        return list(cls.objects.filter(end_at__isnull=True,
+                                       order_at__isnull=False).order_by('-created_at'))
 
     @classmethod
     def get_new_order(cls, ai_board_id):
