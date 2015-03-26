@@ -11,7 +11,7 @@ class OandaOrderApiHistory(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     units = models.PositiveIntegerField(default=None, null=True, help_text='注文量')
-    _currency_pair = models.PositiveIntegerField(default=None, null=True)
+    _currency_pair = models.CharField(max_length=50, default=None, null=True)
     tag = models.CharField(max_length=50)
     response = models.TextField()
 
