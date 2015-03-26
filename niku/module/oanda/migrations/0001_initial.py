@@ -13,7 +13,7 @@ class Migration(SchemaMigration):
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('units', self.gf('django.db.models.fields.PositiveIntegerField')(default=None, null=True)),
+            ('units', self.gf('django.db.models.fields.IntegerField')(default=None, null=True)),
             ('_currency_pair', self.gf('django.db.models.fields.CharField')(default=None, max_length=50, null=True)),
             ('tag', self.gf('django.db.models.fields.CharField')(max_length=50)),
             ('response', self.gf('django.db.models.fields.TextField')()),
@@ -34,7 +34,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'response': ('django.db.models.fields.TextField', [], {}),
             'tag': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            'units': ('django.db.models.fields.PositiveIntegerField', [], {'default': 'None', 'null': 'True'}),
+            'units': ('django.db.models.fields.IntegerField', [], {'default': 'None', 'null': 'True'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         }
     }
