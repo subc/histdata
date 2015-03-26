@@ -45,7 +45,7 @@ class AIBoardHistory(models.Model):
         profit_summary = sum([x.profit for x in orders])
         profit_average = float(profit_summary / trade_count)
         profit_tick_summary = sum([x.profit_tick for x in orders])
-        profit_tick_average = float(profit_tick_summary / profit_average)
+        profit_tick_average = float(profit_tick_summary / trade_count)
         can_create, is_rank_up = cls.can_create(board, trade_count, profit_tick_average, profit_tick_summary)
         if not can_create:
             return None
