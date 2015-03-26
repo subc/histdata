@@ -8,37 +8,33 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'OandaTransaction'
-        db.create_table(u'oanda_oandatransaction', (
+        # Adding model 'OandaOrderApiHistory'
+        db.create_table(u'oanda_oandaorderapihistory', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('oanda_transaction_id', self.gf('django.db.models.fields.PositiveIntegerField')(db_index=True)),
             ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('oanda_time', self.gf('django.db.models.fields.DateTimeField')()),
-            ('order_type', self.gf('django.db.models.fields.CharField')(max_length=50, db_index=True)),
-            ('account_id', self.gf('django.db.models.fields.PositiveIntegerField')(db_index=True)),
-            ('oanda_ticket_id', self.gf('django.db.models.fields.PositiveIntegerField')(default=None, null=True)),
-            ('_data', self.gf('utils.fields.ObjectField')(default=None, null=True)),
+            ('units', self.gf('django.db.models.fields.PositiveIntegerField')(default=None, null=True)),
+            ('_currency_pair', self.gf('django.db.models.fields.PositiveIntegerField')(default=None, null=True)),
+            ('tag', self.gf('django.db.models.fields.CharField')(max_length=50)),
+            ('response', self.gf('django.db.models.fields.TextField')()),
         ))
-        db.send_create_signal(u'oanda', ['OandaTransaction'])
+        db.send_create_signal(u'oanda', ['OandaOrderApiHistory'])
 
 
     def backwards(self, orm):
-        # Deleting model 'OandaTransaction'
-        db.delete_table(u'oanda_oandatransaction')
+        # Deleting model 'OandaOrderApiHistory'
+        db.delete_table(u'oanda_oandaorderapihistory')
 
 
     models = {
-        u'oanda.oandatransaction': {
-            'Meta': {'object_name': 'OandaTransaction'},
-            '_data': ('utils.fields.ObjectField', [], {'default': 'None', 'null': 'True'}),
-            'account_id': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
+        u'oanda.oandaorderapihistory': {
+            'Meta': {'object_name': 'OandaOrderApiHistory'},
+            '_currency_pair': ('django.db.models.fields.PositiveIntegerField', [], {'default': 'None', 'null': 'True'}),
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'oanda_ticket_id': ('django.db.models.fields.PositiveIntegerField', [], {'default': 'None', 'null': 'True'}),
-            'oanda_time': ('django.db.models.fields.DateTimeField', [], {}),
-            'oanda_transaction_id': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
-            'order_type': ('django.db.models.fields.CharField', [], {'max_length': '50', 'db_index': 'True'}),
+            'response': ('django.db.models.fields.TextField', [], {}),
+            'tag': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            'units': ('django.db.models.fields.PositiveIntegerField', [], {'default': 'None', 'null': 'True'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         }
     }

@@ -53,7 +53,7 @@ class Command(BaseCommand):
                 continue
             print '{}:ORDER'.format(key)
             units = order_dict[key]
-            api_response_dict[key] = OrdersAPI(OandaAPIMode.PRODUCTION, 6181277).post(key, units)
+            api_response_dict[key] = OrdersAPI(OandaAPIMode.PRODUCTION, 6181277).post(key, units, tag='close')
 
         # 記録
         for order in orders:

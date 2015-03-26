@@ -10,6 +10,7 @@ from django.utils.functional import cached_property
 from .base import OandaAccountAPIBase, OandaAPIModelBase
 from module.oanda.constants import OandaAPIMode
 from module.rate import CurrencyPair
+from module.oanda.models import OandaOrderApiHistory
 from utils.utc_to_jst import parse_time
 
 
@@ -41,7 +42,7 @@ class OrdersAPI(OandaAccountAPIBase):
     """
     url_base = '{}v1/accounts/{}/orders'
 
-    def post(self, currency_pair, units):
+    def post(self, currency_pair, units, tag=''):
         """
         :param currency_pair: CurrencyPair
         :param units: int
@@ -59,6 +60,8 @@ class OrdersAPI(OandaAccountAPIBase):
         }
         data = self.requests_api(url, payload=payload)
         print data
+        # DB write
+        OandaOrderApiHistory.create(data, units, currency_pair.name, tag)
         return OrderApiModels(data)
 
     def check_json(self, data):
