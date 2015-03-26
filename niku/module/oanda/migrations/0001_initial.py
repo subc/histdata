@@ -14,7 +14,7 @@ class Migration(SchemaMigration):
             ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('units', self.gf('django.db.models.fields.PositiveIntegerField')(default=None, null=True)),
-            ('_currency_pair', self.gf('django.db.models.fields.PositiveIntegerField')(default=None, null=True)),
+            ('_currency_pair', self.gf('django.db.models.fields.CharField')(default=None, max_length=50, null=True)),
             ('tag', self.gf('django.db.models.fields.CharField')(max_length=50)),
             ('response', self.gf('django.db.models.fields.TextField')()),
         ))
@@ -29,7 +29,7 @@ class Migration(SchemaMigration):
     models = {
         u'oanda.oandaorderapihistory': {
             'Meta': {'object_name': 'OandaOrderApiHistory'},
-            '_currency_pair': ('django.db.models.fields.PositiveIntegerField', [], {'default': 'None', 'null': 'True'}),
+            '_currency_pair': ('django.db.models.fields.CharField', [], {'default': 'None', 'max_length': '50', 'null': 'True'}),
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'response': ('django.db.models.fields.TextField', [], {}),
