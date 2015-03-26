@@ -58,10 +58,14 @@ class OrdersAPI(OandaAccountAPIBase):
             'side': 'buy' if units > 0 else 'sell',
             'type': 'market',
         }
-        data = self.requests_api(url, payload=payload)
-        print data
-        # DB write
-        OandaOrderApiHistory.create(data, units, currency_pair.name, tag)
+        try:
+            data = self.requests_api(url, payload=payload)
+
+            # Log
+            OandaOrderApiHistory.create(data, units, currency_pair.name, tag)
+        except Exception as e:
+            # Log
+            OandaOrderApiHistory.create(str(e), units, currency_pair.name, 'HttpError:{}'.format(tag))
         return OrderApiModels(data)
 
     def check_json(self, data):

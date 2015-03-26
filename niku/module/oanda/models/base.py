@@ -63,6 +63,7 @@ class OandaAccountAPIBase(object):
     def requests_api(self, url, payload=None):
         if payload:
             print 'PAYLOAD IS {}'.format(payload)
+            requests.adapters.DEFAULT_RETRIES = 1  # 最大1回
             response = requests.post(url, headers=self.mode.headers, data=payload)
         else:
             response = requests.get(url, headers=self.mode.headers)
