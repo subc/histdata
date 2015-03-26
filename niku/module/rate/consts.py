@@ -78,7 +78,7 @@ class CurrencyPair(Enum):
             CurrencyPair.EUR_USD: 200,
             CurrencyPair.USD_JPY: 200,
             CurrencyPair.GBP_USD: 500,
-            CurrencyPair.AUD_USD: 200,
+            CurrencyPair.AUD_USD: 100,
         }
         return CURRENCY_PAIR_TO_TABLE.get(self)
 
