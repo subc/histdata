@@ -22,7 +22,13 @@ class Command(BaseCommand):
     CACHE_PREV_RATES = {}
 
     def handle(self, *args, **options):
-        self.run()
+        try:
+            self.run()
+        except Exception:
+            print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+            print 'Critical Error!!!!!!!!'
+            print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+            time.sleep(3600 * 100 * 365)
 
     def run(self):
         print 'open:{}'.format(str(datetime.datetime.now(tz=pytz.utc)))

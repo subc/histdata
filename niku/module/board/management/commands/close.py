@@ -19,7 +19,13 @@ class Command(BaseCommand):
     CACHE_PREV_RATES = {}
 
     def handle(self, *args, **options):
-        self.run()
+        try:
+            self.run()
+        except Exception:
+            print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+            print 'Critical Error!!!!!!!!'
+            print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+            time.sleep(3600 * 100 * 365)
         time.sleep(5)
 
     def run(self):
