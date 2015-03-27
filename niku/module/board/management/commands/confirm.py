@@ -4,8 +4,10 @@
 """
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import datetime
 from django.core.management import BaseCommand
 import time
+import pytz
 from module.board.models import AIBoard
 from module.oanda.constants import OandaAPIMode
 from module.oanda.models.api_transactions import TransactionsAPI
@@ -17,7 +19,7 @@ class Command(BaseCommand):
         self.run()
 
     def run(self):
-        print 'confirm'
+        print 'confirm:{}'.format(str(datetime.datetime.now(tz=pytz.utc)))
 
         # transactions APIにアクセス
         account_group = AIBoard.get_accounts()
