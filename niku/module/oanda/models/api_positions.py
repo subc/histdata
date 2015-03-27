@@ -42,7 +42,6 @@ class PositionsAPI(OandaAccountAPIBase):
 
     def get_all(self):
         url = self.url_base.format(self.mode.url_base, self.account)
-        print url
         data = self.requests_api(url)
         d = {}
         for price in data.get('positions'):

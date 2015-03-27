@@ -10,6 +10,7 @@ import time
 import pytz
 from module.board.models import AIBoard
 from module.oanda.constants import OandaAPIMode
+from module.oanda.models.api_account import AccountAPI
 from module.oanda.models.api_positions import PositionsAPI
 from module.oanda.models.api_price import PriceAPI
 from module.oanda.models.api_transactions import TransactionsAPI
@@ -22,6 +23,7 @@ class Command(BaseCommand):
         self.run()
 
     def run(self):
+        print '********************************'
         print 'check:{}'.format(str(datetime.datetime.now(tz=pytz.utc)))
 
         # ポジション取得
@@ -52,6 +54,10 @@ class Command(BaseCommand):
             else:
                 print '[{}] API position:{} DB units summary:{}'.format(pair.name, position.units, units)
                 is_valid = not position.equals_units(units)
+        print '-----------------'
+        # oanda の現在値を取得
+        account = AccountAPI(OandaAPIMode.PRODUCTION, 6181277).get_all()
+        print 'balance:{}'.format(account.get('balance'))
 
         # 現在の価格を調査
         print '~~~~~~~~~~~~~~~~~'

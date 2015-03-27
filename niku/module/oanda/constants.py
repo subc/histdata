@@ -30,7 +30,6 @@ class OandaAPIMode(Enum):
             'Accept': '*/*', 'User-Agent': 'python-requests/1.2.0',
             'Content-type': 'application/x-www-form-urlencoded',
         }
-        print 'self is..', self, self == OandaAPIMode.PRODUCTION
 
         if self == OandaAPIMode.SANDBOX:
             return _base
