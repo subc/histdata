@@ -34,7 +34,7 @@ class Command(BaseCommand):
             orders_dict[pair] = 0
             for order in orders:
                 if order.currency_pair == pair:
-                    orders_dict[pair] += order.units
+                    orders_dict[pair] += order.units if order.buy else order.units * -1
 
         # 比較
         print '~~~~~~~~~~~~~~~~~'
