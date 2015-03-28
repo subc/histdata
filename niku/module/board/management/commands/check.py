@@ -73,8 +73,10 @@ class Command(BaseCommand):
                 continue
 
             if position.is_buy:
+                print 'BUY MARKET:{} POSITION:{}'.format(price.ask, position.avgPrice)
                 tick = (price.ask - position.avgPrice) / pair.get_base_tick()
             elif position.is_sell:
+                print 'SELL MARKET:{} POSITION:{}'.format(price.bid, position.avgPrice)
                 tick = (position.avgPrice - price.bid) / pair.get_base_tick()
             else:
                 raise ValueError

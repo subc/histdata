@@ -57,10 +57,10 @@ class Order(models.Model):
         spread = price.cost_tick
         if buy:
             # buy
-            open_rate = price.bid
+            open_rate = price.ask
         else:
             # sell
-            open_rate = price.ask
+            open_rate = price.bid
 
         # create
         return cls.objects.create(real=real,
@@ -243,9 +243,12 @@ class Order(models.Model):
         :param price: PriceAPIModel
         :rtype : bool
         """
+        if price.is_maintenance:
+            return False
+
         if self.currency_pair != price.currency_pair:
             raise ValueError
-        _price = price.bid if self.buy else price.ask
+        _price = price.ask if self.buy else price.bid
 
         if self.buy:
             if _price >= self.real_limit_rate:
