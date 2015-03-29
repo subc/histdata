@@ -16,6 +16,21 @@ class Command(BaseCommand):
     rate dbにAIをコピーする
     """
     def handle(self, *args, **options):
+        target_ids = [
+            64813,
+            65073,
+            65126,
+            65186,
+            65245,
+            66369,
+            85443,
+            85509,
+            85973,
+            86147]
+
+        if target_ids:
+            for _target_id in target_ids:
+                self.run(_target_id, force=True)
         history_id = self._parse_args(args)
         self.run(history_id)
 
@@ -26,17 +41,18 @@ class Command(BaseCommand):
 
         return history_id
 
-    def run(self, history_id):
+    def run(self, history_id, force=False):
         # インスタンス取得
         history = GeneticHistory.get(history_id)
         self.print_history(history)
 
         # 実行確認
-        print 'COPY START by push 1'
-        input_data = input('>>>')
-        if int(input_data) != 1:
-            print 'FORCE EXIT!!'
-            exit()
+        if force is False:
+            print 'COPY START by push 1'
+            input_data = input('>>>')
+            if int(input_data) != 1:
+                print 'FORCE EXIT!!'
+                exit()
 
         # copy実行
         AIBoard.create(history, 'ID:{}'.format(history_id))
