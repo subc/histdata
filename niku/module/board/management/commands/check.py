@@ -92,14 +92,3 @@ class Command(CustomBaseCommand):
         print 'Current Position Market DB diff'
         print '~~~~~~~~~~~~~~~~~'
         print 'IS_VALID : {}'.format(is_valid)
-
-
-
-
-
-
-
-
-
-
-

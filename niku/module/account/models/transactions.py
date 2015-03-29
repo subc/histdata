@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import datetime
 from django.db import models
+import pytz
 from utils import ObjectField
 
 
@@ -50,3 +52,15 @@ class OandaTransaction(models.Model):
             return cls.objects.get(oanda_transaction_id=oanda_transaction_id)
         except cls.DoesNotExist:
             return None
+
+    @classmethod
+    def get_market_order_count(cls, seconds=3600):
+        """
+        N秒前から何回マーケットオーダーが行われたか回数を返却
+        :param seconds: int
+        """
+        now = datetime.datetime.now(tz=pytz.utc)
+        one_hours_later = now - datetime.timedelta(seconds=3600)
+        count = cls.objects.filter(order_type='MARKET_ORDER_CREATE',
+                                   created_at__gte=one_hours_later).count()
+        return count

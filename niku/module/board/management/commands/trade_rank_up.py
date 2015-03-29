@@ -4,14 +4,17 @@ from __future__ import unicode_literals
 from django.core.management import BaseCommand
 import time
 from module.board.models import AIBoard, AIBoardHistory
+from utils import CustomBaseCommand
 
 
-class Command(BaseCommand):
+class Command(CustomBaseCommand):
     """
     取引量を変化させる
     """
 
     def handle(self, *args, **options):
+        print '********************************'
+        self.echo('trade rank up start')
         self.run()
         time.sleep(120)
 
