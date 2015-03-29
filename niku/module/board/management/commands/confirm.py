@@ -12,15 +12,17 @@ from module.board.models import AIBoard
 from module.oanda.constants import OandaAPIMode
 from module.oanda.models.api_transactions import TransactionsAPI
 from module.account.models import OandaTransaction
+from utils import CustomBaseCommand
 
 
-class Command(BaseCommand):
+class Command(CustomBaseCommand):
     def handle(self, *args, **options):
+        print '********************************'
+        self.echo('confirm start')
+        self.check_kill_switch()
         self.run()
 
     def run(self):
-        print 'confirm:{}'.format(str(datetime.datetime.now(tz=pytz.utc)))
-
         # transactions APIにアクセス
         account_group = AIBoard.get_accounts()
 

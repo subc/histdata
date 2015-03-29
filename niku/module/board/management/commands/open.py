@@ -13,25 +13,30 @@ from module.oanda.constants import OandaAPIMode
 from module.oanda.models.api_orders import OrdersAPI
 from module.oanda.models.api_price import PriceAPI
 from module.rate import CurrencyPairToTable, Granularity, CurrencyPair
+from utils import CustomBaseCommand
 
 
-class Command(BaseCommand):
+class Command(CustomBaseCommand):
     """
     BoardAIを利用して発注する
     """
     CACHE_PREV_RATES = {}
 
     def handle(self, *args, **options):
+        print '********************************'
+        self.echo('open start')
+        self.check_kill_switch()
+
         try:
             self.run()
-        except Exception:
-            print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-            print 'Critical Error!!!!!!!!'
-            print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-            time.sleep(3600 * 100 * 365)
+        except Exception as e:
+            self.critical_error('open', e)
+
+        # 30秒停止
+        time.sleep(30)
 
     def run(self):
-        print 'open:{}'.format(str(datetime.datetime.now(tz=pytz.utc)))
+
         # price取る
         price_group = PriceAPI(OandaAPIMode.PRODUCTION).get_all()
 
@@ -47,9 +52,6 @@ class Command(BaseCommand):
 
         # 発注
         self.order(order_group, price_group)
-
-        # 30秒停止
-        time.sleep(30)
 
     def pre_order(self, ai_board, price_group):
         """

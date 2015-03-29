@@ -10,27 +10,27 @@ from module.oanda.constants import OandaAPIMode
 from module.oanda.models.api_orders import OrdersAPI
 from module.oanda.models.api_price import PriceAPI
 from module.rate import CurrencyPair
+from utils import CustomBaseCommand
 
 
-class Command(BaseCommand):
+class Command(CustomBaseCommand):
     """
     account historyを利用してクローズする
     """
     CACHE_PREV_RATES = {}
 
     def handle(self, *args, **options):
+        print '********************************'
+        self.echo('close start')
+        self.check_kill_switch()
+
         try:
             self.run()
-        except Exception:
-            print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-            print 'Critical Error!!!!!!!!'
-            print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-            time.sleep(3600 * 100 * 365)
+        except Exception as e:
+            self.critical_error('close', e)
         time.sleep(5)
 
     def run(self):
-        print 'close:{}'.format(str(datetime.datetime.now(tz=pytz.utc)))
-
         orders = Order.get_open()
 
         # price取る

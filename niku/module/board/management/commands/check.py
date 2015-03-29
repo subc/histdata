@@ -16,15 +16,17 @@ from module.oanda.models.api_price import PriceAPI
 from module.oanda.models.api_transactions import TransactionsAPI
 from module.account.models import OandaTransaction, Order
 from module.rate import CurrencyPair
+from utils import CustomBaseCommand
 
 
-class Command(BaseCommand):
+class Command(CustomBaseCommand):
     def handle(self, *args, **options):
+        print '********************************'
+        self.echo('check_start')
+        self.check_kill_switch()
         self.run()
 
     def run(self):
-        print '********************************'
-        print 'check:{}'.format(str(datetime.datetime.now(tz=pytz.utc)))
 
         # ポジション取得
         positions = PositionsAPI(OandaAPIMode.PRODUCTION, 6181277).get_all()
