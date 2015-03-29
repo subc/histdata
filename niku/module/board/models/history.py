@@ -76,8 +76,8 @@ class AIBoardHistory(models.Model):
         :return: can_create, is_rank_up
         :rtype : bool, bool
         """
-        # 5回以上取引していて合計-36以下
-        if trade_count >= 5 and profit_tick_summary <= -36:
+        # 10回以上取引していて平均-15以下
+        if trade_count >= 5 and profit_tick_summary <= -15:
             return True, False
 
         # 11回以上取引、平均10以上
@@ -102,33 +102,24 @@ class AIBoardHistory(models.Model):
         10
         100
         1000
-        5000
-        10000
-        15000
-        20000
-        25000
+        1100
+        1200
+        1300
         :param units: int
         :param is_rank_up: bool
         :rtype : int
         """
-        # 10000以上のとき
-        if units >= 10000:
+        # 1000以上のとき
+        if units >= 1000:
             if is_rank_up:
-                return units + 5000
+                return units + 100
             else:
-                return 5000
+                return 10
 
-        # 5000
-        if 10000 > units >= 5000:
+        # 1000未満0以上
+        if 999 >= units > 0:
             if is_rank_up:
-                return 10000
-            else:
-                return 1000
-
-        # 4999以下11以上
-        if 4999 >= units > 0:
-            if is_rank_up:
-                return min([5000, units * 10])
+                return min([1000, units * 10])
             else:
                 return max([10, units / 10])
 
