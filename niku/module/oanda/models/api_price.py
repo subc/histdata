@@ -65,8 +65,8 @@ class PriceAPI(OandaAPIBase):
 class PriceAPIModel(OandaAPIModelBase):
     instrument = None
     time = None
-    bid = None
-    ask = None
+    bid = None  # SELL時のtick
+    ask = None  # BUYの時のtick
     status = None
 
     def __init__(self, price):

@@ -83,7 +83,7 @@ class Command(CustomBaseCommand):
             print 'TIME OR POSITION LIMIT'
             return None
 
-        # 購入判断
+        # 購入判断 AIのシミュレーションと同じ様に、askのみを対象にして売買を決定する
         order_ai = ai.get_order_ai(prev_rates, price.ask, price.time, is_production=True)
 
         if order_ai is None:

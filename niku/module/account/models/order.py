@@ -243,12 +243,21 @@ class Order(models.Model):
         :param price: PriceAPIModel
         :rtype : bool
         """
+        # メンテ中なら売買しない
         if price.is_maintenance:
             return False
 
+        # ティック差が大きすぎるときは売買しない
+        if price.cost_tick >= 5:
+            return False
+
+        # 通過ペアの確認
         if self.currency_pair != price.currency_pair:
             raise ValueError
-        _price = price.ask if self.buy else price.bid
+
+        # AIのシミュレーションと同じ様に、askのみを対象にして売買を決定する
+        # _price = price.ask if self.buy else price.bid
+        _price = price.ask
 
         if self.buy:
             if _price >= self.real_limit_rate:
