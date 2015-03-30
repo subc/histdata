@@ -13,7 +13,7 @@ class Command(CustomBaseCommand):
     AIのデータ不整合が発生して注文が連続して発生していたら
     手数料で死ぬので取引強制終了する
     """
-    ORDER_LIMIT = 40  # 1時間でこの数以上のオーダー飛ばしてたら危険
+    ORDER_LIMIT = 100  # 1時間でこの数以上のオーダー飛ばしてたら危険
     BALANCE = 28 * 10000  # アカウントがこの額以下になったら停止
 
     def handle(self, *args, **options):
