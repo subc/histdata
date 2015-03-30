@@ -157,7 +157,7 @@ class Order(models.Model):
         :param price: OrderApiModels
         """
         self.order_at = price.time
-        _o = price.bid if self.buy else price.ask
+        _o = price.ask if self.buy else price.bid
         self.real_open_rate = _o
         if self.buy:
             self.real_limit_rate = _o + self.limit_tick * self.currency_pair.get_base_tick()
