@@ -11,6 +11,7 @@ from module.oanda.models.api_account import AccountAPI
 from module.oanda.models.api_positions import PositionsAPI
 from module.oanda.models.api_price import PriceAPI
 from module.rate import CurrencyPair
+from module.account.models.kill_switch import KillSwitch
 
 
 class IndexView(BaseView):
@@ -43,6 +44,7 @@ class IndexView(BaseView):
         return self.render_to_response({
             'account': account,
             'is_valid': is_valid,
+            'kill_sw': KillSwitch.is_active(),
             'html_orders': html_orders,
             'close_orders': close_orders,
             'ai_result': ai_result,
@@ -57,6 +59,20 @@ class IndexView(BaseView):
             for order in orders:
                 if order.currency_pair == pair:
                     orders_dict[pair] += order.units if order.buy else order.units * -1
+
+        # valid
+        is_valid = False
+        for pair in CurrencyPair:
+            position = positions.get(pair, None)
+            units = orders_dict.get(pair, None)
+            if position is None and units == 0:
+                print '[{}] IS ALL NONE'.format(pair.name)
+            elif position is None:
+                print '[{}] API position:None DB units summary:{}'.format(pair.name, units)
+                is_valid = True
+            else:
+                print '[{}] API position:{} DB units summary:{}'.format(pair.name, position.units, units)
+                is_valid = not position.equals_units(units)
 
         # 現在の価格を調査
         print '~~~~~~~~~~~~~~~~~'
@@ -86,7 +102,7 @@ class IndexView(BaseView):
                                                            pair.units_to_yen(tick, position.units))
             h = HTMLOrder(pair, position, price_group)
             html_orders.append(h)
-        return orders_dict, html_orders
+        return is_valid, html_orders
 
     def ai_aggregation(self, orders):
         """
@@ -176,11 +192,6 @@ class HTMLAIResult(object):
     @property
     def pair(self):
         return self.orders[0].currency_pair
-                #
-                # <th>unit</th>
-                # <th>sum tick</th>
-                # <th>avg tick</th>
-                # <th>count</th>
 
     @cached_property
     def units(self):

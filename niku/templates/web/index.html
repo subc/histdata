@@ -18,9 +18,14 @@
 <div align="center">
 
     <!--KILL SW-->
-    {% if is_valid %}
+    {% if kill_sw %}
         <p style="margin-top: 10px">
             <button type="button" class="btn btn-danger btn-m">Danger!! Kill SW ON</button>
+        </p>
+    {% endif %}
+    {% if is_valid %}
+        <p style="margin-top: 10px">
+            <button type="button" class="btn btn-danger btn-m">Danger!! TRADE IS VALID</button>
         </p>
     {% endif %}
     <!--KILL SW-->
