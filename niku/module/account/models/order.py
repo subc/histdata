@@ -85,6 +85,28 @@ class Order(models.Model):
                                        order_at__isnull=False).order_by('-created_at'))
 
     @classmethod
+    def get_close(cls):
+        """
+        クローズしている注文を返却
+        :rtype :list of order
+        """
+        return list(cls.objects.filter(end_at__isnull=False).order_by('-created_at'))
+
+    @classmethod
+    def get_close_by_scope(cls, start_delta, finish_delta):
+        """
+        クローズしている注文を返却
+        :rtype :list of order
+        """
+        now = datetime.datetime.now(tz=pytz.utc)
+        start = now - start_delta
+        end = now - finish_delta
+        print '{}:{}'.format(start, end)
+        return list(cls.objects.filter(end_at__isnull=False,
+                                       created_at__lte=start,
+                                       created_at__gte=end).order_by('-created_at'))
+
+    @classmethod
     def get_new_order(cls, ai_board_id):
         """
         最新のポジションを返却
@@ -142,14 +164,6 @@ class Order(models.Model):
         return list(cls.objects.filter(ai_board_id=board.id,
                                        ai_version=board.version,
                                        end_at__isnull=False))
-
-    @property
-    def currency_pair(self):
-        return CurrencyPair(self._currency_pair)
-
-    @property
-    def side(self):
-        return 'buy' if self.buy else 'sell'
 
     def open(self, price):
         """
@@ -270,3 +284,16 @@ class Order(models.Model):
             if _price >= self.real_stop_limit_rate:
                 return True
         return False
+
+    @property
+    def currency_pair(self):
+        return CurrencyPair(self._currency_pair)
+
+    @property
+    def side(self):
+        return 'buy' if self.buy else 'sell'
+
+    @cached_property
+    def board(self):
+        from module.board.models.ai import AIBoard
+        return AIBoard.get(self.ai_board_id)

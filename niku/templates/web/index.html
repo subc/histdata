@@ -18,9 +18,11 @@
 <div align="center">
 
     <!--KILL SW-->
-    <p style="margin-top: 10px">
-        <button type="button" class="btn btn-danger btn-xs">Danger!! Kill SW ON</button>
-    </p>
+    {% if is_valid %}
+        <p style="margin-top: 10px">
+            <button type="button" class="btn btn-danger btn-m">Danger!! Kill SW ON</button>
+        </p>
+    {% endif %}
     <!--KILL SW-->
 
     <!--ACC-->
@@ -40,11 +42,15 @@
             </tr>
             <tr>
                 <td>unreal</td>
-                <td>293.1</td>
+                <td>{{ account.unrealizedPl }}</td>
             </tr>
             <tr>
                 <td>real</td>
-                <td>-300</td>
+                <td>{{ account.realizedPl }}</td>
+            </tr>
+            <tr>
+                <td>marginUsed</td>
+                <td>{{ account.marginUsed }}</td>
             </tr>
             </tbody>
         </table>
@@ -60,15 +66,25 @@
                 <th>order</th>
                 <th>units</th>
                 <th>avg</th>
+                <th>tick</th>
             </tr>
             </thead>
             <tbody>
+            {% for o in html_orders %}
             <tr>
-                <td>USD JPY</td>
-                <td>BUY</td>
-                <td>2500</td>
-                <td>120.01(+0.31)</td>
+                <td>{{ o.pair.name }}</td>
+                <td>{{ o.side }}</td>
+                <td>{{ o.position.units }}</td>
+                <td>{{ o.position.avgPrice }}</td>
+                <td>{{ o.tick }}&nbsp(
+                    {% if o.side_bool %}
+                    <span style="color:green">
+                    {% else %}
+                    <span style="color:red">
+                    {% endif %}
+                    {{ o.yen }}</span>&nbsp;)</td>
             </tr>
+            {% endfor %}
             </tbody>
         </table>
     </div>
@@ -82,19 +98,18 @@
                 <th>scope</th>
                 <th>sum tick</th>
                 <th>avg tick</th>
+                <th>count</th>
             </tr>
             </thead>
             <tbody>
+            {% for o in close_orders %}
             <tr>
-                <td>ALL</td>
-                <td>6031</td>
-                <td>5.4</td>
+                <td>{{ o.tag }}</td>
+                <td>{{ o.profit_tick }}</td>
+                <td>{{ o.avg_tick }}</td>
+                <td>{{ o.count }}</td>
             </tr>
-            <tr>
-                <td>Last One Day</td>
-                <td>321</td>
-                <td>1.4</td>
-            </tr>
+            {% endfor %}
             </tbody>
         </table>
     </div>
@@ -115,14 +130,16 @@
             </tr>
             </thead>
             <tbody>
+            {% for ai in ai_result %}
             <tr>
-                <td>123</td>
-                <td>USD JPY</td>
-                <td>200</td>
-                <td>531</td>
-                <td>7</td>
-                <td>120</td>
+                <td>{{ ai.board.id }}</td>
+                <td>{{ ai.pair.name }}</td>
+                <td>{{ ai.units }}</td>
+                <td>{{ ai.sum_tick }}</td>
+                <td>{{ ai.avg_tick }}</td>
+                <td>{{ ai.count }}</td>
             </tr>
+            {% endfor %}
             </tbody>
         </table>
     </div>
