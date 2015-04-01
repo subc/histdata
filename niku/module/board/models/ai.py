@@ -55,7 +55,7 @@ class AIBoard(models.Model):
                                          currency_pair=history.currency_pair,
                                          account=account,
                                          enable=1,
-                                         units=10,
+                                         units=1,
                                          version=1,
                                          memo=memo)
 
