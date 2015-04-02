@@ -88,9 +88,11 @@ def requests_api(url, payload=None):
                'Content-type': 'application/json; charset=utf-8',
                'Authorization': auth}
     if payload:
-        response = requests.post(url, headers=headers, data=payload)
+        requests.adapters.DEFAULT_RETRIES = 2
+        response = requests.post(url, headers=headers, data=payload, timeout=10)
     else:
-        response = requests.get(url, headers=headers)
+        requests.adapters.DEFAULT_RETRIES = 2
+        response = requests.get(url, headers=headers, timeout=10)
     print 'API_TEST: {}'.format(url)
     return response
 
