@@ -172,7 +172,7 @@ class AIHoriBase(AI1001Base):
             return None
 
         # 最高値からの乖離で取得
-        key_hori_high_low_diff = rate.ma.key_category
+        key_hori_high_low_diff = rate.ma.key_category_d25
 
         # 水平でキー取得
         key_hori_diff = self.get_horizontal_diff_key(rate.ma, open_bid, rate.currency_pair)
@@ -203,9 +203,9 @@ class AIHoriBase(AI1001Base):
         low_d25 = get_tick_category((ma.low_horizontal_d25 - open_bid) / pair.get_base_tick(), 50)
 
         # d5水平で現在レートとの差を取得
-        high_d5 = get_tick_category((ma.high_horizontal_d5 - open_bid) / pair.get_base_tick(), 50)
-        low_d5 = get_tick_category((ma.low_horizontal_d5 - open_bid) / pair.get_base_tick(), 50)
-        return 'HORI-DIFF:D5:{}:{}:D25:{}:{}'.format(high_d5, low_d5, high_d25, low_d25)
+        # high_d5 = get_tick_category((ma.high_horizontal_d5 - open_bid) / pair.get_base_tick(), 50)
+        # low_d5 = get_tick_category((ma.low_horizontal_d5 - open_bid) / pair.get_base_tick(), 50)
+        return 'HORI-DIFF:D25:{}:{}'.format(high_d25, low_d25)
 
 
 class AIHoriUsdJpy1002(UsdJpyMixin, AIHoriBase):

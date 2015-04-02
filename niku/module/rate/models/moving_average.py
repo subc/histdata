@@ -261,6 +261,16 @@ class MovingAverageBase(TestDataMixin, models.Model):
                                                     self.d5_high_category,
                                                     self.d5_low_category)
 
+    @property
+    def key_category_d5(self):
+        return 'KEY-DAYS:D5:{}:{}'.format(self.d5_high_category,
+                                          self.d5_low_category)
+
+    @property
+    def key_category_d25(self):
+        return 'KEY-DAYS:D25:{}:{}'.format(self.d25_high_category,
+                                           self.d25_low_category)
+
 
 def get_avg(candles):
     return sum([x.close_bid for x in candles]) / float(len(candles))
