@@ -210,3 +210,9 @@ class AIHoriBase(AI1001Base):
 
 class AIHoriUsdJpy1002(UsdJpyMixin, AIHoriBase):
     ai_id = 1002
+
+
+class AIHoriGbpUsd2002(GbpUsdMixin, AIHoriBase):
+    ai_id = 2002
+    MUTATION_MAX = 150
+    MUTATION_MIN = 10
