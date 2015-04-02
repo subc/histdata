@@ -82,10 +82,8 @@ class Command(CustomBaseCommand):
 
         # 前回レートから乖離が3分以内
         if now - prev_rate.start_at > datetime.timedelta(seconds=60 * 3):
-            print now
-            print prev_rate.start_at
-            print now - prev_rate.start_at
             print 'ORDER TIME IS OVER'
+            return None
 
         # ポジション数による購入制限と時間による購入制限
         if not ai_board.can_order(prev_rate):
