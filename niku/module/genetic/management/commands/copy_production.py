@@ -17,16 +17,17 @@ class Command(BaseCommand):
     """
     def handle(self, *args, **options):
         target_ids = [
-            64813,
-            65073,
-            65126,
-            65186,
-            65245,
-            66369,
-            85443,
-            85509,
-            85973,
-            86147]
+            223928,
+            223847,
+            223992,
+            226013,
+            225668,
+            225894,
+            225680,
+            226062,
+            225957,
+            223936,
+            223859]
 
         if target_ids:
             for _target_id in target_ids:
