@@ -28,7 +28,7 @@ class Command(CustomBaseCommand):
             self.run()
         except Exception as e:
             self.critical_error('close', e)
-        time.sleep(5)
+        time.sleep(3)
 
     def run(self):
         orders = Order.get_open()

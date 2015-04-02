@@ -36,7 +36,7 @@ class Command(BaseCommand):
     def run(self):
         # 直近のレート取得
         now = datetime.datetime.now(pytz.utc)
-        seven_days_ago = now - datetime.timedelta(seconds=3600*24*7)
+        seven_days_ago = now - datetime.timedelta(seconds=3600*24*1)
         for pair in CurrencyPair:
             print 'START :{}'.format(pair)
             self.update_rate(pair, Granularity.D, 700, limit=seven_days_ago)

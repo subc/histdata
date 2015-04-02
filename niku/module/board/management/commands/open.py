@@ -32,8 +32,8 @@ class Command(CustomBaseCommand):
         except Exception as e:
             self.critical_error('open', e)
 
-        # 30秒停止
-        time.sleep(30)
+        # 3秒停止
+        time.sleep(3)
 
     def run(self):
 
@@ -45,19 +45,21 @@ class Command(CustomBaseCommand):
         ai_board_group = AIBoard.get_all()
 
         # 仮発注
+        now = datetime.datetime.now(tz=pytz.utc)
         for ai_board in ai_board_group:
-            order = self.pre_order(ai_board, price_group)
+            order = self.pre_order(ai_board, price_group, now)
             if order:
                 order_group.append(order)
 
         # 発注
         self.order(order_group, price_group)
 
-    def pre_order(self, ai_board, price_group):
+    def pre_order(self, ai_board, price_group, now):
         """
         発注したらTrueを返却
         :param ai_board: AIBoard
         :param price_group: dict of PriceAPIModel
+        :param now: datetime
         :rtype : bool
         """
         print '~~~~~~~~~~~~~~~~~~~~~~~~~~'
@@ -77,6 +79,10 @@ class Command(CustomBaseCommand):
         if not prev_rates:
             return None
         prev_rate = prev_rates[-1]
+
+        # 前回レートから乖離が3分以内
+        if now - prev_rate.start_at > datetime.timedelta(seconds=60 * 3):
+            print 'ORDER TIME IS OVER'
 
         # ポジション数による購入制限と時間による購入制限
         if not ai_board.can_order(prev_rate):
