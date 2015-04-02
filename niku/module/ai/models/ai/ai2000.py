@@ -60,7 +60,9 @@ class AIUsdJpyBase(DispatchMixin, AIInterFace):
                 print 'RANDOM WALK!!!', rate_type
                 return None
             # AIがない場合はデフォルトデータをロード
-            self.ai_dict[rate_type] = [OrderType.get_random(), random.randint(20, 100), random.randint(20, 100)]
+            self.ai_dict[rate_type] = [OrderType.get_random(),
+                                       random.randint(self.MUTATION_MIN, self.MUTATION_MAX),
+                                       random.randint(self.MUTATION_MIN, self.MUTATION_MAX)]
             order_type, limit, stop_limit = self.ai_dict.get(rate_type)
         from module.ai import OrderAI
         return OrderAI(order_type, limit, stop_limit)
@@ -158,3 +160,53 @@ class AI3001Aud(AudUsdMixin, AI1001Base):
     MUTATION_MAX = 120
     MUTATION_MIN = 10
     pass
+
+
+class AIHoriBase(AI1001Base):
+    MUTATION_MAX = 120
+    MUTATION_MIN = 10
+
+    def get_key(self, open_bid, rates, start_at):
+        rate = rates[-1]
+        if rate is None or rate.ma is None:
+            return None
+
+        # 最高値からの乖離で取得
+        key_hori_high_low_diff = rate.ma.key_category
+
+        # 水平でキー取得
+        key_hori_diff = self.get_horizontal_diff_key(rate.ma, open_bid, rate.currency_pair)
+
+        # MA
+        d5 = self.get_ma_key(rate, 'd5', open_bid, 100)
+        d25 = self.get_ma_key(rate, 'd25', open_bid, 100)
+        d75 = self.get_ma_key(rate, 'd75', open_bid, 200)
+
+        # 流れの方向をキーにする
+        # key_trend = 'TRE:{}'.format(self.get_order_type(rates, open_bid).value)
+
+        # キャンドル
+        key_candle = self.get_key_candle(rates)
+
+        return ':'.join(x for x in [key_hori_high_low_diff, key_hori_diff, key_candle, d5, d25, d75] if x)
+
+    def get_horizontal_diff_key(self, ma, open_bid, pair):
+        """
+        現在レートと過去の最高値と安値の乖離
+        :param ma: MovingAverageBase
+        :param open_bid: float
+        :param pair: CurrencyPair
+        :return:
+        """
+        # d25水平で現在レートとの差を取得
+        high_d25 = get_tick_category((ma.high_horizontal_d25 - open_bid) / pair.get_base_tick(), 50)
+        low_d25 = get_tick_category((ma.low_horizontal_d25 - open_bid) / pair.get_base_tick(), 50)
+
+        # d5水平で現在レートとの差を取得
+        high_d5 = get_tick_category((ma.high_horizontal_d5 - open_bid) / pair.get_base_tick(), 50)
+        low_d5 = get_tick_category((ma.low_horizontal_d5 - open_bid) / pair.get_base_tick(), 50)
+        return 'HORI-DIFF:D5:{}:{}:D25:{}:{}'.format(high_d5, low_d5, high_d25, low_d25)
+
+
+class AIHoriUsdJpy1002(UsdJpyMixin, AIHoriBase):
+    ai_id = 1002

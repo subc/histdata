@@ -10,8 +10,8 @@ from module.rate.models.eur import EurUsdMA
 from module.ai import AI9EurUsd as AI
 from module.ai import AI1001UsdJpy as AI
 from module.ai import AI2001Gbp as AI
-
-from .genetic import Command as CmdBase
+from module.ai import AIHoriUsdJpy1002 as AI
+from .genetic_single import Command as CmdBase
 
 
 class Command(CmdBase):
