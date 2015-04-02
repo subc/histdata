@@ -178,7 +178,7 @@ class AIHoriBase(AI1001Base):
         key_hori_diff = self.get_horizontal_diff_key(rate.ma, open_bid, rate.currency_pair)
 
         # MA
-        d5 = self.get_ma_key(rate, 'd5', open_bid, 100)
+        # d5 = self.get_ma_key(rate, 'd5', open_bid, 100)
         # d25 = self.get_ma_key(rate, 'd25', open_bid, 100)
         # d75 = self.get_ma_key(rate, 'd75', open_bid, 200)
 
@@ -188,7 +188,7 @@ class AIHoriBase(AI1001Base):
         # キャンドル
         key_candle = self.get_key_candle(rates)
 
-        return ':'.join(x for x in [key_hori_high_low_diff, key_hori_diff, key_candle, d5,] if x)
+        return ':'.join(x for x in [key_hori_high_low_diff, key_hori_diff, key_candle] if x)
 
     def get_horizontal_diff_key(self, ma, open_bid, pair):
         """
