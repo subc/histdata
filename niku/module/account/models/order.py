@@ -269,9 +269,8 @@ class Order(models.Model):
         if self.currency_pair != price.currency_pair:
             raise ValueError
 
-        # AIのシミュレーションと同じ様に、askのみを対象にして売買を決定する
-        # _price = price.ask if self.buy else price.bid
-        _price = price.ask
+        # AIのシミュレーションと同じ様に、midのみを対象にして売買を決定する
+        _price = price.mid
 
         if self.buy:
             if _price >= self.real_limit_rate:

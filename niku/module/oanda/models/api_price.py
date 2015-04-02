@@ -116,6 +116,14 @@ class PriceAPIModel(OandaAPIModelBase):
         diff = self.ask - self.bid
         return float(diff / self.currency_pair.get_base_tick())
 
+    @cached_property
+    def mid(self):
+        if self.ask is None:
+            raise ValueError
+        if self.bid is None:
+            raise ValueError
+        return float(float(self.ask + self.bid) / 2)
+
     def is_active(self):
         """
         有効なレートならTrue
