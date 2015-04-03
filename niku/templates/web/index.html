@@ -149,7 +149,43 @@
         </table>
     </div>
 
-
+    <!--ORDER-->
+    <h2>OPEN POSITIONS</h2>
+    <div class="container">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>id</th>
+                <th>name</th>
+                <th>unit</th>
+                <th>buy</th>
+                <th>open</th>
+                <th>limit</th>
+                <th>stop</th>
+                <th>tick</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for o in open_orders %}
+            <tr>
+                <td>{{ o.id }}</td>
+                <td>{{ o.currency_pair.name }}</td>
+                <td>{{ o.units }}</td>
+                <td>{{ o.buy }}</td>
+                <td>{{ o.real_open_rate }}</td>
+                <td>{{ o.real_limit_rate }}</td>
+                <td>{{ o.real_stop_limit_rate }}</td>
+                <td>{% if o.current_profit_tick > 0 %}
+                    <span style="color:green">
+                    {% else %}
+                    <span style="color:red">
+                    {% endif %}
+                    {{ o.current_profit_tick }}</span>&nbsp;</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
 
     <h1>Hello, world!</h1>

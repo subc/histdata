@@ -26,7 +26,8 @@ class IndexView(BaseView):
 
         # positions
         positions = PositionsAPI(OandaAPIMode.PRODUCTION, 6181277).get_all()
-        is_valid, html_orders = self.get_orders(positions)
+        price_group = PriceAPI(OandaAPIMode.PRODUCTION).get_all()
+        is_valid, html_orders = self.get_orders(positions, price_group)
 
         # order
         c_order_all = HTMLCloseOrder('ALL', Order.get_close())
@@ -41,16 +42,22 @@ class IndexView(BaseView):
                                               datetime.timedelta(days=7))
         ai_result = self.ai_aggregation(order_week)
 
+        # open orders
+        open_orders = Order.get_open()
+        self.set_profit(open_orders, price_group)
+        open_orders = sorted(open_orders, key=lambda x: (x._currency_pair, x.current_profit_tick))
+
         return self.render_to_response({
             'account': account,
             'is_valid': is_valid,
             'kill_sw': KillSwitch.is_active(),
             'html_orders': html_orders,
+            'open_orders': open_orders,
             'close_orders': close_orders,
             'ai_result': ai_result,
         })
 
-    def get_orders(self, positions):
+    def get_orders(self, positions, price_group):
         # OPENなポジション取得
         orders = Order.get_open()
         orders_dict = {}
@@ -79,7 +86,6 @@ class IndexView(BaseView):
         print 'Current Position Profit'
         print '~~~~~~~~~~~~~~~~~'
         html_orders = []
-        price_group = PriceAPI(OandaAPIMode.PRODUCTION).get_all()
         for pair in CurrencyPair:
             price = price_group[pair]
             position = positions.get(pair, None)
@@ -117,6 +123,16 @@ class IndexView(BaseView):
 
         r = sorted(r, key=lambda x: x.sum_tick, reverse=True)
         return r
+
+    def set_profit(self, open_orders, price_group):
+        for o in open_orders:
+            price = price_group.get(o.currency_pair)
+            _price = price.bid if o.buy else price.ask
+            if o.buy:
+                tick = (_price - o.real_open_rate) / o.currency_pair.get_base_tick()
+            else:
+                tick = (o.real_open_rate - _price) / o.currency_pair.get_base_tick()
+            o.current_profit_tick = tick
 
 
 class HTMLOrder(object):
