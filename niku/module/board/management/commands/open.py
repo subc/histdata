@@ -10,6 +10,7 @@ from module.account.models import Order
 from module.board.models import AIBoard
 from module.genetic.models.parameter import OrderType
 from module.oanda.constants import OandaAPIMode
+from module.oanda.models.api_account import AccountAPI
 from module.oanda.models.api_orders import OrdersAPI
 from module.oanda.models.api_price import PriceAPI
 from module.rate import CurrencyPairToTable, Granularity, CurrencyPair
@@ -36,6 +37,11 @@ class Command(CustomBaseCommand):
         time.sleep(3)
 
     def run(self):
+        # 証拠金チェック
+        account = AccountAPI(OandaAPIMode.PRODUCTION, 6181277).get_all()
+        if int(account.get('marginAvail')) < 10000:
+            self.echo('MARGIN EMPTY!! marginAvail:{}'.format(int(account.get('marginAvail'))))
+            time.sleep(3000)
 
         # price取る
         price_group = PriceAPI(OandaAPIMode.PRODUCTION).get_all()
