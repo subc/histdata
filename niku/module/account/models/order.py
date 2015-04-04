@@ -163,23 +163,17 @@ class Order(models.Model):
         :rtype : list of Order
         """
         return list(cls.objects.filter(ai_board_id=board.id,
-                                       ai_version=board.version,
                                        end_at__isnull=False))
 
     @classmethod
-    def get_open_order_by_board(cls, board, version=True):
+    def get_open_order_by_board(cls, board):
         """
         対象AIの未決済ポジションを返却
         :param board: AIBoard
         :rtype : list of Order
         """
-        if version:
-            return list(cls.objects.filter(ai_board_id=board.id,
-                                           ai_version=board.version,
-                                           end_at__isnull=True))
-        else:
-            return list(cls.objects.filter(ai_board_id=board.id,
-                                           end_at__isnull=True))
+        return list(cls.objects.filter(ai_board_id=board.id,
+                                       end_at__isnull=True))
 
     def open(self, price):
         """

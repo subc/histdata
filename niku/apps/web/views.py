@@ -252,6 +252,6 @@ class HTMLAIResult(object):
         :param price_group: dict of PriceAPIModel
         """
         price = price_group.get(self.pair)
-        open_orders = Order.get_open_order_by_board(self.board, version=False)
+        open_orders = Order.get_open_order_by_board(self.board)
         self.open_position_tick = sum([o.get_current_profit_tick(price) for o in open_orders])
         self.open_position_count = len(open_orders)
