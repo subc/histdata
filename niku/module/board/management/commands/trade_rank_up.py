@@ -70,7 +70,7 @@ class Command(CustomBaseCommand):
         for key in ai_dict:
             r.append(HTMLAIResult(ai_dict[key]))
 
-        r = sorted(r, key=lambda x: x.sum_tick, reverse=True)
+        r = sorted(r, key=lambda x: x.board.id, reverse=True)
         return r
 
 
