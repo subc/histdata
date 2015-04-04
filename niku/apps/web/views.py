@@ -6,12 +6,14 @@ import datetime
 from django.utils.functional import cached_property
 from ..base.views import BaseView
 from module.account.models import Order
+from module.board.models import AIBoard
 from module.oanda.constants import OandaAPIMode
 from module.oanda.models.api_account import AccountAPI
 from module.oanda.models.api_positions import PositionsAPI
 from module.oanda.models.api_price import PriceAPI
 from module.rate import CurrencyPair
 from module.account.models.kill_switch import KillSwitch
+from module.account.constants import *
 
 
 class IndexView(BaseView):
@@ -60,6 +62,12 @@ class IndexView(BaseView):
         # 資金拘束
         _percent = float(float(account.get('marginUsed')) / float(account.get('balance'))) * 100
         account_margin_percent = '%.2f' % _percent
+        # リスク系の統計情報
+        ai_count = AIBoard.objects.filter(units__gt=1,
+                                          enable=1).count()
+        foresee_daily_risk = int(ai_count * UNITS * DAILY_RISK_COEFFICIENT)
+        foresee_margin = int(ai_count * UNITS * MARGIN_COEFFICIENT)
+        daily_risk = int(sum([o.profit for o in order_week]) / 5)
 
         return self.render_to_response({
             'account': account,
@@ -76,6 +84,10 @@ class IndexView(BaseView):
             'position_percent': position_percent,
             'open_position_percent': open_position_percent,
             'account_margin_percent': account_margin_percent,
+            'ai_count': ai_count,
+            'foresee_daily_risk': foresee_daily_risk,
+            'foresee_margin': foresee_margin,
+            'daily_risk': daily_risk,
         })
 
     def get_orders(self, positions, price_group):
