@@ -230,7 +230,7 @@ class HTMLAIResult(object):
     def pair(self):
         return self.orders[0].currency_pair
 
-    @cached_property
+    @property
     def units(self):
         return self.board.units
 
