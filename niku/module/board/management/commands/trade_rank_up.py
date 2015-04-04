@@ -55,7 +55,12 @@ class Command(CustomBaseCommand):
         ai_group = self.group_by_ai(order_week)
 
         for ai in ai_group:
+            ai.set_current_tick(price_group)
             evaluate(ai, price_group)
+
+        # 同じAIの排除
+        self.echo('SAME AI DISABLE')
+        disable_same_ai(ai_group, price_group)
 
     def group_by_ai(self, orders):
         """
@@ -134,3 +139,56 @@ def rank_up_down(board, after_units, price):
     print "AI:{} BEFORE:{} AFTER:{}".format(board.id,
                                             before_units,
                                             board.units)
+
+
+def disable_same_ai(ai_group, price_group):
+    """
+    同じAIをOFFにする
+    :param ai_group: list if HTMLAIResult
+    :param price_group: dict of PriceAPIModel
+    """
+    disable_ids = []
+    for ai in ai_group:
+        # 既にDISABLEのAIは対象外
+        if ai.board.id in disable_ids:
+            continue
+        # 取引数が20未満のAIは対象外
+        if ai.count < 20:
+            continue
+        disable_ids += _same_ai(ai, ai_group, price_group)
+
+
+def _same_ai(ai, ai_group, price_group):
+    """
+    同じAIをOFFにして,OFFにしたAIBoardIDを返却
+    :param ai_group: list if HTMLAIResult
+    :param price_group: dict of PriceAPIModel
+    """
+    b = ai.board
+    disable_ai_group = []
+    for _ai in ai_group:
+        # 自分自身は無視
+        if b.id == _ai.board.id:
+            continue
+        # 通貨ペア異なっていれば無視
+        if ai.pair != _ai.pair:
+            continue
+        if same(ai, _ai):
+            _ai.board.trade_stop()  # 停止
+            disable_ai_group.append(_ai)
+    return [ai.board.id for ai in disable_ai_group]
+
+
+def same(ai, ai2):
+    """
+    2つのAIが同じならTrue
+    """
+    # クローズした取引tickが異なれば対象外
+    if ai.sum_tick != ai2.sum_tick:
+        return False
+    # オープン中のポジションのtickが異なれば対象外
+    if ai.open_position_tick != ai2.open_position_tick:
+        return False
+
+    print "SAME AI!! {}:{}".format(ai.board.id, ai2.board.id)
+    return True

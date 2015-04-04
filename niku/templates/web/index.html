@@ -149,7 +149,11 @@
             </thead>
             <tbody>
             {% for ai in ai_result %}
-            <tr>
+            {% if ai.board.enable %}
+                <tr>
+            {% else %}
+                <tr style="background-color: lightslategrey; color: darkgrey">
+            {% endif %}
                 <td>{{ ai.board.id }}</td>
                 <td>{{ ai.pair.name }}</td>
                 <td>{{ ai.units }}</td>
