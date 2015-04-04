@@ -52,9 +52,9 @@ class AIBoardHistory(models.Model):
         orders = Order.get_close_order_by_board(board)
         trade_count = len(orders)
         profit_summary = sum([x.profit for x in orders])
-        profit_average = float(profit_summary / trade_count) if trade_count > 0 else 0
+        profit_average = float(profit_summary / trade_count)
         profit_tick_summary = sum([x.profit_tick for x in orders])
-        profit_tick_average = float(profit_tick_summary / trade_count) if trade_count > 0 else 0
+        profit_tick_average = float(profit_tick_summary / trade_count)
         is_rank_up = after_units > board.units
         trade_start_at = min([x.created_at for x in orders])
         trade_end_at = max([x.end_at for x in orders])

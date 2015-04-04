@@ -88,7 +88,8 @@ def evaluate(ai, price_group):
     :param price_group: dict of PriceAPIModel
     """
     # 取引回数が8未満だ
-    if ai.count < 8:
+    count = Order.get_close_order_by_board(ai.board)
+    if count < 8:
         return
 
     price = price_group.get(ai.pair)
