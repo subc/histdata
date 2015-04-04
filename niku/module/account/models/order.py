@@ -158,12 +158,24 @@ class Order(models.Model):
     @classmethod
     def get_close_order_by_board(cls, board):
         """
+        対象AIの決済済みポジションを返却
         :param board: AIBoard
         :rtype : list of Order
         """
         return list(cls.objects.filter(ai_board_id=board.id,
                                        ai_version=board.version,
                                        end_at__isnull=False))
+
+    @classmethod
+    def get_open_order_by_board(cls, board):
+        """
+        対象AIの未決済ポジションを返却
+        :param board: AIBoard
+        :rtype : list of Order
+        """
+        return list(cls.objects.filter(ai_board_id=board.id,
+                                       ai_version=board.version,
+                                       end_at__isnull=True))
 
     def open(self, price):
         """
@@ -192,16 +204,16 @@ class Order(models.Model):
 
         # update
         self.end_at = price.time
-        self.profit = self.get_profit(price)
+        self.profit = self.calc_profit(price)
         self.real_close_spread = price.cost_tick
         self.real_close_rate = price.ask if self.buy else price.bid  # 注文クローズなので反対売買する
         self.profit_tick = self.get_profit_tick()
         self.save()
         return self
 
-    def get_profit(self, price):
+    def calc_profit(self, price):
         """
-        利益を計算する
+        クローズ直前のポジション利益を計算する
         :param price: OrderApiModels
         :rtype : float
         """
@@ -214,6 +226,29 @@ class Order(models.Model):
         else:
             return self.currency_pair.units_to_yen(
                 (self.real_open_rate - _price) / self.currency_pair.get_base_tick(), self.units)
+
+    def get_current_profit(self, price):
+        """
+        オープンしているポジションの利益を計算する
+        :param price: OrderApiModels
+        :rtype : float
+        """
+        tick = self.get_current_profit_tick(price)
+        return self.currency_pair.units_to_yen(tick, self.units)
+
+    def get_current_profit_tick(self, price):
+        """
+        オープンしているポジションの利益を計算する
+        :param price: OrderApiModels
+        :rtype : float
+        """
+        if self.is_close():
+            raise ValueError
+        _price = price.bid if self.buy else price.ask
+        if self.buy:
+            return (_price - self.real_open_rate) / self.currency_pair.get_base_tick()
+        else:
+            return (self.real_open_rate - _price) / self.currency_pair.get_base_tick()
 
     def get_profit_tick(self):
         """

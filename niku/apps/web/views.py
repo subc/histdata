@@ -41,11 +41,25 @@ class IndexView(BaseView):
         order_week = Order.get_close_by_scope(datetime.timedelta(days=0),
                                               datetime.timedelta(days=7))
         ai_result = self.ai_aggregation(order_week)
+        for ai in ai_result:
+            ai.set_current_tick(price_group)
 
         # open orders
         open_orders = Order.get_open()
         self.set_profit(open_orders, price_group)
         open_orders = sorted(open_orders, key=lambda x: (x._currency_pair, x.current_profit_tick))
+
+        # 統計情報
+        ai_total_units = sum(ai.units for ai in ai_result if ai.board.enable)
+        total_position_units = sum([o.position.units for o in html_orders])
+        _percent = float(float(total_position_units * 100) / float(ai_total_units * 10))
+        position_percent = '%.2f' % _percent
+        open_position_units = sum([o.units for o in open_orders])
+        _percent = float(float(open_position_units * 100) / float(ai_total_units * 10))
+        open_position_percent = '%.2f' % _percent
+        # 資金拘束
+        _percent = float(float(account.get('marginUsed')) / float(account.get('balance'))) * 100
+        account_margin_percent = '%.2f' % _percent
 
         return self.render_to_response({
             'account': account,
@@ -55,6 +69,13 @@ class IndexView(BaseView):
             'open_orders': open_orders,
             'close_orders': close_orders,
             'ai_result': ai_result,
+            # 統計情報
+            'ai_total_units': ai_total_units,
+            'total_position_units': total_position_units,
+            'open_position_units': open_position_units,
+            'position_percent': position_percent,
+            'open_position_percent': open_position_percent,
+            'account_margin_percent': account_margin_percent,
         })
 
     def get_orders(self, positions, price_group):
@@ -224,3 +245,13 @@ class HTMLAIResult(object):
     @cached_property
     def avg_tick(self):
         return float(self.sum_tick / self.count)
+
+    def set_current_tick(self, price_group):
+        """
+        未決済ポジションのtickを設定する
+        :param price_group: dict of PriceAPIModel
+        """
+        price = price_group.get(self.pair)
+        open_orders = Order.get_open_order_by_board(self.board)
+        self.open_position_tick = sum([o.get_current_profit_tick(price) for o in open_orders])
+        self.open_position_count = len(open_orders)

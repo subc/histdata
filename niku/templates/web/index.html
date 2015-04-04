@@ -55,8 +55,21 @@
             </tr>
             <tr>
                 <td>marginUsed</td>
-                <td>{{ account.marginUsed }}</td>
+                <td>{{ account.marginUsed }}&nbsp;[&nbsp;{{ account_margin_percent }}%&nbsp;]</td>
             </tr>
+            <tr>
+                <td>PositionPercent</td>
+                <td>{{ total_position_units }}&nbsp;[&nbsp;{{ position_percent }}%&nbsp;]</td>
+            </tr>
+            <tr>
+                <td>OpenPositionPercent</td>
+                <td>{{ open_position_units }}&nbsp;[&nbsp;{{ open_position_percent }}%&nbsp;]</td>
+            </tr>
+            <tr>
+                <td>AI Units</td>
+                <td>{{ ai_total_units }}</td>
+            </tr>
+
             </tbody>
         </table>
     </div>
@@ -140,7 +153,17 @@
                 <td>{{ ai.board.id }}</td>
                 <td>{{ ai.pair.name }}</td>
                 <td>{{ ai.units }}</td>
-                <td>{{ ai.sum_tick }}</td>
+                <td>{{ ai.sum_tick }}&nbsp;
+                    {% if ai.open_position_count != 0 %}
+                        (
+                        {% if ai.open_position_tick > 0 %}
+                            <span style="color:green">
+                        {% else %}
+                            <span style="color:red">
+                        {% endif %}
+                        {{ ai.open_position_tick }}</span>,&nbsp;{{ ai.open_position_count }}&nbsp;)
+                    {% endif %}
+                </td>
                 <td>{{ ai.avg_tick }}</td>
                 <td>{{ ai.count }}</td>
             </tr>
@@ -150,7 +173,7 @@
     </div>
 
     <!--ORDER-->
-    <h2>OPEN POSITIONS</h2>
+    <h2>OPEN POSITIONS [CT:{{ open_orders|length }}]</h2>
     <div class="container">
         <table class="table table-striped">
             <thead>

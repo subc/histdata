@@ -16,10 +16,12 @@ class AIBoardHistory(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     trade_start_at = models.DateTimeField(default=None, null=True)
     trade_end_at = models.DateTimeField(default=None, null=True)
-    trade_stop_at = models.DateTimeField(default=None, null=True)
     ai_board_id = models.PositiveIntegerField(db_index=True)
     version = models.PositiveIntegerField(default=1, null=True, help_text='AIの取引世代')
     trade_count = models.PositiveIntegerField(default=None, null=True)
+    open_position_count = models.PositiveIntegerField(default=None, null=True)
+    open_position_profit = models.FloatField(default=None, null=True)
+    open_position_tick = models.FloatField(default=None, null=True)
     before_units = models.PositiveIntegerField()
     after_units = models.PositiveIntegerField()
     is_rank_up = models.PositiveIntegerField(help_text='昇進ならTrue', default=None, null=True)
@@ -32,24 +34,28 @@ class AIBoardHistory(models.Model):
         app_label = 'board'
 
     @classmethod
-    def create_if_achieve(cls, board):
+    def create(cls, board, after_units, price):
         """
-        条件を満たしていればcreate
+        注文状況を集計して記録する
         :param board: AIBoard
+        :param after_units: int
+        :param price: OrderApiModels
         :rtype : AIBoardHistory
         """
+        # 未決済のポジションを集計
+        open_orders = Order.get_open_order_by_board(board)
+        open_position_count = len(open_orders)
+        open_position_profit = sum([o.get_current_profit(price) for o in open_orders])
+        open_position_tick = sum([o.get_current_profit_tick(price) for o in open_orders])
+
+        # 決済済みのポジションを集計
         orders = Order.get_close_order_by_board(board)
         trade_count = len(orders)
-        if trade_count == 0:
-            return None
         profit_summary = sum([x.profit for x in orders])
         profit_average = float(profit_summary / trade_count)
         profit_tick_summary = sum([x.profit_tick for x in orders])
         profit_tick_average = float(profit_tick_summary / trade_count)
-        can_create, is_rank_up = cls.can_create(board, trade_count, profit_tick_average, profit_tick_summary)
-        if not can_create:
-            return None
-        after_units = cls.get_next_units(board.units, is_rank_up)
+        is_rank_up = after_units > board.units
         trade_start_at = min([x.created_at for x in orders])
         trade_end_at = max([x.end_at for x in orders])
         return cls.objects.create(trade_start_at=trade_start_at,
@@ -63,65 +69,10 @@ class AIBoardHistory(models.Model):
                                   profit_summary=profit_summary,
                                   profit_average=profit_average,
                                   profit_tick_summary=profit_tick_summary,
-                                  profit_tick_average=profit_tick_average)
-
-    @classmethod
-    def can_create(cls, board, trade_count, profit_tick_average, profit_tick_summary):
-        """
-        生成
-        :param board: AIBoard
-        :param trade_count: int
-        :param profit_tick_average: float
-        :param profit_tick_summary: float
-        :return: can_create, is_rank_up
-        :rtype : bool, bool
-        """
-        # 10回以上取引していて平均-15以下
-        if trade_count >= 5 and profit_tick_summary <= -15:
-            return True, False
-
-        # 11回以上取引、平均10以上
-        if trade_count >= 11 and profit_tick_average >= 10:
-            return True, True
-
-        # 22回以上取引、平均4以上
-        if trade_count >= 22 and profit_tick_average >= 4:
-            return True, True
-
-        # 22回以上取引、平均0以下
-        if trade_count >= 22 and profit_tick_average <= 0:
-            return True, False
-
-        return False, None
-
-    @classmethod
-    def get_next_units(cls, units, is_rank_up):
-        """
-        次のunits数を返却
-
-        10
-        100
-        1000
-        1100
-        1200
-        1300
-        :param units: int
-        :param is_rank_up: bool
-        :rtype : int
-        """
-        # 1000以上のとき
-        if units >= 1000:
-            if is_rank_up:
-                return units + 100
-            else:
-                return 10
-
-        # 1000未満0以上
-        if 999 >= units > 0:
-            if is_rank_up:
-                return min([1000, units * 10])
-            else:
-                return max([10, units / 10])
+                                  profit_tick_average=profit_tick_average,
+                                  open_position_count=open_position_count,
+                                  open_position_profit=open_position_profit,
+                                  open_position_tick=open_position_tick)
 
     @property
     def board(self):
@@ -134,30 +85,3 @@ class AIBoardHistory(models.Model):
         :rtype : list of AIBoardHistory
         """
         return list(AIBoardHistory.objects.filter(ai_board_id=self.ai_board_id).order_by('-version')[:count])
-
-    def can_trade_stop(self):
-        """
-        取引停止可能かチェックする。停止するときはTrue
-        :rtype : bool
-        """
-        # unitsが11以上のときは、調査しない
-        if self.before_units == self.after_units == 10:
-            return False
-
-        # 過去10イテレーション以下の時は調査しない
-        if self.version <= 10:
-            return False
-
-        # 直近10取引をみて、units10が5以上のときは停止
-        history_group = self.get_new_history(10)
-        count = len([x.units for x in history_group if x.units <= 10])
-        if count >= 5:
-            return True
-        return False
-
-    def trade_stop(self):
-        """
-        取引停止を記録
-        """
-        self.trade_end_at = datetime.datetime.now(tz=pytz.utc)
-        self.save()
