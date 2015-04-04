@@ -62,8 +62,6 @@ class Command(CustomBaseCommand):
         :param now: datetime
         :rtype : bool
         """
-        print '~~~~~~~~~~~~~~~~~~~~~~~~~~'
-        print 'START AI BOARD:{} UNITS:{}'.format(ai_board.id, ai_board.units)
         ai = ai_board.get_ai_instance()
         price = price_group.get(ai.currency_pair, None)
 
@@ -71,7 +69,7 @@ class Command(CustomBaseCommand):
         if price is None:
             return None
         if not price.is_active():
-            print 'price not active'
+            # print 'price not active'
             return None
 
         # レートが正常ではない
@@ -82,12 +80,12 @@ class Command(CustomBaseCommand):
 
         # 前回レートから乖離が3分以内
         if now - prev_rate.start_at > datetime.timedelta(seconds=60 * 3):
-            print 'ORDER TIME IS OVER'
+            # print 'ORDER TIME IS OVER'
             return None
 
         # ポジション数による購入制限と時間による購入制限
         if not ai_board.can_order(prev_rate):
-            print 'TIME OR POSITION LIMIT'
+            # print 'TIME OR POSITION LIMIT'
             return None
 
         # 購入判断 AIのシミュレーションと同じ様に、midのみを対象にして売買を決定する
@@ -97,8 +95,6 @@ class Command(CustomBaseCommand):
             return None
         if order_ai.order_type == OrderType.WAIT:
             return None
-
-        order_ai.print_member()
 
         # 仮注文発砲
         order = Order.pre_open(ai_board, order_ai, price, prev_rate.start_at)
