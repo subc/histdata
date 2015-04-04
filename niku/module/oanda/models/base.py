@@ -6,10 +6,6 @@ import time
 import ujson
 
 
-class HttpError(Exception):
-    pass
-
-
 class OandaAPIBase(object):
     mode = None
     class Meta(object):
@@ -38,8 +34,9 @@ class OandaAPIBase(object):
             except:
                 print 'http error'
                 time.sleep(3)
-                pass
-        raise HttpError
+                if x >= 2:
+                    raise
+        raise
 
     def check_json(self, data):
         raise NotImplementedError
