@@ -98,7 +98,7 @@ class AIBoard(models.Model):
 
         # ポジション数制限
         position_num = Order.get_position_count(self.id)
-        if position_num > 10:
+        if position_num > 9:
             return False
 
         # 時間制限
