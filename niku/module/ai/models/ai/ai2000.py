@@ -228,11 +228,11 @@ class AIMultiCandleBase(AIHoriBase):
         # key_hori_high_low_diff = rate.ma.key_category_d25
 
         # 水平でキー取得
-        key_hori_diff = self.get_horizontal_diff_key(rate.ma, open_bid, rate.currency_pair)
+        # key_hori_diff = self.get_horizontal_diff_key(rate.ma, open_bid, rate.currency_pair)
 
         # MA
         # d5 = self.get_ma_key(rate, 'd5', open_bid, 100)
-        # d25 = self.get_ma_key(rate, 'd25', open_bid, 100)
+        d25 = self.get_ma_key(rate, 'd25', open_bid, 100)
         # d75 = self.get_ma_key(rate, 'd75', open_bid, 200)
 
         # 流れの方向をキーにする
@@ -252,10 +252,10 @@ class AIMultiCandleBase(AIHoriBase):
 
         if None in key_candle_group:
             return None
-        key_candle = self.get_key_candle(rates)
+        # key_candle = self.get_key_candle(rates)
         key_candle_plus = ':'.join(key_candle_group)
 
-        return ':'.join(x for x in [key_hori_diff, key_candle, key_candle_plus] if x)
+        return ':'.join(x for x in [d25, key_candle_plus] if x)
 
     def get_key_candle_general(self, rates, depth, base_tick):
 
