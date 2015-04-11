@@ -244,11 +244,10 @@ class AIMultiCandleBase(AIHoriBase):
         key_candle_h24 = self.get_key_candle_general(rates, 24, self.candle_h24_base_tick)
         # key_candle_h48 = self.get_key_candle_general(rates, 48, self.candle_h48_base_tick)
         # key_candle_h72 = self.get_key_candle_general(rates, 72, self.candle_h72_base_tick * 2)
-        key_candle_h120 = self.get_key_candle_general(rates, 120, self.candle_h120_base_tick * 2)
+        # key_candle_h120 = self.get_key_candle_general(rates, 120, self.candle_h120_base_tick * 2)
         # key_candle_h240 = self.get_key_candle_general(rates, 240, self.candle_h240_base_tick * 2)
         key_candle_group = [key_candle_h4,
-                            key_candle_h24,
-                            key_candle_h120]
+                            key_candle_h24]
 
         if None in key_candle_group:
             return None
