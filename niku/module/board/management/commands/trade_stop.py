@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import time
 from module.account.models import OandaTransaction, KillSwitch
 from module.oanda.constants import OandaAPIMode
+from module.oanda.exceptions import OandaServiceUnavailableError, OandaInternalServerError
 from module.oanda.models.api_account import AccountAPI
 from utils import CustomBaseCommand
 
@@ -21,7 +22,17 @@ class Command(CustomBaseCommand):
         self.echo('trade stop start')
         self.check_kill_switch()
 
-        self.run()
+        try:
+            self.run()
+        except OandaServiceUnavailableError:
+            # 土日メンテ中のとき
+            self.echo("ServiceUnavailableError")
+            time.sleep(60)
+        except OandaInternalServerError:
+            # 土日メンテ中のとき
+            self.echo("OandaInternalServerError")
+            time.sleep(60)
+
         self.echo('trade stop finish')
         time.sleep(30)
 

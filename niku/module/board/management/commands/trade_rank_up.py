@@ -8,6 +8,7 @@ from module.board.models import AIBoardHistory
 from apps.web.views import HTMLAIResult
 from module.account.models import Order
 from module.oanda.constants import OandaAPIMode
+from module.oanda.exceptions import OandaInternalServerError, OandaServiceUnavailableError
 from module.oanda.models.api_price import PriceAPI
 from utils import CustomBaseCommand
 
@@ -35,7 +36,17 @@ class Command(CustomBaseCommand):
     def handle(self, *args, **options):
         print '********************************'
         self.echo('trade rank up start')
-        self.run()
+        try:
+            self.run()
+        except OandaServiceUnavailableError:
+            # 土日メンテ中のとき
+            self.echo("ServiceUnavailableError")
+            time.sleep(60)
+        except OandaInternalServerError:
+            # 土日メンテ中のとき
+            self.echo("OandaInternalServerError")
+            time.sleep(60)
+
         time.sleep(120)
 
     def run(self):
