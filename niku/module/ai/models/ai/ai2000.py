@@ -239,24 +239,23 @@ class AIMultiCandleBase(AIHoriBase):
         # key_trend = 'TRE:{}'.format(self.get_order_type(rates, open_bid).value)
 
         # キャンドル
-        key_candle_h1 = self.get_key_candle_general(rates, 1, self.candle_h1_base_tick)
+        # key_candle_h1 = self.get_key_candle_general(rates, 1, self.candle_h1_base_tick)
         key_candle_h4 = self.get_key_candle_general(rates, 4, self.candle_h4_base_tick)
         key_candle_h24 = self.get_key_candle_general(rates, 24, self.candle_h24_base_tick)
-        key_candle_h48 = self.get_key_candle_general(rates, 48, self.candle_h48_base_tick)
+        # key_candle_h48 = self.get_key_candle_general(rates, 48, self.candle_h48_base_tick)
         # key_candle_h72 = self.get_key_candle_general(rates, 72, self.candle_h72_base_tick * 2)
-        # key_candle_h120 = self.get_key_candle_general(rates, 120, self.candle_h120_base_tick * 2)
+        key_candle_h120 = self.get_key_candle_general(rates, 120, self.candle_h120_base_tick * 2)
         # key_candle_h240 = self.get_key_candle_general(rates, 240, self.candle_h240_base_tick * 2)
-        key_candle_group = [key_candle_h1,
-                            key_candle_h4,
+        key_candle_group = [key_candle_h4,
                             key_candle_h24,
-                            key_candle_h48]
+                            key_candle_h120]
 
         if None in key_candle_group:
             return None
+        key_candle = self.get_key_candle(rates)
+        key_candle_plus = ':'.join(key_candle_group)
 
-        key_candle = ':'.join(key_candle_group)
-
-        return ':'.join(x for x in [key_hori_diff, key_candle] if x)
+        return ':'.join(x for x in [key_hori_diff, key_candle, key_candle_plus] if x)
 
     def get_key_candle_general(self, rates, depth, base_tick):
 
