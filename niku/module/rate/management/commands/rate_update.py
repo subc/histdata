@@ -5,14 +5,18 @@ Rate Update
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
+import time
 from django.core.management import BaseCommand
 import requests
 from module.rate import CurrencyPair, CurrencyPairToTable
 from module.rate.models import CandleEurUsdM5Rate
+from module.oanda.constants import OandaAPIMode
+from module.oanda.exceptions import OandaInternalServerError, OandaServiceUnavailableError
+from module.oanda.models.base import OandaAPIBase
 from module.rate.models.eur import Granularity
 from module.title.models.title import TitleSettings
 from module.oanda.models.candle import OandaCandle
-from utils import get_password
+from utils import get_password, CustomBaseCommand
 from utils.timeit import timeit
 from utils.oanda_api import OandaAPI, Streamer
 import ujson
@@ -29,9 +33,18 @@ MODE = {
 }
 
 
-class Command(BaseCommand):
+class Command(CustomBaseCommand):
     def handle(self, *args, **options):
-        self.run()
+        try:
+            self.run()
+        except OandaServiceUnavailableError:
+            # 土日メンテ中のとき
+            self.echo("ServiceUnavailableError")
+            time.sleep(60)
+        except OandaInternalServerError:
+            # 土日メンテ中のとき
+            self.echo("OandaInternalServerError")
+            time.sleep(60)
 
     def run(self):
         # レート取得
@@ -46,6 +59,7 @@ class Command(BaseCommand):
         :param currency_pair: CurrencyPair
         :param granularity: Granularity
         """
+        requests_api = OandaAPIBase(OandaAPIMode.PRODUCTION).requests_api
         for _date in start_date_generator(span, limit=limit):
             start = '%02d-%02d-%02d' % (int(_date.year), int(_date.month), int(_date.day))
             # レート取得
@@ -68,19 +82,20 @@ class Command(BaseCommand):
                 candles.append(OandaCandle(candle, granularity))
             CurrencyPairToTable.get_table(currency_pair, granularity).safe_bulk_create_by_oanda(candles, start_at=limit)
 
-
-def requests_api(url, payload=None):
-    auth = 'Bearer {}'.format(get_password('OandaRestAPIToken'))
-    headers = {'Accept-Encoding': 'identity, deflate, compress, gzip',
-               'Accept': '*/*', 'User-Agent': 'python-requests/1.2.0',
-               'Content-type': 'application/json; charset=utf-8',
-               'Authorization': auth}
-    if payload:
-        response = requests.post(url, headers=headers, data=payload)
-    else:
-        response = requests.get(url, headers=headers)
-    print 'API_TEST: {}'.format(url)
-    return response
+#
+# def requests_api(url, payload=None):
+#     auth = 'Bearer {}'.format(get_password('OandaRestAPIToken'))
+#     headers = {'Accept-Encoding': 'identity, deflate, compress, gzip',
+#                'Accept': '*/*', 'User-Agent': 'python-requests/1.2.0',
+#                'Content-type': 'application/json; charset=utf-8',
+#                'Authorization': auth}
+#     if payload:
+#         response = requests.post(url, headers=headers, data=payload)
+#     else:
+#         response = requests.get(url, headers=headers)
+#     print 'API_TEST: {}'.format(url)
+#     print response.text
+#     return response
 
 
 def start_date_generator(span, limit=None):
