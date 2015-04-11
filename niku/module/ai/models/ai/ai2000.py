@@ -246,15 +246,26 @@ class AIMultiCandleBase(AIHoriBase):
         # key_candle_h72 = self.get_key_candle_general(rates, 72, self.candle_h72_base_tick * 2)
         key_candle_h120 = self.get_key_candle_general(rates, 120, self.candle_h120_base_tick * 2)
         key_candle_h240 = self.get_key_candle_general(rates, 240, self.candle_h240_base_tick * 2)
-        key_candle = ':'.join([key_candle_h1, key_candle_h4, key_candle_h24,
-                               key_candle_h48, key_candle_h120, key_candle_h240])
+        key_candle_group = [key_candle_h1,
+                            key_candle_h4,
+                            key_candle_h24,
+                            key_candle_h48,
+                            key_candle_h120,
+                            key_candle_h240]
+
+        if None in key_candle_group:
+            return None
+
+        key_candle = ':'.join(key_candle_group)
 
         return ':'.join(x for x in [key_hori_diff, key_candle] if x)
 
     def get_key_candle_general(self, rates, depth, base_tick):
+
         c = len(rates)
         prev_rates = rates[c - depth:c]
-        assert len(prev_rates) == depth, (len(prev_rates), depth)
+        if len(prev_rates) != depth:
+            return None
         prev_rate = MultiCandles(prev_rates, Granularity.UNKNOWN)
         key_candle = 'CANDLE:{}'.format(prev_rate.get_candle_type(base_tick))
         return key_candle
