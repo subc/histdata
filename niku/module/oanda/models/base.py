@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import requests
 import time
 import ujson
+from module.oanda.exceptions import OandaServiceUnavailableError, OandaInternalServerError
 
 
 class OandaAPIBase(object):
@@ -20,6 +21,7 @@ class OandaAPIBase(object):
     def requests_api(self, url, payload=None):
         # 3回繰り返す
         for x in xrange(3):
+            response = None
             try:
                 if payload:
                     response = requests.post(url, headers=self.mode.headers, data=payload)
@@ -31,11 +33,17 @@ class OandaAPIBase(object):
                 data = ujson.loads(response.text)
                 self.check_json(data)
                 return data
-            except:
-                print 'http error'
+            except Exception as e:
+                if response is None:
+                    raise
+                if response.text:
+                    if str("Service Unavailable") in str(response.text):
+                        raise OandaServiceUnavailableError
+                    if str("An internal server error occurred") in str(response.text):
+                        raise OandaInternalServerError
                 time.sleep(3)
                 if x >= 2:
-                    raise
+                    raise TypeError, response.text
         raise
 
     def check_json(self, data):
@@ -73,6 +81,8 @@ class OandaAccountAPIBase(object):
             data = ujson.loads(response.text)
             self.check_json(data)
         except AssertionError:
+            if str("Service Unavailable") in str(response.text):
+                raise OandaServiceUnavailableError
             raise TypeError, response.text
         return data
 

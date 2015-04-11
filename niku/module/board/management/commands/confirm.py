@@ -10,6 +10,7 @@ import time
 import pytz
 from module.board.models import AIBoard
 from module.oanda.constants import OandaAPIMode
+from module.oanda.exceptions import OandaInternalServerError, OandaServiceUnavailableError
 from module.oanda.models.api_transactions import TransactionsAPI
 from module.account.models import OandaTransaction
 from utils import CustomBaseCommand
@@ -20,7 +21,16 @@ class Command(CustomBaseCommand):
         print '********************************'
         self.echo('confirm start')
         self.check_kill_switch()
-        self.run()
+        try:
+            self.run()
+        except OandaServiceUnavailableError:
+            # 土日メンテ中のとき
+            self.echo("ServiceUnavailableError")
+            time.sleep(60)
+        except OandaInternalServerError:
+            # 土日メンテ中のとき
+            self.echo("OandaInternalServerError")
+            time.sleep(60)
 
     def run(self):
         # transactions APIにアクセス

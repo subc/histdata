@@ -4,8 +4,6 @@ boardを更新する
 """
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management import BaseCommand
 import requests
 from ...constans import TEST_HEADER, TEST_HOST

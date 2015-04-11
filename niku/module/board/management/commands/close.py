@@ -7,6 +7,7 @@ import time
 import pytz
 from module.account.models import Order
 from module.oanda.constants import OandaAPIMode
+from module.oanda.exceptions import OandaServiceUnavailableError, OandaInternalServerError
 from module.oanda.models.api_orders import OrdersAPI
 from module.oanda.models.api_price import PriceAPI
 from module.rate import CurrencyPair
@@ -26,6 +27,14 @@ class Command(CustomBaseCommand):
 
         try:
             self.run()
+        except OandaServiceUnavailableError:
+            # 土日メンテ中のとき
+            self.echo("ServiceUnavailableError")
+            time.sleep(60)
+        except OandaInternalServerError:
+            # 土日メンテ中のとき
+            self.echo("OandaInternalServerError")
+            time.sleep(60)
         except Exception as e:
             self.critical_error('close', e)
         time.sleep(3)
