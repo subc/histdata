@@ -16,7 +16,7 @@ from module.oanda.models.base import OandaAPIBase
 from module.rate.models.eur import Granularity, CandleEurUsdM1Rate
 from module.title.models.title import TitleSettings
 from module.oanda.models.candle import OandaCandle
-from utils import get_password
+from utils import get_password, CustomBaseCommand
 from utils.timeit import timeit
 from utils.oanda_api import OandaAPI, Streamer
 import ujson
@@ -33,7 +33,7 @@ MODE = {
 }
 
 
-class Command(BaseCommand):
+class Command(CustomBaseCommand):
     def handle(self, *args, **options):
         try:
             self.run()
