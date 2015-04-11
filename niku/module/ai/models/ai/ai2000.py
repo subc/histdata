@@ -216,3 +216,51 @@ class AIHoriGbpUsd2002(GbpUsdMixin, AIHoriBase):
     ai_id = 2002
     MUTATION_MAX = 150
     MUTATION_MIN = 10
+
+
+class AIMultiCandleBase(AIHoriBase):
+    def get_key(self, open_bid, rates, start_at):
+        rate = rates[-1]
+        if rate is None or rate.ma is None:
+            return None
+
+        # 最高値からの乖離で取得
+        # key_hori_high_low_diff = rate.ma.key_category_d25
+
+        # 水平でキー取得
+        key_hori_diff = self.get_horizontal_diff_key(rate.ma, open_bid, rate.currency_pair)
+
+        # MA
+        # d5 = self.get_ma_key(rate, 'd5', open_bid, 100)
+        # d25 = self.get_ma_key(rate, 'd25', open_bid, 100)
+        # d75 = self.get_ma_key(rate, 'd75', open_bid, 200)
+
+        # 流れの方向をキーにする
+        # key_trend = 'TRE:{}'.format(self.get_order_type(rates, open_bid).value)
+
+        # キャンドル
+        key_candle_h1 = self.get_key_candle_general(rates, 1, self.candle_h1_base_tick)
+        key_candle_h4 = self.get_key_candle_general(rates, 4, self.candle_h4_base_tick)
+        key_candle_h24 = self.get_key_candle_general(rates, 24, self.candle_h24_base_tick)
+        key_candle_h48 = self.get_key_candle_general(rates, 48, self.candle_h48_base_tick)
+        # key_candle_h72 = self.get_key_candle_general(rates, 72, self.candle_h72_base_tick * 2)
+        key_candle_h120 = self.get_key_candle_general(rates, 120, self.candle_h120_base_tick * 2)
+        key_candle_h240 = self.get_key_candle_general(rates, 240, self.candle_h240_base_tick * 2)
+        key_candle = ':'.join([key_candle_h1, key_candle_h4, key_candle_h24,
+                               key_candle_h48, key_candle_h120, key_candle_h240])
+
+        return ':'.join(x for x in [key_hori_diff, key_candle] if x)
+
+    def get_key_candle_general(self, rates, depth, base_tick):
+        c = len(rates)
+        prev_rates = rates[c - depth:c]
+        assert len(prev_rates) == depth, (len(prev_rates), depth)
+        prev_rate = MultiCandles(prev_rates, Granularity.UNKNOWN)
+        key_candle = 'CANDLE:{}'.format(prev_rate.get_candle_type(base_tick))
+        return key_candle
+
+
+class AIMultiCandleUsdJpy1003(UsdJpyMixin, AIMultiCandleBase):
+    ai_id = 1003
+    MUTATION_MAX = 80
+    MUTATION_MIN = 10
