@@ -277,3 +277,45 @@ class AIMultiCandleUsdJpy1003(UsdJpyMixin, AIMultiCandleBase):
     ai_id = 1003
     MUTATION_MAX = 80
     MUTATION_MIN = 10
+
+
+class AIHoriMarketTimeBase(MarketTimeMixin, AIHoriBase):
+    def get_key(self, open_bid, rates, start_at):
+        rate = rates[-1]
+        if rate is None or rate.ma is None:
+            return None
+
+        # 最高値からの乖離で取得
+        key_hori_high_low_diff = rate.ma.key_category_d25
+
+        # 水平でキー取得
+        key_hori_diff = self.get_horizontal_diff_key(rate.ma, open_bid, rate.currency_pair)
+
+        # MA
+        d5 = self.get_ma_key(rate, 'd5', open_bid, 100)
+        # d25 = self.get_ma_key(rate, 'd25', open_bid, 100)
+        # d75 = self.get_ma_key(rate, 'd75', open_bid, 200)
+
+        # 流れの方向をキーにする
+        # key_trend = 'TRE:{}'.format(self.get_order_type(rates, open_bid).value)
+
+        # キャンドル
+        key_candle = self.get_key_candle(rates)
+
+        # market time
+        key_markettime = 'MTime:{}:{}'.format(self.holiday(start_at),
+                                              self.newyear(start_at))
+
+        return ':'.join(x for x in [key_markettime, key_hori_high_low_diff, key_hori_diff, key_candle, d5] if x)
+
+
+class AIMarketTimeUsdJpy1004(UsdJpyMixin, AIHoriMarketTimeBase):
+    ai_id = 1004
+    MUTATION_MAX = 120
+    MUTATION_MIN = 10
+
+
+class AIMarketTimeAudUsd3002(AudUsdMixin, AIHoriMarketTimeBase):
+    ai_id = 3002
+    MUTATION_MAX = 120
+    MUTATION_MIN = 10
