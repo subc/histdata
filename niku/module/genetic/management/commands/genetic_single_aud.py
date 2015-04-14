@@ -7,7 +7,7 @@ from module.genetic.models.benchmark_single import BenchmarkSingle
 from module.genetic.models.mixin import GeneticMixin, ApiMixin
 # from module.ai import AI1001UsdJpy as AI
 # from module.ai import AI2001Gbp as AI
-from module.ai import AI3001Aud as AI
+from module.ai import AIMarketTimeAudUsd3002 as AI
 from .genetic_single import Command as CMD
 
 

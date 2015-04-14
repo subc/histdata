@@ -5,7 +5,7 @@ from django.core.management import BaseCommand
 import numpy
 from module.genetic.models.benchmark_single import BenchmarkSingle
 from module.genetic.models.mixin import GeneticMixin, ApiMixin
-from module.ai import AIMultiCandleUsdJpy1003 as AI
+from module.ai import AIMarketTimeUsdJpy1004 as AI
 from .genetic_single import Command as CMD
 
 

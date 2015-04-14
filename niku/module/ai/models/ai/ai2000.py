@@ -10,6 +10,7 @@ from module.currency import UsdJpyMixin, GbpUsdMixin, AudUsdMixin
 from module.genetic.models.parameter import OrderType
 from module.rate import Granularity
 from module.rate.models.base import MultiCandles
+from ..mixin import MarketTimeMixin
 
 
 class AIUsdJpyBase(DispatchMixin, AIInterFace):
@@ -218,7 +219,7 @@ class AIHoriGbpUsd2002(GbpUsdMixin, AIHoriBase):
     MUTATION_MIN = 10
 
 
-class AIMultiCandleBase(AIHoriBase):
+class AIMultiCandleBase(MarketTimeMixin, AIHoriBase):
     def get_key(self, open_bid, rates, start_at):
         rate = rates[-1]
         if rate is None or rate.ma is None:
@@ -232,7 +233,7 @@ class AIMultiCandleBase(AIHoriBase):
 
         # MA
         # d5 = self.get_ma_key(rate, 'd5', open_bid, 100)
-        d25 = self.get_ma_key(rate, 'd25', open_bid, 100)
+        # d25 = self.get_ma_key(rate, 'd25', open_bid, 100)
         # d75 = self.get_ma_key(rate, 'd75', open_bid, 200)
 
         # 流れの方向をキーにする
@@ -240,21 +241,26 @@ class AIMultiCandleBase(AIHoriBase):
 
         # キャンドル
         # key_candle_h1 = self.get_key_candle_general(rates, 1, self.candle_h1_base_tick)
-        key_candle_h4 = self.get_key_candle_general(rates, 4, self.candle_h4_base_tick)
+        # key_candle_h4 = self.get_key_candle_general(rates, 4, self.candle_h4_base_tick)
         key_candle_h24 = self.get_key_candle_general(rates, 24, self.candle_h24_base_tick)
         # key_candle_h48 = self.get_key_candle_general(rates, 48, self.candle_h48_base_tick)
         # key_candle_h72 = self.get_key_candle_general(rates, 72, self.candle_h72_base_tick * 2)
-        # key_candle_h120 = self.get_key_candle_general(rates, 120, self.candle_h120_base_tick * 2)
-        # key_candle_h240 = self.get_key_candle_general(rates, 240, self.candle_h240_base_tick * 2)
-        key_candle_group = [key_candle_h4,
-                            key_candle_h24]
+        key_candle_h120 = self.get_key_candle_general(rates, 120, self.candle_h120_base_tick * 2)
+        key_candle_h240 = self.get_key_candle_general(rates, 240, self.candle_h240_base_tick * 2)
+        key_candle_group = [key_candle_h24,
+                            key_candle_h120,
+                            key_candle_h240]
 
         if None in key_candle_group:
             return None
         # key_candle = self.get_key_candle(rates)
         key_candle_plus = ':'.join(key_candle_group)
 
-        return ':'.join(x for x in [d25, key_candle_plus] if x)
+        # market time
+        key_markettime = 'MTime:{}:{}'.format(self.holiday(start_at),
+                                              self.newyear(start_at))
+
+        return ':'.join(x for x in [key_markettime, key_candle_plus] if x)
 
     def get_key_candle_general(self, rates, depth, base_tick):
 
@@ -270,4 +276,46 @@ class AIMultiCandleBase(AIHoriBase):
 class AIMultiCandleUsdJpy1003(UsdJpyMixin, AIMultiCandleBase):
     ai_id = 1003
     MUTATION_MAX = 80
+    MUTATION_MIN = 10
+
+
+class AIHoriMarketTimeBase(MarketTimeMixin, AIHoriBase):
+    def get_key(self, open_bid, rates, start_at):
+        rate = rates[-1]
+        if rate is None or rate.ma is None:
+            return None
+
+        # 最高値からの乖離で取得
+        key_hori_high_low_diff = rate.ma.key_category_d25
+
+        # 水平でキー取得
+        key_hori_diff = self.get_horizontal_diff_key(rate.ma, open_bid, rate.currency_pair)
+
+        # MA
+        d5 = self.get_ma_key(rate, 'd5', open_bid, 100)
+        # d25 = self.get_ma_key(rate, 'd25', open_bid, 100)
+        # d75 = self.get_ma_key(rate, 'd75', open_bid, 200)
+
+        # 流れの方向をキーにする
+        # key_trend = 'TRE:{}'.format(self.get_order_type(rates, open_bid).value)
+
+        # キャンドル
+        key_candle = self.get_key_candle(rates)
+
+        # market time
+        key_markettime = 'MTime:{}:{}'.format(self.holiday(start_at),
+                                              self.newyear(start_at))
+
+        return ':'.join(x for x in [key_markettime, key_hori_high_low_diff, key_hori_diff, key_candle, d5] if x)
+
+
+class AIMarketTimeUsdJpy1004(UsdJpyMixin, AIHoriMarketTimeBase):
+    ai_id = 1004
+    MUTATION_MAX = 120
+    MUTATION_MIN = 10
+
+
+class AIMarketTimeAudUsd3002(AudUsdMixin, AIHoriMarketTimeBase):
+    ai_id = 3002
+    MUTATION_MAX = 120
     MUTATION_MIN = 10
