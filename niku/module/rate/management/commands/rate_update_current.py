@@ -63,7 +63,7 @@ class Command(CustomBaseCommand):
         :param currency_pair: CurrencyPair
         :param granularity: Granularity
         """
-        requests_api = OandaAPIBase(OandaAPIMode.PRODUCTION).requests_api
+        # requests_api = OandaAPIBase(OandaAPIMode.PRODUCTION).requests_api
         for _date in start_date_generator(span, limit=limit):
             start = '%02d-%02d-%02d' % (int(_date.year), int(_date.month), int(_date.day))
             # レート取得
@@ -77,7 +77,9 @@ class Command(CustomBaseCommand):
                 'alignmentTimezone=Asia%2FTokyo&' +\
                 'start={}T00%3A00%3A00Z'.format(start)
 
-            data = requests_api(url)
+            response = requests_api(url)
+            assert response.status_code == 200, response.status_code
+            data = ujson.loads(response.text)
             assert 'code' not in data
             candles = []
             for candle in data.get('candles'):
@@ -93,20 +95,20 @@ class Command(CustomBaseCommand):
         ma_cls.sync(seven_days_ago, pair)
 
 
-# def requests_api(url, payload=None):
-#     auth = 'Bearer {}'.format(get_password('OandaRestAPIToken'))
-#     headers = {'Accept-Encoding': 'identity, deflate, compress, gzip',
-#                'Accept': '*/*', 'User-Agent': 'python-requests/1.2.0',
-#                'Content-type': 'application/json; charset=utf-8',
-#                'Authorization': auth}
-#     if payload:
-#         requests.adapters.DEFAULT_RETRIES = 2
-#         response = requests.post(url, headers=headers, data=payload, timeout=10)
-#     else:
-#         requests.adapters.DEFAULT_RETRIES = 2
-#         response = requests.get(url, headers=headers, timeout=10)
-#     print 'API_TEST: {}'.format(url)
-#     return response
+def requests_api(url, payload=None):
+    auth = 'Bearer {}'.format(get_password('OandaRestAPIToken'))
+    headers = {'Accept-Encoding': 'identity, deflate, compress, gzip',
+               'Accept': '*/*', 'User-Agent': 'python-requests/1.2.0',
+               'Content-type': 'application/json; charset=utf-8',
+               'Authorization': auth}
+    if payload:
+        requests.adapters.DEFAULT_RETRIES = 2
+        response = requests.post(url, headers=headers, data=payload, timeout=10)
+    else:
+        requests.adapters.DEFAULT_RETRIES = 2
+        response = requests.get(url, headers=headers, timeout=10)
+    print 'API_TEST: {}'.format(url)
+    return response
 
 
 def start_date_generator(span, limit=None):
