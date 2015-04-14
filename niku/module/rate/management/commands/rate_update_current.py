@@ -77,9 +77,7 @@ class Command(CustomBaseCommand):
                 'alignmentTimezone=Asia%2FTokyo&' +\
                 'start={}T00%3A00%3A00Z'.format(start)
 
-            response = requests_api(url)
-            assert response.status_code == 200, response.status_code
-            data = ujson.loads(response.text)
+            data = requests_api(url)
             assert 'code' not in data
             candles = []
             for candle in data.get('candles'):

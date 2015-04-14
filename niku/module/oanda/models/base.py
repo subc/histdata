@@ -84,7 +84,7 @@ class OandaAccountAPIBase(object):
             if str("Service Unavailable") in str(response.text):
                 raise OandaServiceUnavailableError
             if str("An internal server error occurred") in str(response.text):
-                raise OandaInternalServerError            
+                raise OandaInternalServerError
             raise TypeError, response.text
         return data
 
