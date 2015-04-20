@@ -25,6 +25,7 @@ class Command(BaseCommand):
     def run(self):
         # price取る
         price_group = PriceAPI(OandaAPIMode.PRODUCTION).get_all()
+        price_group = sorted(price_group, key=lambda x: x.id)
 
         # AIインスタンス生成
         ai_board_group = AIBoard.get_all()
@@ -32,6 +33,7 @@ class Command(BaseCommand):
             self.check(ai_board, price_group)
 
     def check(self, ai_board, price_group):
+        print 'START AI: {}'.format(ai_board.id)
         for x in xrange(10):
             order1 = self.order(ai_board, price_group)
             order2 = self.order(ai_board, price_group)
@@ -57,8 +59,8 @@ class Command(BaseCommand):
         if type(order1) != type(order2):
             raise ValueError
         assert order1.order_type == order2.order_type, '{}:{}'.format(order1.order_type, order2.order_type)
-        assert order1.limit == order2.limit
-        assert order1.stop_limit == order2.stop_limit
+        assert order1.limit == order2.limit, '{}:{}'.format(order1.limit, order2.limit)
+        assert order1.stop_limit == order2.stop_limit, '{}:{}'.format(order1.stop_limit, order2.stop_limit)
 
     def get_prev_rates(self, currency_pair, granularity):
         key = self._get_key(currency_pair, granularity)
