@@ -4,7 +4,8 @@ from __future__ import unicode_literals
 from collections import defaultdict
 import datetime
 import time
-from module.board.models import AIBoardHistory
+from module.account.constants import get_units
+from module.board.models import AIBoardHistory, AIBoard
 from apps.web.views import HTMLAIResult
 from module.account.models import Order
 from module.oanda.constants import OandaAPIMode
@@ -58,6 +59,7 @@ class Command(CustomBaseCommand):
             price = price_group[key]
             if price.is_maintenance:
                 self.echo('MAINTENANCE NOW!!')
+                return
 
         # 1週間分の取引の取得
         order_week = Order.get_close_by_scope(datetime.timedelta(days=0),
@@ -72,6 +74,9 @@ class Command(CustomBaseCommand):
         # 同じAIの排除
         self.echo('SAME AI DISABLE')
         disable_same_ai(ai_group, price_group)
+
+        # 取引数を変更
+        self.change_units()
 
     def group_by_ai(self, orders):
         """
@@ -88,6 +93,32 @@ class Command(CustomBaseCommand):
 
         r = sorted(r, key=lambda x: x.board.id, reverse=True)
         return r
+
+    def change_units(self):
+        """
+        取引数の変更
+        """
+        ai_group = AIBoard.get_enable_and_main()
+        ai_count = len(ai_group)
+        before_units = ai_group[0].units
+        after_units = get_units(10000, ai_count)
+
+        # 差が5以下なら何もしない
+        if abs(after_units - before_units) <= 5:
+            return
+
+        # 0以下ならエラー
+        if after_units <= 0:
+            raise ValueError
+
+        # 10000以上ならエラー
+        if after_units > 10000:
+            raise ValueError
+
+        # update
+        for ai in ai_group:
+            ai.units = after_units
+            ai.save()
 
 
 def evaluate(ai, price_group):

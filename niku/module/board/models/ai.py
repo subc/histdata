@@ -37,6 +37,10 @@ class AIBoard(models.Model):
         return list(cls.objects.filter(enable=1))
 
     @classmethod
+    def get_enable_and_main(cls):
+        return list(cls.objects.filter(units__gt=1, enable=1))
+
+    @classmethod
     def get_accounts(cls):
         """
         アカウント一覧を返却

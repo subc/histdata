@@ -13,3 +13,17 @@ MARGIN_COEFFICIENT = 37.5
 DAILY_RISK_COEFFICIENT = 0.75
 
 UNITS = 200
+
+
+def get_units(daily_risk, ai_count):
+    """
+    最適なユニット数を返却
+
+    count * units * risk_coeff = daily_risk
+    units = daily_risk / count / risk_coeff
+
+    :param daily_risk: int
+    :param ai_count: int
+    :rtype : int
+    """
+    return int(daily_risk / ai_count / DAILY_RISK_COEFFICIENT)
