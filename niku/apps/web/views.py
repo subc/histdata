@@ -63,8 +63,9 @@ class IndexView(BaseView):
         _percent = float(float(account.get('marginUsed')) / float(account.get('balance'))) * 100
         account_margin_percent = '%.2f' % _percent
         # リスク系の統計情報
-        ai_count = len(AIBoard.get_enable_and_main())
-        foresee_daily_risk = int(ai_count * UNITS * DAILY_RISK_COEFFICIENT)
+        ai_group = AIBoard.get_enable_and_main()
+        ai_count = len(ai_group)
+        foresee_daily_risk = int(ai_count * ai_group[0].units * DAILY_RISK_COEFFICIENT)
         foresee_margin = int(ai_count * UNITS * MARGIN_COEFFICIENT)
         daily_risk = int(sum([o.profit for o in order_week]) / 5)
 
