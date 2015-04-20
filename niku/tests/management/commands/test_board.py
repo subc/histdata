@@ -25,10 +25,10 @@ class Command(BaseCommand):
     def run(self):
         # price取る
         price_group = PriceAPI(OandaAPIMode.PRODUCTION).get_all()
-        price_group = sorted(price_group, key=lambda x: x.id)
 
         # AIインスタンス生成
         ai_board_group = AIBoard.get_all()
+        ai_board_group = sorted(ai_board_group, key=lambda x: x.id)
         for ai_board in ai_board_group:
             self.check(ai_board, price_group)
 
