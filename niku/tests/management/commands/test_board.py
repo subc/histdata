@@ -4,6 +4,7 @@ boardを更新する
 """
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import traceback
 from django.core.management import BaseCommand
 import requests
 from ...constans import TEST_HEADER, TEST_HOST
@@ -37,7 +38,10 @@ class Command(BaseCommand):
         for x in xrange(10):
             order1 = self.order(ai_board, price_group)
             order2 = self.order(ai_board, price_group)
-            self.test(order1, order2)
+            try:
+                self.test(order1, order2)
+            except AssertionError:
+                print traceback.format_exc()
         print 'AI BOARD:{} OK!!'.format(ai_board.id)
 
     def order(self, ai_board, price_group):
@@ -53,11 +57,11 @@ class Command(BaseCommand):
         if order1 is None and order2 is None:
             return True
         if order1 is None:
-            raise ValueError
+            raise AssertionError
         if order2 is None:
-            raise ValueError
+            raise AssertionError
         if type(order1) != type(order2):
-            raise ValueError
+            raise AssertionError
         assert order1.order_type == order2.order_type, '{}:{}'.format(order1.order_type, order2.order_type)
         assert order1.limit == order2.limit, '{}:{}'.format(order1.limit, order2.limit)
         assert order1.stop_limit == order2.stop_limit, '{}:{}'.format(order1.stop_limit, order2.stop_limit)
