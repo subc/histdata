@@ -14,9 +14,6 @@ from module.oanda.models.api_price import PriceAPI
 from utils import CustomBaseCommand
 
 
-UNITS = 200
-
-
 class Command(CustomBaseCommand):
     """
     取引量を変化させる
@@ -154,7 +151,7 @@ def evaluate(ai, price_group):
         # 低評価AIのとき
         if ai.sum_tick >= 100 and total_tick >= 100:
             board = ai.board
-            rank_up_down(board, UNITS, price)
+            rank_up_down(board, AIBoard.get_enable_and_main()[0].units, price)
     else:
         # 高評価AIのとき
         if ai.sum_tick <= -150 or total_tick <= -150:

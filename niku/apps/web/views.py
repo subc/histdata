@@ -67,7 +67,7 @@ class IndexView(BaseView):
         ai_count = len(ai_group)
         ai_units = ai_group[0].units
         foresee_daily_risk = int(ai_count * ai_units * DAILY_RISK_COEFFICIENT)
-        foresee_margin = int(ai_count * UNITS * MARGIN_COEFFICIENT)
+        foresee_margin = int(ai_count * ai_units * MARGIN_COEFFICIENT)
         daily_risk = int(sum([o.profit for o in order_week]) / 5)
 
         return self.render_to_response({

@@ -12,8 +12,6 @@ MARGIN_COEFFICIENT = 37.5
 # 1日のリスク係数
 DAILY_RISK_COEFFICIENT = 0.75
 
-UNITS = 200
-
 
 def get_units(daily_risk, ai_count):
     """
