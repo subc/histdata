@@ -22,6 +22,7 @@ def get_ai_class_by(ai_id):
         1004: AIMarketTimeUsdJpy1004,
         2001: AI2001Gbp,
         2002: AIHoriGbpUsd2002,
+        2003: AIMarketTimeGbpUsd2003,
         3001: AI3001Aud,
         3002: AIMarketTimeAudUsd3002,
     }

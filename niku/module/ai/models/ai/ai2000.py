@@ -319,3 +319,9 @@ class AIMarketTimeAudUsd3002(AudUsdMixin, AIHoriMarketTimeBase):
     ai_id = 3002
     MUTATION_MAX = 120
     MUTATION_MIN = 10
+
+
+class AIMarketTimeGbpUsd2003(GbpUsdMixin, AIHoriMarketTimeBase):
+    ai_id = 2003
+    MUTATION_MAX = 150
+    MUTATION_MIN = 10
