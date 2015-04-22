@@ -123,9 +123,15 @@ class AIBoard(models.Model):
     def version_up(self):
         self.version += 1
 
-    def trade_stop(self):
+    def trade_stop(self, message, trade_count, sum_tick, open_position_tick):
         """
         取引停止を記録
         """
         self.enable = 0
         self.save()
+
+        # 記録
+        from .history import AIBoardDisableHistory
+        AIBoardDisableHistory.record(self.id, message,
+                                     trade_count, sum_tick, open_position_tick
+                                     )

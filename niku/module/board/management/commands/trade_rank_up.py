@@ -213,7 +213,8 @@ def _same_ai(ai, ai_group, price_group):
         if ai.pair != _ai.pair:
             continue
         if same(ai, _ai):
-            _ai.board.trade_stop()  # 停止
+            message = "SAME AI!! BASE:{} DISABLE_TARGET:{}".format(ai.board.id, _ai.board.id)
+            _ai.board.trade_stop(message, ai.count, ai.sum_tick, ai.open_position_tick)  # 停止
             disable_ai_group.append(_ai)
     return [ai.board.id for ai in disable_ai_group]
 

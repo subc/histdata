@@ -85,3 +85,31 @@ class AIBoardHistory(models.Model):
         :rtype : list of AIBoardHistory
         """
         return list(AIBoardHistory.objects.filter(ai_board_id=self.ai_board_id).order_by('-version')[:count])
+
+
+class AIBoardDisableHistory(models.Model):
+    """
+    AI のOFFにした履歴
+    """
+    created_at = models.DateTimeField(auto_now_add=True)
+    ai_board_id = models.PositiveIntegerField(db_index=True)
+    description = models.CharField(max_length=50)
+    trade_count = models.IntegerField()
+    sum_tick = models.FloatField(null=True, default=None)
+    open_position_tick = models.FloatField(null=True, default=None)
+
+    class Meta(object):
+        app_label = 'board'
+
+    @classmethod
+    def record(cls, ai_board_id, message, trade_count, sum_tick, open_position_tick):
+        """
+        記録
+        :param ai_board_id: int
+        :param message: string
+        """
+        cls.objects.create(ai_board_id=ai_board_id,
+                           description=message,
+                           trade_count=trade_count,
+                           sum_tick=sum_tick,
+                           open_position_tick=open_position_tick)
