@@ -5,6 +5,7 @@ import datetime
 from django.core.management import BaseCommand
 import time
 import pytz
+from requests import ConnectionError
 from module.account.models import Order
 from module.oanda.constants import OandaAPIMode
 from module.oanda.exceptions import OandaServiceUnavailableError, OandaInternalServerError
@@ -34,6 +35,8 @@ class Command(CustomBaseCommand):
         except OandaInternalServerError:
             # 土日メンテ中のとき
             self.echo("OandaInternalServerError")
+            time.sleep(60)
+        except ConnectionError:
             time.sleep(60)
         except Exception as e:
             self.critical_error('close', e)

@@ -6,6 +6,7 @@ from django.core.management import BaseCommand
 import time
 import sys
 import pytz
+from requests import ConnectionError
 from module.account.models import Order
 from module.board.models import AIBoard
 from module.genetic.models.parameter import OrderType
@@ -38,6 +39,8 @@ class Command(CustomBaseCommand):
         except OandaInternalServerError:
             # 土日メンテ中のとき
             self.echo("OandaInternalServerError")
+            time.sleep(60)
+        except ConnectionError:
             time.sleep(60)
         except Exception as e:
             self.critical_error('open', e)
