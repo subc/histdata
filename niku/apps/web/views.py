@@ -65,7 +65,7 @@ class IndexView(BaseView):
         # リスク系の統計情報
         ai_group = AIBoard.get_enable_and_main()
         ai_count = len(ai_group)
-        ai_units = ai_group[0].units
+        ai_units = sum([ai.units for ai in ai_group])
         foresee_daily_risk = int(ai_count * ai_units * DAILY_RISK_COEFFICIENT)
         foresee_margin = int(ai_count * ai_units * MARGIN_COEFFICIENT)
         daily_risk = int(sum([o.profit for o in order_week]) / 5)
