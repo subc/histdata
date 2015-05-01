@@ -79,7 +79,7 @@ class Command(CustomBaseCommand):
         term = Order.get_close_by_scope(datetime.timedelta(days=0),
                                         datetime.timedelta(days=365))
 
-        ai_group = self.group_by_ai(term)
+        ai_group = self.group_by_ai(term, boards)
 
         # 100取引以上で成績の悪いAIをOFFにする
         self.echo('Fool AI DISABLE')
