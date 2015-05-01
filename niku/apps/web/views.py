@@ -241,6 +241,10 @@ class HTMLAIResult(object):
         return self.orders[0].board
 
     @cached_property
+    def board_enable(self):
+        return self.orders[0].board.enable
+
+    @cached_property
     def pair(self):
         return self.orders[0].currency_pair
 

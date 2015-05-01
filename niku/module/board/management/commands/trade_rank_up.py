@@ -95,7 +95,7 @@ class Command(CustomBaseCommand):
         ai_dict = defaultdict(list)
         for o in orders:
             # disableAIの排除
-            if not o.board.enable:
+            if not o.board_enable:
                 continue
             ai_dict[o.ai_board_id] += [o]
         r = []
