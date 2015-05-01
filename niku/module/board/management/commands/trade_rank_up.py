@@ -84,6 +84,7 @@ class Command(CustomBaseCommand):
 
         # 取引数を変更
         self.change_units()
+        self.echo("finish")
 
     def group_by_ai(self, orders):
         """
@@ -227,6 +228,7 @@ def disable_fool_ai(ai_group, price_group):
 
         # 無効にする
         message = "FOOL AI{}!!".format(ai.board.id)
+        print message
         ai.board.trade_stop(message, ai.count, ai.sum_tick, ai.open_position_tick)  # 停止
 
 
