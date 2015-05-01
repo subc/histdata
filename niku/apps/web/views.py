@@ -34,14 +34,14 @@ class IndexView(BaseView):
         # order
         c_order_all = HTMLCloseOrder('ALL', Order.get_close())
         close_orders = [c_order_all]
-        for index in range(11):
+        for index in range(21):
             o = HTMLCloseOrder('{}DAY'.format(index), Order.get_close_by_scope(datetime.timedelta(days=index),
                                                                                datetime.timedelta(days=index + 1)))
             close_orders.append(o)
 
         # order 1week
         order_week = Order.get_close_by_scope(datetime.timedelta(days=0),
-                                              datetime.timedelta(days=7))
+                                              datetime.timedelta(days=21))
         ai_result = self.ai_aggregation(order_week)
         for ai in ai_result:
             ai.set_current_tick(price_group)
