@@ -153,8 +153,8 @@ class Command(CustomBaseCommand):
         after_units = get_units(10000, ai_count)
 
         # 差が5以下なら何もしない
-        if abs(after_units - before_units) <= 5:
-            return
+        #if abs(after_units - before_units) <= 5:
+        #    return
 
         # 0以下ならエラー
         if after_units <= 0:
