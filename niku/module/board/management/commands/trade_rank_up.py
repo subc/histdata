@@ -58,11 +58,11 @@ class Command(CustomBaseCommand):
                 self.echo('MAINTENANCE NOW!!')
                 return
 
-        # 1週間分の取引の取得
-        order_week = Order.get_close_by_scope(datetime.timedelta(days=0),
-                                              datetime.timedelta(days=7))
+        # 30日分の取引の取得
+        term = Order.get_close_by_scope(datetime.timedelta(days=0),
+                                        datetime.timedelta(days=30))
 
-        ai_group = self.group_by_ai(order_week)
+        ai_group = self.group_by_ai(term)
 
         for ai in ai_group:
             ai.set_current_tick(price_group)
@@ -71,6 +71,16 @@ class Command(CustomBaseCommand):
         # 同じAIの排除
         self.echo('SAME AI DISABLE')
         disable_same_ai(ai_group, price_group)
+
+        # 365日分の取引の取得
+        term = Order.get_close_by_scope(datetime.timedelta(days=0),
+                                        datetime.timedelta(days=365))
+
+        ai_group = self.group_by_ai(term)
+
+        # 100取引以上で成績の悪いAIをOFFにする
+        self.echo('Fool AI DISABLE')
+        disable_fool_ai(ai_group, price_group)
 
         # 取引数を変更
         self.change_units()
@@ -83,6 +93,9 @@ class Command(CustomBaseCommand):
         """
         ai_dict = defaultdict(list)
         for o in orders:
+            # disableAIの排除
+            if not o.board.enable:
+                continue
             ai_dict[o.ai_board_id] += [o]
         r = []
         for key in ai_dict:
@@ -192,9 +205,29 @@ def disable_same_ai(ai_group, price_group):
         if ai.board.id in disable_ids:
             continue
         # 取引数が20未満のAIは対象外
-        if ai.count < 20:
+        if ai.count < 100:
             continue
         disable_ids += _same_ai(ai, ai_group, price_group)
+
+
+def disable_fool_ai(ai_group, price_group):
+    """
+    無能なAIをOFFにする
+    :param ai_group: list if HTMLAIResult
+    :param price_group: dict of PriceAPIModel
+    """
+    for ai in ai_group:
+        # 取引数が20未満のAIは対象外
+        if ai.count < 100:
+            continue
+
+        # 利益が-500以上なら対象外
+        if ai.sum_tick > -500:
+            continue
+
+        # 無効にする
+        message = "FOOL AI{}!!".format(ai.board.id)
+        ai.board.trade_stop(message, ai.count, ai.sum_tick, ai.open_position_tick)  # 停止
 
 
 def _same_ai(ai, ai_group, price_group):
