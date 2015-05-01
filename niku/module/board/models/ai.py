@@ -112,13 +112,17 @@ class AIBoard(models.Model):
         print one_hours_ago, order.created_at, one_hours_ago > order.created_at
         return one_hours_ago > order.created_at
 
-    def update_units(self, history):
+    def update_units(self, history, elite):
         """
         取引量を変更
         :param history: AIBoardHistory
         """
         self.units = history.after_units
         self.version_up()
+        if elite:
+            self.elite = 1
+        else:
+            self.elite = 0
         self.save()
 
     def version_up(self):

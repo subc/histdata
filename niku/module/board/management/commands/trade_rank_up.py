@@ -87,9 +87,10 @@ class Command(CustomBaseCommand):
                                         datetime.timedelta(days=14))
 
         ai_group = self.group_by_ai(term, boards)
+        default_unit = AIBoard.get_enable_and_main()[0].units
         for ai in ai_group:
             ai.set_current_tick(price_group)
-            evaluate(ai, price_group)
+            evaluate(ai, price_group, default_unit)
 
     def disable_fool(self, price_group, boards):
         """
@@ -169,7 +170,7 @@ class Command(CustomBaseCommand):
             ai.save()
 
 
-def evaluate(ai, price_group):
+def evaluate(ai, price_group, default_unit):
     """
     AI を評価して更新する
 
@@ -181,6 +182,7 @@ def evaluate(ai, price_group):
 
     :param ai: HTMLAIResult
     :param price_group: dict of PriceAPIModel
+    :param default_unit: int
     """
     # 取引回数が10未満だ
     count = len(Order.get_close_order_by_board(ai.board))
@@ -201,21 +203,22 @@ def evaluate(ai, price_group):
     if ai.units == 1:
         # 低評価AIのとき
         if ai.sum_tick >= 100 and total_tick >= 100:
-            board = ai.board
-            rank_up_down(board, AIBoard.get_enable_and_main()[0].units, price)
+            rank_up_down(ai.board, default_unit, price, 0)
     else:
         # 高評価AIのとき
         if ai.sum_tick <= -150 or total_tick <= -150:
-            board = ai.board
-            rank_up_down(board, 1, price)
+            rank_up_down(ai.board, 1, price, 0)
+        if ai.sum_tick >= 1000 and total_tick >= 1000:
+            rank_up_down(ai.board, default_unit, price, 1)
 
 
-def rank_up_down(board, after_units, price):
+def rank_up_down(board, after_units, price, elite):
     """
     取引量のランク変動
     :param board:AIBoard
     :param after_units:int
     :param price:PriceAPIModel
+    :param elite:int
     """
     before_units = board.units
 
@@ -223,7 +226,7 @@ def rank_up_down(board, after_units, price):
     history = AIBoardHistory.create(board, after_units, price)
 
     # AIBoardの更新
-    board.update_units(history)
+    board.update_units(history, elite)
 
     # print
     print "AI:{} BEFORE:{} AFTER:{}".format(board.id,
