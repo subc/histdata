@@ -234,6 +234,7 @@ def disable_fool_ai(ai_group, price_group):
         # 無効にする
         message = "FOOL AI{}!!".format(ai.board.id)
         print message
+        ai.set_current_tick(price_group)
         ai.board.trade_stop(message, ai.count, ai.sum_tick, ai.open_position_tick)  # 停止
 
 
