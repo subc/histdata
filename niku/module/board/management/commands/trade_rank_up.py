@@ -58,11 +58,14 @@ class Command(CustomBaseCommand):
                 self.echo('MAINTENANCE NOW!!')
                 return
 
+        # AIを全部取る
+        boards = {ai.id: ai for ai in AIBoard.get_all()}
+
         # 30日分の取引の取得
         term = Order.get_close_by_scope(datetime.timedelta(days=0),
                                         datetime.timedelta(days=30))
 
-        ai_group = self.group_by_ai(term)
+        ai_group = self.group_by_ai(term, boards)
 
         for ai in ai_group:
             ai.set_current_tick(price_group)
@@ -86,7 +89,7 @@ class Command(CustomBaseCommand):
         self.change_units()
         self.echo("finish")
 
-    def group_by_ai(self, orders):
+    def group_by_ai(self, orders, boards):
         """
         AI毎にオーダーを集計するよ
 
@@ -94,8 +97,10 @@ class Command(CustomBaseCommand):
         """
         ai_dict = defaultdict(list)
         for o in orders:
+            board = boards[o.ai_board_id]
+
             # disableAIの排除
-            if not o.board_enable:
+            if not board.enable:
                 continue
             ai_dict[o.ai_board_id] += [o]
         r = []
