@@ -11,7 +11,7 @@ from module.rate import CurrencyPair
 
 class Order(models.Model):
     # 日付
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
     order_at = models.DateTimeField(default=None, null=True)
     end_at = models.DateTimeField(default=None, null=True, db_index=True)
