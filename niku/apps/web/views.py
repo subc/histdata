@@ -41,7 +41,7 @@ class IndexView(BaseView):
 
         # order 1week
         order_week = Order.get_close_by_scope(datetime.timedelta(days=0),
-                                              datetime.timedelta(days=21))
+                                              datetime.timedelta(days=14))
         ai_result = self.ai_aggregation(order_week)
         for ai in ai_result:
             ai.set_current_tick(price_group)

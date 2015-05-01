@@ -21,6 +21,7 @@ class AIBoard(models.Model):
     memo = models.CharField(max_length=100)
     units = models.PositiveIntegerField(default=None, null=True, help_text='注文量')
     version = models.PositiveIntegerField(default=1, null=True, help_text='AIの取引世代')
+    elite = models.PositiveIntegerField(default=None, null=True, help_text='エリート')
 
     class Meta(object):
         app_label = 'board'

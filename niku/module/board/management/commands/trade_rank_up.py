@@ -61,33 +61,65 @@ class Command(CustomBaseCommand):
         # AIを全部取る
         boards = {ai.id: ai for ai in list(AIBoard.objects.filter())}
 
-        # 30日分の取引の取得
+        # AIの評価
+        self.valuation(price_group, boards)
+
+        # 100取引以上で成績の悪いAIをOFFにする
+        self.disable_fool(price_group, boards)
+
+        # 同じAIの排除
+        self.disable_same(price_group, boards)
+
+        # 取引数を変更
+        self.change_units()
+
+        self.echo("finish")
+
+    def valuation(self, price_group, boards):
+        """
+        AIの評価
+        :param price_group:
+        :param boards:
+        :return:
+        """
+        self.echo('AI valuation')
         term = Order.get_close_by_scope(datetime.timedelta(days=0),
-                                        datetime.timedelta(days=30))
+                                        datetime.timedelta(days=14))
 
         ai_group = self.group_by_ai(term, boards)
-
         for ai in ai_group:
             ai.set_current_tick(price_group)
             evaluate(ai, price_group)
 
-        # 同じAIの排除
-        self.echo('SAME AI DISABLE')
-        disable_same_ai(ai_group, price_group)
-
-        # 365日分の取引の取得
+    def disable_fool(self, price_group, boards):
+        """
+        100取引以上で成績の悪いAIをOFFにする
+        :param price_group:
+        :param boards:
+        :return:
+        """
+        self.echo('Fool AI DISABLE')
         term = Order.get_close_by_scope(datetime.timedelta(days=0),
                                         datetime.timedelta(days=365))
 
         ai_group = self.group_by_ai(term, boards)
-
-        # 100取引以上で成績の悪いAIをOFFにする
-        self.echo('Fool AI DISABLE')
         disable_fool_ai(ai_group, price_group)
 
-        # 取引数を変更
-        self.change_units()
-        self.echo("finish")
+    def disable_same(self, price_group, boards):
+        """
+        同じAIの排除
+        :param price_group:
+        :param boards:
+        :return:
+        """
+        # 14日分の取引の取得
+        term = Order.get_close_by_scope(datetime.timedelta(days=0),
+                                        datetime.timedelta(days=14))
+
+        ai_group = self.group_by_ai(term, boards)
+
+        self.echo('SAME AI DISABLE')
+        disable_same_ai(ai_group, price_group)
 
     def group_by_ai(self, orders, boards):
         """
@@ -150,9 +182,9 @@ def evaluate(ai, price_group):
     :param ai: HTMLAIResult
     :param price_group: dict of PriceAPIModel
     """
-    # 取引回数が8未満だ
+    # 取引回数が10未満だ
     count = len(Order.get_close_order_by_board(ai.board))
-    if count < 8:
+    if count < 10:
         return
 
     price = price_group.get(ai.pair)
@@ -210,7 +242,7 @@ def disable_same_ai(ai_group, price_group):
         # 既にDISABLEのAIは対象外
         if ai.board.id in disable_ids:
             continue
-        # 取引数が20未満のAIは対象外
+        # 取引数が100未満のAIは対象外
         if ai.count < 100:
             continue
         disable_ids += _same_ai(ai, ai_group, price_group)
