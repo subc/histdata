@@ -166,7 +166,11 @@ class Command(CustomBaseCommand):
 
         # update
         for ai in ai_group:
-            ai.units = after_units
+            if ai.elite:
+                # エリートは2倍
+                ai.units = after_units * 2
+            else:
+                ai.units = after_units
             ai.save()
 
 
