@@ -89,7 +89,7 @@ class IndexView(BaseView):
             'foresee_daily_risk': foresee_daily_risk,
             'foresee_margin': foresee_margin,
             'daily_risk': daily_risk,
-            'ai_units': set([ai.units for ai in ai_group]),
+            'ai_units': ','.join([str(i) for i in list(set([ai.units for ai in ai_group]))]),
         })
 
     def get_orders(self, positions, price_group):
