@@ -259,8 +259,8 @@ def disable_fool_ai(ai_group, price_group):
         if ai.count < 100:
             continue
 
-        # 利益が-500以上なら対象外
-        if ai.sum_tick > -500:
+        # 利益が-1000以上なら対象外
+        if ai.sum_tick > -1000:
             continue
 
         # 無効にする
