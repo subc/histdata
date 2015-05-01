@@ -59,7 +59,7 @@ class Command(CustomBaseCommand):
                 return
 
         # AIを全部取る
-        boards = {ai.id: ai for ai in AIBoard.get_all()}
+        boards = {ai.id: ai for ai in list(AIBoard.objects.filter())}
 
         # 30日分の取引の取得
         term = Order.get_close_by_scope(datetime.timedelta(days=0),
