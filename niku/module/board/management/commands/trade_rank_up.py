@@ -255,8 +255,8 @@ def disable_fool_ai(ai_group, price_group):
     :param price_group: dict of PriceAPIModel
     """
     for ai in ai_group:
-        # 取引数が20未満のAIは対象外
-        if ai.count < 100:
+        # 取引数が50未満のAIは対象外
+        if ai.count < 50:
             continue
 
         # 利益が-1000以上なら対象外
