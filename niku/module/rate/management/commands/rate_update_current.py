@@ -45,11 +45,14 @@ class Command(CustomBaseCommand):
             # 土日メンテ中のとき
             self.echo("OandaInternalServerError")
             time.sleep(60)
+        except Exception:
+            time.sleep(10)
+            raise Exception
 
     def run(self):
         # 直近のレート取得
         now = datetime.datetime.now(pytz.utc)
-        seven_days_ago = now - datetime.timedelta(seconds=3600*24*10)
+        seven_days_ago = now - datetime.timedelta(seconds=3600*24*1)
         for pair in CurrencyPair:
             print 'START :{}'.format(pair)
             self.update_rate(pair, Granularity.D, 700, limit=seven_days_ago)

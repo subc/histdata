@@ -32,6 +32,9 @@ class Command(CustomBaseCommand):
             # 土日メンテ中のとき
             self.echo("OandaInternalServerError")
             time.sleep(60)
+        except Exception:
+            time.sleep(10)
+            raise Exception
 
         self.echo('trade stop finish')
         time.sleep(30)

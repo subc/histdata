@@ -31,6 +31,9 @@ class Command(CustomBaseCommand):
             # 土日メンテ中のとき
             self.echo("OandaInternalServerError")
             time.sleep(60)
+        except Exception:
+            time.sleep(10)
+            raise Exception
 
     def run(self):
         # transactions APIにアクセス
